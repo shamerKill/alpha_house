@@ -13,19 +13,23 @@
 ### 代码规范
   - eslint
   - typescript-eslint
+
 ### 视图
   - react-native
   - react-native-elements (UI组件)
   - React Navigation (路由)
   - react-native-linear-gradient (渐变色)
   - react-native-vector-icons (图标)
+  
 ### 数据处理
   - redux
   - redux-observable
   - realm
+
 ### 网络处理
   - fetch
   - WebSocket
+
 ### app升级
   - react-native-code-push
   - code-push
