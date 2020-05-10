@@ -21,6 +21,6 @@
     "baseUrl": "src"
   },
   "include": [
-    "src", "index.tsx"
+    "src", "./*.tsx", "__tests__", "./*.js"
   ]
 }

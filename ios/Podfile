@@ -78,6 +78,10 @@ target 'alpha_house' do
   pod 'glog', :podspec => '../node_modules/react-native/third-party-podspecs/glog.podspec'
   pod 'Folly', :podspec => '../node_modules/react-native/third-party-podspecs/Folly.podspec'
 
+
+
+
+
   target 'alpha_houseTests' do
     inherit! :complete
     # Pods for testing
