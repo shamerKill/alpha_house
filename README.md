@@ -17,9 +17,13 @@
 ### 视图
   - react-native
   - react-native-elements (UI组件)
-  - React Navigation (路由)
   - react-native-linear-gradient (渐变色)
   - react-native-vector-icons (图标)
+
+### 路由
+  - React Navigation (路由)
+  - @react-navigation/stack (视图堆栈)
+    - { cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS } 添加这一行会实现安卓下页面的左右切换，默认是从下到上
   
 ### 数据处理
   - redux
@@ -33,3 +37,6 @@
 ### app升级
   - react-native-code-push
   - code-push
+
+### 更改项目名
+ - react-native-rename
