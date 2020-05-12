@@ -39,4 +39,10 @@
   - code-push
 
 ### 更改项目名
- - react-native-rename
+  - react-native-rename
+
+### 启动图
+  - react-native-splash-screen
+
+### 指纹认证
+  - expo-local-authentication

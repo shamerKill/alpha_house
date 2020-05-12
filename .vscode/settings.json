@@ -1,3 +1,4 @@
 {
-  "eslint.nodePath": "../node_modules/"
+  "eslint.nodePath": "../node_modules/",
+  "eslint.codeActionsOnSave.mode": "all"
 }
