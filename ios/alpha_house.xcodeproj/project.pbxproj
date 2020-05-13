@@ -17,6 +17,7 @@
 		2D02E4BF1E0B4AB3006451C7 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		2DCD954D1E0B4F2C00145EB5 /* alpha_houseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* alpha_houseTests.m */; };
 		6B1F0F93246802B500DA9984 /* Fonts in Resources */ = {isa = PBXBuildFile; fileRef = 6B1F0F92246802B500DA9984 /* Fonts */; };
+		6B51B660246B89D300890DFC /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6B51B65F246B89D300890DFC /* Launch Screen.storyboard */; };
 		ADD181AAD3EDF6F95F5A59C5 /* libPods-alpha_house.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C1571480A4AA4F1BF5109D17 /* libPods-alpha_house.a */; };
 		D893E81506D8589AED1CCFCE /* libPods-alpha_house-alpha_houseTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D1919632F38BBB98777764D /* libPods-alpha_house-alpha_houseTests.a */; };
 		E422525526FF152200BE15AD /* libPods-alpha_house-tvOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 79D3FD7930F790CEFD1B02D1 /* libPods-alpha_house-tvOS.a */; };
@@ -37,13 +38,6 @@
 			remoteGlobalIDString = 2D02E47A1E0B4A5D006451C7;
 			remoteInfo = "alpha_house-tvOS";
 		};
-		6B51B658246AA62D00890DFC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6B51B654246AA62D00890DFC /* SplashScreen.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 3D7682761D8E76B80014119E;
-			remoteInfo = SplashScreen;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -63,7 +57,7 @@
 		2D4A229EB4B4444A6D2EEDB0 /* libPods-alpha_house-tvOSTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-alpha_house-tvOSTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		532801ECFEAEE57B48C0E7BA /* Pods-alpha_house.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-alpha_house.debug.xcconfig"; path = "Target Support Files/Pods-alpha_house/Pods-alpha_house.debug.xcconfig"; sourceTree = "<group>"; };
 		6B1F0F92246802B500DA9984 /* Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Fonts; path = "../node_modules/react-native-vector-icons/Fonts"; sourceTree = "<group>"; };
-		6B51B654246AA62D00890DFC /* SplashScreen.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SplashScreen.xcodeproj; path = "../node_modules/react-native-splash-screen/ios/SplashScreen.xcodeproj"; sourceTree = "<group>"; };
+		6B51B65F246B89D300890DFC /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		778835A78856FBE3AAAF31E6 /* Pods-alpha_house-tvOSTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-alpha_house-tvOSTests.debug.xcconfig"; path = "Target Support Files/Pods-alpha_house-tvOSTests/Pods-alpha_house-tvOSTests.debug.xcconfig"; sourceTree = "<group>"; };
 		798376BD7E955F2FA7092973 /* Pods-alpha_house-tvOSTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-alpha_house-tvOSTests.release.xcconfig"; path = "Target Support Files/Pods-alpha_house-tvOSTests/Pods-alpha_house-tvOSTests.release.xcconfig"; sourceTree = "<group>"; };
 		79D3FD7930F790CEFD1B02D1 /* libPods-alpha_house-tvOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-alpha_house-tvOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -152,6 +146,7 @@
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.m */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				6B51B65F246B89D300890DFC /* Launch Screen.storyboard */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB71A68108700A75B9A /* main.m */,
 			);
@@ -171,14 +166,6 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		6B51B655246AA62D00890DFC /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				6B51B659246AA62D00890DFC /* libSplashScreen.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		800E5B3E7CE442BDAE01D6CA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
@@ -189,7 +176,6 @@
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
-				6B51B654246AA62D00890DFC /* SplashScreen.xcodeproj */,
 			);
 			name = Libraries;
 			sourceTree = "<group>";
@@ -342,12 +328,6 @@
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 6B51B655246AA62D00890DFC /* Products */;
-					ProjectRef = 6B51B654246AA62D00890DFC /* SplashScreen.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* alpha_house */,
@@ -357,16 +337,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		6B51B659246AA62D00890DFC /* libSplashScreen.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libSplashScreen.a;
-			remoteRef = 6B51B658246AA62D00890DFC /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		00E356EC1AD99517003FC87E /* Resources */ = {
@@ -380,6 +350,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B51B660246B89D300890DFC /* Launch Screen.storyboard in Resources */,
 				6B1F0F93246802B500DA9984 /* Fonts in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 			);
@@ -715,6 +686,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = alpha_houseTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -735,6 +707,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = alpha_houseTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -890,6 +863,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_TESTABILITY = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "alpha_house-tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = (
@@ -918,6 +892,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_NO_COMMON_BLOCKS = YES;
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "alpha_house-tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = (
@@ -945,6 +920,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_TESTABILITY = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "alpha_house-tvOSTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = (
@@ -972,6 +948,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_NO_COMMON_BLOCKS = YES;
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "alpha_house-tvOSTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = (

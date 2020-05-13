@@ -5,7 +5,6 @@ import DataScreen from './data';
 import StatusBarTheme from './components/statusBar';
 import theme from './config/theme';
 
-// SplashScreen.show();
 const App: FC = () => {
   useEffect(() => {
     setTimeout(() => {
