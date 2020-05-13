@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native';
 import SplashScreen from 'react-native-splash-screen';
 import DataScreen from './data';
 import StatusBarTheme from './components/statusBar';
-import theme from './config/theme';
+import AppStyle from './style';
 
 const App: FC = () => {
   useEffect(() => {
@@ -12,7 +12,7 @@ const App: FC = () => {
     }, 1000);
   }, []);
   return (
-    <SafeAreaView style={{ ...theme.default, flex: 1 }}>
+    <SafeAreaView style={AppStyle.AppView}>
       <StatusBarTheme />
       <DataScreen />
     </SafeAreaView>

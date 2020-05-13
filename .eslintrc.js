@@ -18,6 +18,7 @@ module.exports = {
     'global-require': 0,
     'no-alert': 0,
     'arrow-parens': 0,
+    'max-len': ['error', 120],
   },
   parserOptions: {
     project: './tsconfig.json',

@@ -1,14 +1,14 @@
 import React, { FC } from 'react';
 import { View, Text } from 'react-native';
 
-const LoginScreen: FC = () => {
+const RegisterScreen: FC = () => {
   return (
     <View>
       <Text>
-        登录
+        注册
       </Text>
     </View>
   );
 };
 
-export default LoginScreen;
+export default RegisterScreen;
