@@ -8,7 +8,9 @@ import theme from './config/theme';
 // SplashScreen.show();
 const App: FC = () => {
   useEffect(() => {
-    SplashScreen.hide();
+    setTimeout(() => {
+      SplashScreen.hide();
+    }, 1000);
   }, []);
   return (
     <SafeAreaView style={{ ...theme.default, flex: 1 }}>
