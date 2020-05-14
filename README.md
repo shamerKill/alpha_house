@@ -19,6 +19,7 @@
   - react-native-elements (UI组件)
   - react-native-linear-gradient (渐变色)
   - react-native-vector-icons (图标)
+  - react-native-swiper (轮播图)
 
 ### 路由
   - React Navigation (路由)
@@ -44,5 +45,6 @@
 ### 启动图
   - react-native-splash-screen
 
-### 指纹认证
-  - expo-local-authentication
+### 安全处理
+  - expo-local-authentication (指纹认证)
+  - react-native-device-info (唯一设备码)

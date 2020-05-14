@@ -6,7 +6,6 @@ const StatusBarTheme: FC<{ bgColor?: string; }> = ({ bgColor }) => {
   return (
     <StatusBar
       animated
-      translucent
       barStyle="dark-content"
       backgroundColor={bgColor || defaultThemeBarColor} />
   );

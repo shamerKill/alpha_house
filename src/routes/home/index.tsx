@@ -2,6 +2,7 @@ import React from 'react';
 import TypeStackValue from '../stackType';
 import HomeScreen from '../../views/home';
 import ComIconBotton from '../../components/icon/bottom';
+import HomeNewsList from '../../views/home/news_list';
 
 const HomeRoutes: TypeStackValue = [
   {
@@ -17,6 +18,9 @@ const HomeRoutes: TypeStackValue = [
     screens: [{
       name: 'Home',
       component: HomeScreen,
+    }, {
+      name: 'HomeNewsList',
+      component: HomeNewsList,
     }],
   },
 ];

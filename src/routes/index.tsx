@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import TypeStackValue from './stackType';
 import HomeRoutes from './home';
@@ -45,6 +45,7 @@ const RoutesBase: FC = () => {
                       <Stack.Screen
                         options={{
                           headerShown: false,
+                          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
                         }}
                         name={screen.name}
                         component={screen.component}
