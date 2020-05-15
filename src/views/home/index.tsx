@@ -180,6 +180,11 @@ const HomeScreenRowMarket: FC<{ value: TypeHomeRowMarketValue[] }> = ({ value })
 // nav列表
 type TypeHomeNavProp = {pic: ImageSourcePropType, link: string} | null;
 const HomeScreenNav: FC<{ adv: TypeHomeNavProp }> = ({ adv }) => {
+  const navigation = useNavigation();
+  const goTolink = (link: string) => {
+    if (link) navigation.navigate(link);
+    console.log(link);
+  };
   const navList = [
     {
       icon: require('../../assets/images/icons/nav_usdt.png'), name: 'USDT合约', link: '', key: 'nav_1',
@@ -194,9 +199,6 @@ const HomeScreenNav: FC<{ adv: TypeHomeNavProp }> = ({ adv }) => {
       icon: require('../../assets/images/icons/nav_blend.png'), name: '混合合约', link: '', key: 'nav_4',
     },
   ];
-  const goTolink = (link: string) => {
-    console.log(link);
-  };
   return (
     <View>
       <View style={homeStyle.navListView}>
@@ -212,7 +214,7 @@ const HomeScreenNav: FC<{ adv: TypeHomeNavProp }> = ({ adv }) => {
         }
       </View>
       <View style={homeStyle.navListView}>
-        <TouchableNativeFeedback style={{ flex: 1 }}>
+        <TouchableNativeFeedback onPress={() => goTolink('HomeHelpList')} style={{ flex: 1 }}>
           <View style={homeStyle.navBtnView}>
             <Image style={homeStyle.navBtnImage} source={require('../../assets/images/icons/help_center.png')} />
             <Text style={homeStyle.navBtnText}>帮助中心</Text>
@@ -283,8 +285,8 @@ const HomeScreenMarket: FC = () => {
   const marketView = useRef<ScrollView>(null);
   // 获取宽高
   const screenWidth = Math.floor(Dimensions.get('window').width);
-  let screenHeight = Math.floor(Dimensions.get('window').height) - 30 - 50 - 40;
-  if (Platform.OS === 'ios') screenHeight = screenHeight - 30 - 50 - 40;
+  let screenHeight = Math.floor(Dimensions.get('window').height) - 30 - 50 - 70;
+  if (Platform.OS === 'ios') screenHeight = screenHeight - 30 - 30;
   // 币币行情
   const [coinMarketU, setCoinMarketU] = useState<TypeHomeScreenMarketLine[]>([]);
   const [coinMarketB, setCoinMarketB] = useState<TypeHomeScreenMarketLine[]>([]);

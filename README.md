@@ -20,6 +20,7 @@
   - react-native-linear-gradient (渐变色)
   - react-native-vector-icons (图标)
   - react-native-swiper (轮播图)
+  - react-native-webview (内嵌html)
 
 ### 路由
   - React Navigation (路由)

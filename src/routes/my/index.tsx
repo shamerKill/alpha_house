@@ -14,10 +14,8 @@ const MyRoutes: TypeStackValue = [
           : require('../../assets/images/icons/my_none.png')
       } />
     ),
-    screens: [{
-      name: 'Home',
-      component: HomeScreen,
-    }],
+    component: HomeScreen,
+    screens: [],
   },
 ];
 

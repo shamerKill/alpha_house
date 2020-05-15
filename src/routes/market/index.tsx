@@ -14,10 +14,8 @@ const MarketRoutes: TypeStackValue = [
           : require('../../assets/images/icons/market_none.png')
       } />
     ),
-    screens: [{
-      name: 'Home',
-      component: HomeScreen,
-    }],
+    component: HomeScreen,
+    screens: [],
   },
 ];
 

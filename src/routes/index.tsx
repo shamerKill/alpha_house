@@ -20,54 +20,62 @@ const StackValue: TypeStackValue = [
 ];
 
 const Tab = createBottomTabNavigator();
+const Statc = createStackNavigator();
+
+const TabScreen: FC = () => {
+  return (
+    <Tab.Navigator
+      tabBarOptions={{
+        activeTintColor: defaultThemeColor,
+        inactiveTintColor: themeGray,
+        labelStyle: {
+          fontSize: 12,
+          backgroundColor: themeWhite,
+        },
+      }}>
+      {
+      StackValue.map(screens => {
+        return (
+          <Tab.Screen
+            options={{
+              tabBarLabel: screens.name,
+              tabBarIcon: screens.icon,
+            }}
+            name={screens.name}
+            component={screens.component}
+            key={screens.name} />
+        );
+      })
+    }
+    </Tab.Navigator>
+  );
+};
 
 const RoutesBase: FC = () => {
   return (
     <NavigationContainer>
-      <Tab.Navigator
-        initialRouteName="Feed"
-        tabBarOptions={{
-          activeTintColor: defaultThemeColor,
-          inactiveTintColor: themeGray,
-          labelStyle: {
-            fontSize: 12,
-            backgroundColor: themeWhite,
-          },
-        }}>
+      <Statc.Navigator>
+        <Statc.Screen
+          options={{
+            headerShown: false,
+          }}
+          name="Home"
+          component={TabScreen} />
         {
-          StackValue.map(screens => {
-            const Stack = createStackNavigator();
-            const stack: FC = () => {
-              return (
-                <Stack.Navigator>
-                  {
-                    screens.screens.map(screen => (
-                      <Stack.Screen
-                        options={{
-                          headerShown: false,
-                          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-                        }}
-                        name={screen.name}
-                        component={screen.component}
-                        key={screen.name} />
-                    ))
-                  }
-                </Stack.Navigator>
-              );
-            };
+          StackValue.map(item => item.screens).reduce((prev, after) => [...prev, ...after]).map((item, index) => {
             return (
-              <Tab.Screen
+              <Statc.Screen
                 options={{
-                  tabBarLabel: screens.name,
-                  tabBarIcon: screens.icon,
+                  headerShown: false,
+                  cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
                 }}
-                name={screens.name}
-                component={stack}
-                key={screens.name} />
+                key={index}
+                name={item.name}
+                component={item.component} />
             );
           })
         }
-      </Tab.Navigator>
+      </Statc.Navigator>
     </NavigationContainer>
   );
 };

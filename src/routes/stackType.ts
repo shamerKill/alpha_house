@@ -5,6 +5,7 @@ type TypeStackValue = {
     color: string;
     size: number;
   }) => React.ReactNode;
+  component: React.ComponentType<any>,
   screens: {
     name: string;
     component: React.ComponentType<any>
