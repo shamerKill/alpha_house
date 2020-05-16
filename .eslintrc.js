@@ -18,7 +18,7 @@ module.exports = {
     'global-require': 0,
     'no-alert': 0,
     'arrow-parens': 0,
-    'max-len': ['error', 120],
+    'max-len': ['error', 180],
     'react/no-array-index-key': 0,
   },
   parserOptions: {

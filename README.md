@@ -30,6 +30,7 @@
 ### 数据处理
   - redux
   - redux-observable
+  - rxjs
   - realm
 
 ### 网络处理

@@ -53,20 +53,25 @@ const HomeScreenBanner: FC<{ bannerArr: TypeBannerArr }> = ({ bannerArr }) => {
   const swiperTime = 4;
   return (
     <View style={homeStyle.banner}>
-      <Swiper
-        autoplay
-        autoplayTimeout={swiperTime}
-        paginationStyle={homeStyle.bannerSlideBottom}
-        dotStyle={homeStyle.bannerSlideBottomDotStyle}
-        activeDotStyle={homeStyle.bannerSlideBottomActiveDotStyle}>
-        {
+      {
+        bannerArr.length
+          ? (
+            <Swiper
+              autoplay
+              autoplayTimeout={swiperTime}
+              paginationStyle={homeStyle.bannerSlideBottom}
+              dotStyle={homeStyle.bannerSlideBottomDotStyle}
+              activeDotStyle={homeStyle.bannerSlideBottomActiveDotStyle}>
+              {
           bannerArr.map(item => (
             <View style={homeStyle.bannerSlide} key={item.id}>
               <Image resizeMode="stretch" style={homeStyle.bannerSlideImage} source={item.pic} />
             </View>
           ))
         }
-      </Swiper>
+            </Swiper>
+          ) : <View />
+      }
     </View>
   );
 };
@@ -86,22 +91,27 @@ const HomeScreenComment: FC<{ commentArr: TypeCommentArr }> = ({ commentArr }) =
         style={homeStyle.commentIcon}
         resizeMode="contain"
         source={require('../../assets/images/icons/comments.png')} />
-      <Swiper
-        autoplay
-        horizontal={false}
-        scrollEnabled={false}
-        showsPagination={false}
-        autoplayTimeout={swiperTime}>
-        {
-          commentArr.map(item => (
-            <TouchableNativeFeedback key={item.id} onPress={() => commitClick(item.id)}>
-              <View style={homeStyle.commentView}>
-                <Text style={homeStyle.commentText}>{ item.title }</Text>
-              </View>
-            </TouchableNativeFeedback>
-          ))
-        }
-      </Swiper>
+      {
+        commentArr.length
+          ? (
+            <Swiper
+              autoplay
+              horizontal={false}
+              scrollEnabled={false}
+              showsPagination={false}
+              autoplayTimeout={swiperTime}>
+              {
+                commentArr.map(item => (
+                  <TouchableNativeFeedback key={item.id} onPress={() => commitClick(item.id)}>
+                    <View style={homeStyle.commentView}>
+                      <Text style={homeStyle.commentText}>{ item.title }</Text>
+                    </View>
+                  </TouchableNativeFeedback>
+                ))
+              }
+            </Swiper>
+          ) : <View />
+      }
       <LinearGradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
@@ -279,7 +289,14 @@ const HomeScreenMarketLine: FC<TypeHomeScreenMarketLine> = ({
     </View>
   );
 };
-const HomeScreenMarket: FC = () => {
+const HomeScreenMarket: FC<{
+  coinMarketU: TypeHomeScreenMarketLine[],
+  coinMarketB: TypeHomeScreenMarketLine[],
+  coinMarketE: TypeHomeScreenMarketLine[],
+  coinMarketRange: TypeHomeScreenMarketLine[],
+}> = ({
+  coinMarketU, coinMarketB, coinMarketE, coinMarketRange,
+}) => {
   const [marketType, setMarketType] = useState(0);
   const [coinType, setCoinType] = useState(0);
   const marketView = useRef<ScrollView>(null);
@@ -287,12 +304,6 @@ const HomeScreenMarket: FC = () => {
   const screenWidth = Math.floor(Dimensions.get('window').width);
   let screenHeight = Math.floor(Dimensions.get('window').height) - 30 - 50 - 70;
   if (Platform.OS === 'ios') screenHeight = screenHeight - 30 - 30;
-  // 币币行情
-  const [coinMarketU, setCoinMarketU] = useState<TypeHomeScreenMarketLine[]>([]);
-  const [coinMarketB, setCoinMarketB] = useState<TypeHomeScreenMarketLine[]>([]);
-  const [coinMarketE, setCoinMarketE] = useState<TypeHomeScreenMarketLine[]>([]);
-  // 涨幅榜
-  const [coinMarketRange, setCoinMarketRange] = useState<TypeHomeScreenMarketLine[]>([]);
   // 币币行情滑动函数
   const coinMarketChange = (x: number) => {
     const changeNum = Math.round(x / screenWidth);
@@ -307,32 +318,6 @@ const HomeScreenMarket: FC = () => {
       } catch (err) { console.log(err); }
     }
   };
-  // 获取数据
-  useEffect(() => {
-    setCoinMarketU([
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '1',
-      },
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '2',
-      },
-    ]);
-    setCoinMarketB([
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '3',
-      },
-    ]);
-    setCoinMarketE([
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '4',
-      },
-    ]);
-    setCoinMarketRange([
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '5',
-      },
-    ]);
-  }, []);
   return (
     <View>
       {/* 头部 */}
@@ -445,21 +430,26 @@ const HomeScreen: FC = () => {
   // 用户
   const [userPhone] = useState('188****8888');
   // 轮播图
-  const [bannerArr, setBanner] = useState<TypeBannerArr>([]);
+  const [banner, setBanner] = useState<TypeBannerArr>([]);
   // 公告
   const [comments, setComments] = useState<TypeCommentArr>([]);
   // 中部行情
   const [marketBlock, setMarketBlock] = useState<TypeHomeRowMarketValue[]>([]);
   // nav的广告图片和链接
   const [navAd, setNavAd] = useState<TypeHomeNavProp>(null);
-
+  // 币币行情USET/BTC/ETH
+  const [coinMarketU, setCoinMarketU] = useState<TypeHomeScreenMarketLine[]>([]);
+  const [coinMarketB, setCoinMarketB] = useState<TypeHomeScreenMarketLine[]>([]);
+  const [coinMarketE, setCoinMarketE] = useState<TypeHomeScreenMarketLine[]>([]);
+  // 涨幅榜
+  const [coinMarketRange, setCoinMarketRange] = useState<TypeHomeScreenMarketLine[]>([]);
   // 处理数据
   useEffect(() => {
-    const banner = require('../../assets/images/memory/banner1.png');
+    const bannerMem = require('../../assets/images/memory/banner1.png');
     setBanner([
-      { pic: banner, id: 1 },
-      { pic: banner, id: 2 },
-      { pic: banner, id: 3 },
+      { pic: bannerMem, id: 1 },
+      { pic: bannerMem, id: 2 },
+      { pic: bannerMem, id: 3 },
     ]);
     setComments([
       { title: '这是第一个公告这是第一个公告这是第一个公告', id: '1' },
@@ -485,6 +475,29 @@ const HomeScreen: FC = () => {
       pic: require('../../assets/images/memory/nav_1.png'),
       link: '',
     });
+    setCoinMarketU([
+      {
+        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '1',
+      },
+      {
+        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '2',
+      },
+    ]);
+    setCoinMarketB([
+      {
+        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '3',
+      },
+    ]);
+    setCoinMarketE([
+      {
+        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '4',
+      },
+    ]);
+    setCoinMarketRange([
+      {
+        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '5',
+      },
+    ]);
   }, []);
   return (
     <ComLayoutHead close>
@@ -493,7 +506,7 @@ const HomeScreen: FC = () => {
           {/* 头部 */}
           <HomeScreenHead user={userPhone} />
           {/* banner */}
-          <HomeScreenBanner bannerArr={bannerArr} />
+          <HomeScreenBanner bannerArr={banner} />
           {/* adv */}
           <HomeScreenComment commentArr={comments} />
           {/* market */}
@@ -506,7 +519,7 @@ const HomeScreen: FC = () => {
         </View>
         <ComLine />
         {/* 行情 */}
-        <HomeScreenMarket />
+        <HomeScreenMarket coinMarketU={coinMarketU} coinMarketB={coinMarketB} coinMarketE={coinMarketE} coinMarketRange={coinMarketRange} />
       </ScrollView>
     </ComLayoutHead>
   );
