@@ -5,7 +5,8 @@ import ComIconBotton from '../../components/icon/bottom';
 
 const MarketRoutes: TypeStackValue = [
   {
-    name: '行情',
+    name: 'Market',
+    tabName: '行情',
     icon: ({ focused }) => (
       <ComIconBotton
         focused={focused}

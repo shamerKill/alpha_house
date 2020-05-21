@@ -1,5 +1,6 @@
 type TypeStackValue = {
   name: string;
+  tabName: string;
   icon: (props: {
     focused: boolean;
     color: string;

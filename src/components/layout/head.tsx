@@ -1,13 +1,14 @@
 import React, { FC } from 'react';
 import {
-  View, StyleProp, ViewStyle, TextProps, TouchableNativeFeedback, Image,
+  View, StyleProp, ViewStyle, TextProps, TouchableNativeFeedback, Image, ScrollViewProps,
 } from 'react-native';
-import { Header } from 'react-native-elements';
+import { Header, HeaderSubComponent } from 'react-native-elements';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import {
   themeBlack, themeWhite, defaultThemeBgColor,
 } from '../../config/theme';
+import ComLine from '../line';
 
 interface InLayoutHeadProps {
   title?: string;
@@ -17,6 +18,10 @@ interface InLayoutHeadProps {
   border?: true;
   scrollStyle?: ViewStyle;
   overScroll?: true;
+  animated?: true;
+  onScroll?: ScrollViewProps['onScroll'],
+  rightComponent?: HeaderSubComponent,
+  line?: true;
 }
 
 const ComLayoutHead: FC<InLayoutHeadProps> = ({
@@ -28,6 +33,10 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
   title,
   scrollStyle,
   overScroll,
+  onScroll,
+  animated,
+  rightComponent,
+  line,
 }) => {
   const navigation = useNavigation();
   // 返回事件
@@ -36,6 +45,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
     <View style={{ flex: 1 }}>
       <Header
         // 标题
+        rightComponent={rightComponent}
         centerComponent={((): TextProps & { text: string } | {} => {
           return title ? {
             text: title,
@@ -65,6 +75,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
         statusBarProps={
           {
             translucent: true,
+            animated,
             backgroundColor: headBg || '#00000000',
             barStyle: barStyleLight ? 'light-content' : 'dark-content',
           }
@@ -88,6 +99,11 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
           return resultStyle;
         })()} />
       {
+        line
+          ? <ComLine />
+          : null
+      }
+      {
         overScroll
           ? (
             <View style={({ flex: 1, backgroundColor: defaultThemeBgColor, ...scrollStyle })}>
@@ -95,7 +111,10 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
             </View>
           )
           : (
-            <ScrollView style={({ flex: 1, backgroundColor: defaultThemeBgColor, ...scrollStyle })}>
+            <ScrollView
+              scrollEventThrottle={16}
+              onScroll={onScroll}
+              style={({ flex: 1, backgroundColor: defaultThemeBgColor, ...scrollStyle })}>
               { children }
             </ScrollView>
           )

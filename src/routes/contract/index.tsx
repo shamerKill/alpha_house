@@ -5,7 +5,8 @@ import ComIconBotton from '../../components/icon/bottom';
 
 const ContractRoutes: TypeStackValue = [
   {
-    name: '合约',
+    name: 'Contract',
+    tabName: '合约',
     icon: ({ focused }) => (
       <ComIconBotton
         focused={focused}

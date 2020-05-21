@@ -1,11 +1,14 @@
 import React from 'react';
 import TypeStackValue from '../stackType';
-import HomeScreen from '../../views/home';
 import ComIconBotton from '../../components/icon/bottom';
+import MyScreen from '../../views/my';
+import MyRechargeScreen from '../../views/my/recharge';
+import MyReachargeLogScreen from '../../views/my/recharge_log';
 
 const MyRoutes: TypeStackValue = [
   {
-    name: '我的',
+    name: 'My',
+    tabName: '我的',
     icon: ({ focused }) => (
       <ComIconBotton
         focused={focused}
@@ -14,8 +17,17 @@ const MyRoutes: TypeStackValue = [
           : require('../../assets/images/icons/my_none.png')
       } />
     ),
-    component: HomeScreen,
-    screens: [],
+    component: MyScreen,
+    screens: [
+      {
+        name: 'recharge', // 充值
+        component: MyRechargeScreen,
+      },
+      {
+        name: 'rechargeLog', // 充值记录
+        component: MyReachargeLogScreen,
+      },
+    ],
   },
 ];
 

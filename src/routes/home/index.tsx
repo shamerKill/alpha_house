@@ -9,7 +9,8 @@ import HomeHelpDetails from '../../views/home/help_details';
 
 const HomeRoutes: TypeStackValue = [
   {
-    name: '首页',
+    name: 'Home',
+    tabName: '首页',
     icon: ({ focused }) => (
       <ComIconBotton
         focused={focused}

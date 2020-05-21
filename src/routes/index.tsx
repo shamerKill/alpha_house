@@ -25,6 +25,7 @@ const Statc = createStackNavigator();
 const TabScreen: FC = () => {
   return (
     <Tab.Navigator
+      initialRouteName="My"
       tabBarOptions={{
         activeTintColor: defaultThemeColor,
         inactiveTintColor: themeGray,
@@ -38,7 +39,7 @@ const TabScreen: FC = () => {
         return (
           <Tab.Screen
             options={{
-              tabBarLabel: screens.name,
+              tabBarLabel: screens.tabName,
               tabBarIcon: screens.icon,
             }}
             name={screens.name}
