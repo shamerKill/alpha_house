@@ -50,3 +50,4 @@
 ### 安全处理
   - expo-local-authentication (指纹认证)
   - react-native-device-info (唯一设备码)
+  - React Native Camera (二维码扫描)

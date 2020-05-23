@@ -1,9 +1,10 @@
 // 充值
 import React, { FC, useState, useEffect } from 'react';
 import {
-  View, TouchableNativeFeedback, Text, Image, ImageSourcePropType,
+  View, TouchableNativeFeedback, Text, ImageSourcePropType, Image as StaticImage,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Image } from 'react-native-elements';
 import LinearGradient from 'react-native-linear-gradient';
 import Clipboard from '@react-native-community/clipboard';
 import { showMessage } from 'react-native-flash-message';
@@ -90,7 +91,7 @@ const MyRechargeScreen: FC = () => {
             <Image style={{ width: 40, height: 40 }} source={coinIcon} />
             <Text style={{ color: themeWhite, fontSize: 18, paddingLeft: 10 }}>{coinName}</Text>
           </View>
-          <Image
+          <StaticImage
             resizeMode="contain"
             style={{ width: 20, height: 20 }}
             source={require('../../assets/images/icons/list_more.png')} />
