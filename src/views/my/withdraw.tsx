@@ -3,13 +3,17 @@ import {
   View, Text, TouchableNativeFeedback, ImageSourcePropType, Image as StaticImage,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { Image } from 'react-native-elements';
+import { Image, Button } from 'react-native-elements';
+import { useNavigation } from '@react-navigation/native';
 import ComLayoutHead from '../../components/layout/head';
-import { defaultThemeColor, themeWhite } from '../../config/theme';
+import { defaultThemeColor, themeWhite, themeGray } from '../../config/theme';
 import showSelector from '../../components/modal/selector';
 import { ComInputForm } from '../../components/form/input';
+import { showScan } from '../../components/scan';
+import showComAlert from '../../components/modal/alert';
 
 const MyWithdrawScreen: FC = () => {
+  const navigation = useNavigation();
   // 说明文字
   const descTexts = [
     '1、单笔最小提币数量为：0.002BTC,每日提币累计限额为：5BTC。',
@@ -51,17 +55,51 @@ const MyWithdrawScreen: FC = () => {
     },
     // 扫码
     clickScan: () => {
-      console.log('扫码');
+      showScan().then(data => setAddress(data));
+    },
+    // 全部提现
+    allWithdraw: () => {
+      setNum(canUse);
+    },
+    // 提币按钮
+    wihtdrawBtnFunc: () => {
+      console.log(coinName, address, num);
+      addEvent.postMessage();
+    },
+    // 发送提币信息
+    postMessage: () => {
+      const closeAlert = showComAlert({
+        title: '提币申请',
+        desc: '您的提币申请已提交成功，请等待审核',
+        success: {
+          text: '确定',
+          onPress: () => {
+            closeAlert();
+          },
+        },
+        close: {
+          text: '取消',
+          onPress: () => {
+            closeAlert();
+          },
+        },
+      });
     },
   };
   useEffect(() => {
     setCoinName(coinList[0].name);
     setCoinIcon(coinList[0].icon);
+    setCanUse('900');
+    setFree('5.00');
   }, []);
+  useEffect(() => {
+    const willNum = Number(num) - Number(free);
+    setToNum((willNum > 0 ? willNum : 0).toString());
+  }, [num, free]);
   return (
     <ComLayoutHead
       rightComponent={(
-        <TouchableNativeFeedback>
+        <TouchableNativeFeedback onPress={() => navigation.navigate('withdrawLog')}>
           <Text style={{ color: defaultThemeColor, fontSize: 16 }}>提币记录</Text>
         </TouchableNativeFeedback>
       )}
@@ -91,8 +129,15 @@ const MyWithdrawScreen: FC = () => {
         </LinearGradient>
       </TouchableNativeFeedback>
       {/* 提现表单 */}
-      <View style={{ backgroundColor: themeWhite, paddingLeft: 10, paddingRight: 10 }}>
+      <View style={{
+        backgroundColor: themeWhite,
+        paddingLeft: 10,
+        paddingRight: 10,
+        marginBottom: 10,
+      }}>
         <ComInputForm
+          value={address}
+          onChange={value => setAddress(value)}
           labelText="提现地址"
           placeholder="请输入提现地址"
           right={(
@@ -105,10 +150,93 @@ const MyWithdrawScreen: FC = () => {
           )}
           noError />
         <ComInputForm
+          keyboardType="number-pad"
+          value={num}
+          onChange={value => setNum(value)}
           labelText="数量"
           placeholder="请输入提现数量"
-          noError />
+          noError
+          right={(
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{
+                fontSize: 16,
+                lineHeight: 26,
+              }}>
+                {coinName}
+              </Text>
+              <Text style={{
+                paddingLeft: 5,
+                color: themeGray,
+                fontSize: 18,
+                lineHeight: 26,
+              }}>
+                |
+              </Text>
+              <TouchableNativeFeedback onPress={addEvent.allWithdraw}>
+                <Text style={{
+                  color: defaultThemeColor,
+                  fontSize: 16,
+                  paddingLeft: 5,
+                  lineHeight: 26,
+                }}>
+                  全部
+                </Text>
+              </TouchableNativeFeedback>
+            </View>
+          )} />
+        <Text style={{
+          paddingLeft: 10,
+          lineHeight: 30,
+          fontSize: 14,
+          color: defaultThemeColor,
+        }}>
+          可用&nbsp;{ canUse }
+        </Text>
+        <ComInputForm
+          noError
+          disabled
+          labelText="手续费"
+          value={free} />
+        <ComInputForm
+          disabled
+          noError
+          labelText="到账数量"
+          value={toNum}
+          right={(
+            <Text style={{ fontSize: 16 }}>{coinName}</Text>
+          )} />
       </View>
+      {
+        descTexts.map((item, index) => (
+          <Text
+            key={index}
+            style={{
+              paddingLeft: 10,
+              paddingRight: 10,
+              fontSize: 14,
+              color: themeGray,
+              lineHeight: 20,
+            }}>
+            {item}
+          </Text>
+        ))
+      }
+      <Button
+        onPress={addEvent.wihtdrawBtnFunc}
+        ViewComponent={LinearGradient}
+        linearGradientProps={{
+          start: { x: 0, y: 0 },
+          end: { x: 1, y: 0 },
+          colors: ['#826ffd', '#543dff'],
+        }}
+        buttonStyle={{
+          height: 40,
+          width: '80%',
+          alignSelf: 'center',
+          marginTop: 30,
+          marginBottom: 30,
+        }}
+        title="提币" />
     </ComLayoutHead>
   );
 };

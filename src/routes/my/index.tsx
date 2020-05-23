@@ -5,6 +5,7 @@ import MyScreen from '../../views/my';
 import MyRechargeScreen from '../../views/my/recharge';
 import MyReachargeLogScreen from '../../views/my/recharge_log';
 import MyWithdrawScreen from '../../views/my/withdraw';
+import MyWithdrawLogScreen from '../../views/my/withdraw_log';
 
 const MyRoutes: TypeStackValue = [
   {
@@ -31,6 +32,10 @@ const MyRoutes: TypeStackValue = [
       {
         name: 'withdraw', // 提币
         component: MyWithdrawScreen,
+      },
+      {
+        name: 'withdrawLog', // 提币记录
+        component: MyWithdrawLogScreen,
       },
     ],
   },

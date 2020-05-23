@@ -1,0 +1,96 @@
+import React, { FC } from 'react';
+import { View, Text } from 'react-native';
+import { Button } from 'react-native-elements';
+import { modalOutBg } from './outBg';
+import { themeWhite, defaultThemeColor, themeGray } from '../../config/theme';
+
+type TypeComAlert = {
+  title?: string;
+  desc?: string;
+  success?: {
+    text: string;
+    onPress: () => void;
+  };
+  close?: TypeComAlert['success']
+};
+
+const closeComAlert = () => {
+  modalOutBg.outBgsetShow(false);
+  modalOutBg.outBgsetChildren(undefined);
+};
+
+const ComAlert: (data: TypeComAlert) => FC = ({
+  title,
+  desc,
+  success,
+  close,
+}) => () => {
+  return (
+    <View style={{
+      paddingTop: 10,
+      paddingBottom: 10,
+      paddingLeft: 20,
+      paddingRight: 20,
+      backgroundColor: themeWhite,
+      borderRadius: 5,
+      width: 300,
+    }}>
+      <Text style={{
+        textAlign: 'center',
+        fontSize: 16,
+        fontWeight: 'bold',
+        paddingBottom: 10,
+      }}>
+        {title}
+      </Text>
+      <Text style={{
+        paddingTop: 10,
+        paddingBottom: 10,
+      }}>
+        {desc}
+      </Text>
+      <View style={{ flexDirection: 'row-reverse' }}>
+        {
+          success
+          && (
+            <Button
+              title={success.text}
+              onPress={success.onPress}
+              buttonStyle={{
+                backgroundColor: 'transparent',
+                width: 60,
+              }}
+              titleStyle={{
+                color: defaultThemeColor,
+                fontSize: 16,
+              }} />
+          )
+        }
+        {
+          close
+          && (
+            <Button
+              title={close.text}
+              onPress={close.onPress}
+              buttonStyle={{
+                backgroundColor: 'transparent',
+                width: 60,
+              }}
+              titleStyle={{
+                color: themeGray,
+                fontSize: 16,
+              }} />
+          )
+        }
+      </View>
+    </View>
+  );
+};
+
+const showComAlert = (data: TypeComAlert) => {
+  modalOutBg.outBgsetChildren(ComAlert(data));
+  modalOutBg.outBgsetShow(true);
+  return closeComAlert;
+};
+
+export default showComAlert;

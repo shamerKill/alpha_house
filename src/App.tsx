@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import DataScreen from './data';
 import ComModalOutBg from './components/modal/outBg';
+import ComScanView from './components/scan';
 
 const App: FC = () => {
   useEffect(() => {
@@ -16,6 +17,8 @@ const App: FC = () => {
       <FlashMessage position="top" />
       {/* 弹出框 */}
       <ComModalOutBg />
+      {/* 扫码 */}
+      <ComScanView />
     </View>
   );
 };

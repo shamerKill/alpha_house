@@ -21,7 +21,6 @@ const closeSelector = () => {
 
 
 const ComModalSelector: (data: TypeShowSelector) => FC<TypeShowSelector> = ({ data, selected, onPress }) => () => {
-  console.log(data, selected, onPress);
   const bottomHeight = isIphoneX() ? 30 : 0;
   return (
     <View style={{
