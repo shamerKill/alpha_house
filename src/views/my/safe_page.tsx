@@ -1,8 +1,11 @@
 import React, { FC, useState, useEffect } from 'react';
 import { ListItem } from 'react-native-elements';
+import { useNavigation } from '@react-navigation/native';
 import ComLayoutHead from '../../components/layout/head';
+import ComLine from '../../components/line';
 
 const MySafeScreen: FC = () => {
+  const navigation = useNavigation();
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   useEffect(() => {
@@ -11,23 +14,25 @@ const MySafeScreen: FC = () => {
   }, []);
   return (
     <ComLayoutHead title="安全中心">
+      <ComLine />
       <ListItem
+        onPress={() => navigation.navigate('loginPass')}
         containerStyle={{
-          marginTop: 10,
           height: 50,
         }}
         title="修改登录密码"
         bottomDivider
         chevron />
       <ListItem
+        onPress={() => navigation.navigate('payPass')}
         containerStyle={{
           height: 50,
         }}
         title="修改交易密码"
         chevron />
+      <ComLine />
       <ListItem
         containerStyle={{
-          marginTop: 10,
           height: 50,
         }}
         title="绑定手机号"

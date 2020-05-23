@@ -3,7 +3,7 @@ import {
   View, Text, TouchableNativeFeedback, ImageSourcePropType, Image as StaticImage,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { Image, Button } from 'react-native-elements';
+import { Image } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 import ComLayoutHead from '../../components/layout/head';
 import { defaultThemeColor, themeWhite, themeGray } from '../../config/theme';
@@ -11,6 +11,7 @@ import showSelector from '../../components/modal/selector';
 import { ComInputForm } from '../../components/form/input';
 import { showScan } from '../../components/scan';
 import showComAlert from '../../components/modal/alert';
+import ComFormButton from '../../components/form/button';
 
 const MyWithdrawScreen: FC = () => {
   const navigation = useNavigation();
@@ -221,22 +222,13 @@ const MyWithdrawScreen: FC = () => {
           </Text>
         ))
       }
-      <Button
+      <ComFormButton
+        title="提币"
         onPress={addEvent.wihtdrawBtnFunc}
-        ViewComponent={LinearGradient}
-        linearGradientProps={{
-          start: { x: 0, y: 0 },
-          end: { x: 1, y: 0 },
-          colors: ['#826ffd', '#543dff'],
-        }}
-        buttonStyle={{
-          height: 40,
-          width: '80%',
-          alignSelf: 'center',
+        style={{
           marginTop: 30,
           marginBottom: 30,
-        }}
-        title="提币" />
+        }} />
     </ComLayoutHead>
   );
 };

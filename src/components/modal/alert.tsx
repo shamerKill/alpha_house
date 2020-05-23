@@ -58,7 +58,6 @@ const ComAlert: (data: TypeComAlert) => FC = ({
               onPress={success.onPress}
               buttonStyle={{
                 backgroundColor: 'transparent',
-                width: 60,
               }}
               titleStyle={{
                 color: defaultThemeColor,
@@ -74,7 +73,6 @@ const ComAlert: (data: TypeComAlert) => FC = ({
               onPress={close.onPress}
               buttonStyle={{
                 backgroundColor: 'transparent',
-                width: 60,
               }}
               titleStyle={{
                 color: themeGray,
