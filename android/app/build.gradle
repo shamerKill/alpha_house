@@ -139,6 +139,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        // Caream
+        missingDimensionStrategy 'react-native-camera', 'general'
+        multiDexEnabled true // 解决添加react-native-camera报错问题
     }
     splits {
         abi {
