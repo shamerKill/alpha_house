@@ -19,11 +19,11 @@ const ComScanView: FC = () => {
     changeViewData.data = result.data;
   };
   const startAnimation = () => {
-    moveAnim.setValue(0);
+    moveAnim.setValue(-250);
     Animated.timing(
       moveAnim,
       {
-          toValue: -250,
+          toValue: 0,
           duration: 1500,
           easing: Easing.linear,
           useNativeDriver: true,
