@@ -62,7 +62,7 @@ const ComFormLabel: FC<{
       <Text style={{
         height: 40,
         lineHeight: 40,
-        width: 80,
+        width: 100,
         flex: 1,
         fontSize: 16,
       }}>

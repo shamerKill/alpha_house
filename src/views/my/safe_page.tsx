@@ -16,7 +16,7 @@ const MySafeScreen: FC = () => {
     <ComLayoutHead title="安全中心">
       <ComLine />
       <ListItem
-        onPress={() => navigation.navigate('loginPass')}
+        onPress={() => navigation.navigate('changePass', { state: 'login' })}
         containerStyle={{
           height: 50,
         }}
@@ -24,7 +24,7 @@ const MySafeScreen: FC = () => {
         bottomDivider
         chevron />
       <ListItem
-        onPress={() => navigation.navigate('payPass')}
+        onPress={() => navigation.navigate('changePass', { state: 'pay' })}
         containerStyle={{
           height: 50,
         }}
@@ -32,6 +32,7 @@ const MySafeScreen: FC = () => {
         chevron />
       <ComLine />
       <ListItem
+        onPress={() => navigation.navigate('bindAccount', { state: 'phone' })}
         containerStyle={{
           height: 50,
         }}
@@ -42,6 +43,7 @@ const MySafeScreen: FC = () => {
         bottomDivider
         chevron />
       <ListItem
+        onPress={() => navigation.navigate('bindAccount', { state: 'email' })}
         containerStyle={{
           height: 50,
         }}

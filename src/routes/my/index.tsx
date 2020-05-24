@@ -7,8 +7,8 @@ import MyReachargeLogScreen from '../../views/my/recharge_log';
 import MyWithdrawScreen from '../../views/my/withdraw';
 import MyWithdrawLogScreen from '../../views/my/withdraw_log';
 import MySafeScreen from '../../views/my/safe_page';
-import MyLoginPassScreen from '../../views/my/login_pass';
-import MyPayPassScreen from '../../views/my/pay_pass';
+import MyBindAccountScreen from '../../views/my/bind_account';
+import MyChangePassScreen from '../../views/my/change_pass';
 
 const MyRoutes: TypeStackValue = [
   {
@@ -45,12 +45,12 @@ const MyRoutes: TypeStackValue = [
         component: MySafeScreen,
       },
       {
-        name: 'loginPass', // 修改登录密码
-        component: MyLoginPassScreen,
+        name: 'changePass', // 修改密码
+        component: MyChangePassScreen,
       },
       {
-        name: 'payPass', // 修改交易密码
-        component: MyPayPassScreen,
+        name: 'bindAccount', // 账户绑定邮箱/手机号
+        component: MyBindAccountScreen,
       },
     ],
   },
