@@ -9,6 +9,7 @@ import MyWithdrawLogScreen from '../../views/my/withdraw_log';
 import MySafeScreen from '../../views/my/safe_page';
 import MyBindAccountScreen from '../../views/my/bind_account';
 import MyChangePassScreen from '../../views/my/change_pass';
+import MyOrderInfo from '../../views/my/order_info';
 
 const MyRoutes: TypeStackValue = [
   {
@@ -51,6 +52,10 @@ const MyRoutes: TypeStackValue = [
       {
         name: 'bindAccount', // 账户绑定邮箱/手机号
         component: MyBindAccountScreen,
+      },
+      {
+        name: 'orderInfo', // 账单明细
+        component: MyOrderInfo,
       },
     ],
   },

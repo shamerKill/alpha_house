@@ -2,27 +2,42 @@
 import React, {
   FC, useState, useEffect,
 } from 'react';
-import { View } from 'react-native';
+import { Animated } from 'react-native';
 
 export const modalOutBg: {
   outBgsetShow: React.Dispatch<React.SetStateAction<boolean>>;
-  outBgsetChildren: React.Dispatch<React.SetStateAction<React.FC<any> | undefined>>;
+  outBgsetChildren: React.Dispatch<React.ReactElement|null>;
 } = {
   outBgsetShow: () => {},
   outBgsetChildren: () => {},
 };
 
 const ComModalOutBg: FC = () => {
-  const [children, setChildren] = useState<FC<any>>();
+  const [children, setChildren] = useState<React.ReactElement|null>();
   const [show, setShow] = useState(false);
+  const insertBgStart = new Animated.Value(0);
   useEffect(() => {
     modalOutBg.outBgsetShow = setShow;
     modalOutBg.outBgsetChildren = setChildren;
   }, []);
+  useEffect(() => {
+    if (show) {
+      insertBgStart.setValue(0);
+      Animated.timing(
+        insertBgStart,
+        {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        },
+      ).start();
+    }
+  }, [show]);
   if (!show) return null;
   return (
-    <View
+    <Animated.View
       style={{
+        opacity: insertBgStart,
         position: 'absolute',
         top: 0,
         left: 0,
@@ -34,7 +49,7 @@ const ComModalOutBg: FC = () => {
         zIndex: 10,
       }}>
       { children }
-    </View>
+    </Animated.View>
   );
 };
 

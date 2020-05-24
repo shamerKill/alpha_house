@@ -20,6 +20,7 @@ module.exports = {
     'arrow-parens': 0,
     'max-len': ['error', 180],
     'react/no-array-index-key': 0,
+    'no-plusplus': 0,
   },
   parserOptions: {
     project: './tsconfig.json',

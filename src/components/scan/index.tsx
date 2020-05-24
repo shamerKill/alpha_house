@@ -53,7 +53,6 @@ const ComScanView: FC = () => {
     };
     BackHandler.addEventListener('hardwareBackPress', onListener);
     return () => BackHandler.removeEventListener('hardwareBackPress', onListener);
-    ;
   }, [viewScan]);
   if (!viewScan) return null;
   return (

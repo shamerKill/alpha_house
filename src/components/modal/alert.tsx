@@ -16,15 +16,15 @@ type TypeComAlert = {
 
 const closeComAlert = () => {
   modalOutBg.outBgsetShow(false);
-  modalOutBg.outBgsetChildren(undefined);
+  modalOutBg.outBgsetChildren(null);
 };
 
-const ComAlert: (data: TypeComAlert) => FC = ({
+const ComAlert: FC<TypeComAlert> = ({
   title,
   desc,
   success,
   close,
-}) => () => {
+}) => {
   return (
     <View style={{
       paddingTop: 10,
@@ -86,7 +86,7 @@ const ComAlert: (data: TypeComAlert) => FC = ({
 };
 
 const showComAlert = (data: TypeComAlert) => {
-  modalOutBg.outBgsetChildren(ComAlert(data));
+  modalOutBg.outBgsetChildren(<ComAlert {...data} />);
   modalOutBg.outBgsetShow(true);
   return closeComAlert;
 };

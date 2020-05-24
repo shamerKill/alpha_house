@@ -23,7 +23,7 @@ const MyScreen: FC = () => {
   // 主要显示按钮
   const centerShowBtns = [
     { icon: require('../../assets/images/icons/user_center_center.png'), name: '安全中心', link: 'safePage' },
-    { icon: require('../../assets/images/icons/user_center_order.png'), name: '账单明细', link: 'Home' },
+    { icon: require('../../assets/images/icons/user_center_order.png'), name: '账单明细', link: 'orderInfo' },
     { icon: require('../../assets/images/icons/user_center_friend.png'), name: '我的邀请', link: 'demo' },
   ];
   // 更多链接
