@@ -84,6 +84,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
         containerStyle={(() => {
           const resultStyle: StyleProp<ViewStyle> = {
             backgroundColor: themeWhite,
+            borderBottomColor: themeWhite,
           };
           if (close) {
             resultStyle.height = 0;

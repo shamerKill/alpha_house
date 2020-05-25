@@ -18,13 +18,13 @@ const MyScreen: FC = () => {
   const userMoneyBtns = [
     { icon: require('../../assets/images/icons/user_center_add.png'), name: '充值', link: 'recharge' },
     { icon: require('../../assets/images/icons/user_center_cut.png'), name: '提币', link: 'withdraw' },
-    { icon: require('../../assets/images/icons/user_center_change.png'), name: '转账', link: 'Home' },
+    { icon: require('../../assets/images/icons/user_center_change.png'), name: '转账', link: 'realname' },
   ];
   // 主要显示按钮
   const centerShowBtns = [
     { icon: require('../../assets/images/icons/user_center_center.png'), name: '安全中心', link: 'safePage' },
     { icon: require('../../assets/images/icons/user_center_order.png'), name: '账单明细', link: 'orderInfo' },
-    { icon: require('../../assets/images/icons/user_center_friend.png'), name: '我的邀请', link: 'demo' },
+    { icon: require('../../assets/images/icons/user_center_friend.png'), name: '我的邀请', link: 'recommend' },
   ];
   // 更多链接
   const moreList = [
@@ -227,6 +227,10 @@ const MyScreen: FC = () => {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
+                      paddingLeft: 10,
+                      paddingRight: 10,
+                      paddingTop: 5,
+                      paddingBottom: 5,
                     }}>
                     <StaticImage
                       style={{

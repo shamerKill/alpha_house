@@ -4,17 +4,21 @@
 <dict>
 	<!-- Camream -->
 	<!-- Required with iOS 10 and higher -->
+	<!-- 摄像头权限 -->
 	<key>NSCameraUsageDescription</key>
-	<string>Your message to user when the camera is accessed for the first time</string>
+	<string>该操作需要访问摄像头</string>
 	<!-- Required with iOS 11 and higher: include this only if you are planning to use the camera roll -->
+	<!-- 添加图库 -->
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Your message to user when the photo library is accessed for the first time</string>
+	<string>该操作需要访问图库</string>
 	<!-- Include this only if you are planning to use the camera roll -->
+	<!-- 获得图库 -->
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Your message to user when the photo library is accessed for the first time</string>
+	<string>该操作需要访问图库</string>
 	<!-- Include this only if you are planning to use the microphone for video recording -->
+	<!-- 麦克风权限 -->
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Your message to user when the microphone is accessed for the first time</string>
+	<string>该操作需要访问麦克风</string>
 
 	
 	<key>CFBundleDevelopmentRegion</key>

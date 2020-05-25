@@ -142,6 +142,7 @@ android {
         // Caream
         missingDimensionStrategy 'react-native-camera', 'general'
         multiDexEnabled true // 解决添加react-native-camera报错问题
+        vectorDrawables.useSupportLibrary = true
     }
     splits {
         abi {
@@ -209,6 +210,7 @@ dependencies {
     implementation "com.facebook.react:react-native:+"  // From node_modules
     
     implementation project(':react-native-splash-screen')
+    implementation project(':react-native-fs')
 
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
 

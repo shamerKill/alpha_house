@@ -10,6 +10,8 @@ import MySafeScreen from '../../views/my/safe_page';
 import MyBindAccountScreen from '../../views/my/bind_account';
 import MyChangePassScreen from '../../views/my/change_pass';
 import MyOrderInfo from '../../views/my/order_info';
+import MyRecommendScreen from '../../views/my/recommend';
+import MyRealnameScreen from '../../views/my/realname';
 
 const MyRoutes: TypeStackValue = [
   {
@@ -56,6 +58,14 @@ const MyRoutes: TypeStackValue = [
       {
         name: 'orderInfo', // 账单明细
         component: MyOrderInfo,
+      },
+      {
+        name: 'recommend', // 我的邀请
+        component: MyRecommendScreen,
+      },
+      {
+        name: 'realname', // 我的邀请
+        component: MyRealnameScreen,
       },
     ],
   },

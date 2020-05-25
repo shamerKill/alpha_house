@@ -13,6 +13,7 @@
     "reload": "react-native run-android && npx pod-install ios && react-native run-ios"
   },
   "dependencies": {
+    "@react-native-community/cameraroll": "^1.7.1",
     "@react-native-community/clipboard": "^1.2.2",
     "@react-native-community/masked-view": "^0.1.10",
     "@react-navigation/bottom-tabs": "^5.4.2",
@@ -20,6 +21,7 @@
     "@react-navigation/material-bottom-tabs": "^5.2.2",
     "@react-navigation/native": "^5.3.0",
     "@react-navigation/stack": "^5.3.2",
+    "@types/react-native-keyboard-spacer": "^0.4.1",
     "@types/react-redux": "^7.1.8",
     "expo-local-authentication": "^9.0.0",
     "react": "16.11.0",
@@ -27,7 +29,10 @@
     "react-native-camera": "^3.26.0",
     "react-native-elements": "^2.0.0",
     "react-native-flash-message": "^0.1.15",
+    "react-native-fs": "^2.16.6",
     "react-native-gesture-handler": "^1.6.1",
+    "react-native-image-crop-picker": "^0.31.1",
+    "react-native-keyboard-spacer": "^0.4.1",
     "react-native-linear-gradient": "^2.5.6",
     "react-native-paper": "^3.10.1",
     "react-native-reanimated": "^1.8.0",

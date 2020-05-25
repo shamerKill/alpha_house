@@ -1,4 +1,5 @@
 {
   "eslint.nodePath": "../node_modules/",
-  "eslint.codeActionsOnSave.mode": "all"
+  "eslint.codeActionsOnSave.mode": "all",
+  "deno.enable": false
 }
