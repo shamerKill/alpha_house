@@ -2,11 +2,11 @@ import React, {
   FC, useState, useEffect,
 } from 'react';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
-import ComLayoutHead from '../../components/layout/head';
-import ComLine from '../../components/line';
-import ComFormLabel from '../../components/form/label';
-import ComFormButton from '../../components/form/button';
-import showComAlert from '../../components/modal/alert';
+import ComLayoutHead from '../../../components/layout/head';
+import ComLine from '../../../components/line';
+import ComFormLabel from '../../../components/form/label';
+import ComFormButton from '../../../components/form/button';
+import showComAlert from '../../../components/modal/alert';
 
 const MyChangePassScreen: FC = () => {
   const route = useRoute<RouteProp<{bindAccount: { state: 'login'|'pay' }|undefined}, 'bindAccount'>>();

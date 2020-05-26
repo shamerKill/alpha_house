@@ -119,7 +119,7 @@ const MyOrderInfo: FC = () => {
               gray={item.id !== orderType}
               key={item.id}
               title={item.name}
-              style={{
+              containerStyle={{
                 width: screenWith * 0.3,
                 marginTop: 5,
                 marginBottom: 5,

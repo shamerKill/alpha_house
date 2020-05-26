@@ -1,10 +1,10 @@
 // 充值记录
 import React, { FC, useState, useEffect } from 'react';
 import { ListItem } from 'react-native-elements';
-import ComLayoutHead from '../../components/layout/head';
+import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, themeGray, themeBlack, themeRed,
-} from '../../config/theme';
+} from '../../../config/theme';
 
 const MyWithdrawLogScreen: FC = () => {
   const statusArr = ['审核中', '已通过', '已驳回'];

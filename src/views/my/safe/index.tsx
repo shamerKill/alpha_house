@@ -1,8 +1,8 @@
 import React, { FC, useState, useEffect } from 'react';
 import { ListItem } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
-import ComLayoutHead from '../../components/layout/head';
-import ComLine from '../../components/line';
+import ComLayoutHead from '../../../components/layout/head';
+import ComLine from '../../../components/line';
 
 const MySafeScreen: FC = () => {
   const navigation = useNavigation();

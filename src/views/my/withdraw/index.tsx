@@ -5,13 +5,13 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { Image } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
-import ComLayoutHead from '../../components/layout/head';
-import { defaultThemeColor, themeWhite, themeGray } from '../../config/theme';
-import showSelector from '../../components/modal/selector';
-import { ComInputForm } from '../../components/form/input';
-import { showScan } from '../../components/scan';
-import showComAlert from '../../components/modal/alert';
-import ComFormButton from '../../components/form/button';
+import ComLayoutHead from '../../../components/layout/head';
+import { defaultThemeColor, themeWhite, themeGray } from '../../../config/theme';
+import showSelector from '../../../components/modal/selector';
+import { ComInputForm } from '../../../components/form/input';
+import { showScan } from '../../../components/scan';
+import showComAlert from '../../../components/modal/alert';
+import ComFormButton from '../../../components/form/button';
 
 const MyWithdrawScreen: FC = () => {
   const navigation = useNavigation();
@@ -25,9 +25,9 @@ const MyWithdrawScreen: FC = () => {
   const [coinName, setCoinName] = useState('');
   const [coinIcon, setCoinIcon] = useState<ImageSourcePropType>(0);
   const [coinList] = useState<{name: string; icon: ImageSourcePropType}[]>([
-    { name: 'BTC', icon: require('../../assets/images/coin/BTC.png') },
-    { name: 'USDT', icon: require('../../assets/images/coin/BTC.png') },
-    { name: 'ETH', icon: require('../../assets/images/coin/BTC.png') },
+    { name: 'BTC', icon: require('../../../assets/images/coin/BTC.png') },
+    { name: 'USDT', icon: require('../../../assets/images/coin/BTC.png') },
+    { name: 'ETH', icon: require('../../../assets/images/coin/BTC.png') },
   ]);
   // 输入内容
   const [address, setAddress] = useState('');
@@ -126,7 +126,7 @@ const MyWithdrawScreen: FC = () => {
           <StaticImage
             resizeMode="contain"
             style={{ width: 20, height: 20 }}
-            source={require('../../assets/images/icons/list_more.png')} />
+            source={require('../../../assets/images/icons/list_more.png')} />
         </LinearGradient>
       </TouchableNativeFeedback>
       {/* 提现表单 */}
@@ -146,7 +146,7 @@ const MyWithdrawScreen: FC = () => {
               <StaticImage
                 resizeMode="contain"
                 style={{ width: 20, height: 20 }}
-                source={require('../../assets/images/icons/scan.png')} />
+                source={require('../../../assets/images/icons/scan.png')} />
             </TouchableNativeFeedback>
           )}
           noError />

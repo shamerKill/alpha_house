@@ -18,11 +18,11 @@ const MyScreen: FC = () => {
   const userMoneyBtns = [
     { icon: require('../../assets/images/icons/user_center_add.png'), name: '充值', link: 'recharge' },
     { icon: require('../../assets/images/icons/user_center_cut.png'), name: '提币', link: 'withdraw' },
-    { icon: require('../../assets/images/icons/user_center_change.png'), name: '转账', link: 'realname' },
+    { icon: require('../../assets/images/icons/user_center_change.png'), name: '转账', link: 'Home' },
   ];
   // 主要显示按钮
   const centerShowBtns = [
-    { icon: require('../../assets/images/icons/user_center_center.png'), name: '安全中心', link: 'safePage' },
+    { icon: require('../../assets/images/icons/user_center_center.png'), name: '安全中心', link: 'safe' },
     { icon: require('../../assets/images/icons/user_center_order.png'), name: '账单明细', link: 'orderInfo' },
     { icon: require('../../assets/images/icons/user_center_friend.png'), name: '我的邀请', link: 'recommend' },
   ];
@@ -307,7 +307,7 @@ const MyScreen: FC = () => {
       </View>
 
       {/* 跟单按钮 */}
-      <TouchableNativeFeedback onPress={() => addEvent.goTo('Home')}>
+      <TouchableNativeFeedback onPress={() => addEvent.goTo('followList')}>
         <StaticImage
           source={require('../../assets/images/pic/user_center_with.png')}
           resizeMode="contain"

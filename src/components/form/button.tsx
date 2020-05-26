@@ -25,7 +25,13 @@ const ComFormButton: FC<{
       disabled={disabled}
       onPress={onPress}
       ViewComponent={LinearGradient}
-      containerStyle={containerStyle}
+      containerStyle={[
+        {
+          width: '80%',
+          alignSelf: 'center',
+        },
+        containerStyle,
+      ]}
       disabledTitleStyle={{
         color: gray ? themeBlack : themeWhite,
       }}
@@ -36,8 +42,6 @@ const ComFormButton: FC<{
       }}
       buttonStyle={[{
         height: 40,
-        width: '80%',
-        alignSelf: 'center',
       }, style]}
       titleStyle={[
         {

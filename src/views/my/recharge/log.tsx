@@ -1,8 +1,8 @@
 // 充值记录
 import React, { FC, useState, useEffect } from 'react';
 import { ListItem } from 'react-native-elements';
-import ComLayoutHead from '../../components/layout/head';
-import { themeWhite, themeGray, themeBlack } from '../../config/theme';
+import ComLayoutHead from '../../../components/layout/head';
+import { themeWhite, themeGray, themeBlack } from '../../../config/theme';
 
 const MyReachargeLogScreen: FC = () => {
   const [logs, setLogs] = useState<{type: string; num: string; time: string;}[]>([]);

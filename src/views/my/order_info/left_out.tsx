@@ -89,12 +89,13 @@ const ComMyOrderInfoLeftOut: FC<TypeComMyOrderInfoLeftOutProp> = ({ close }) => 
                           gray={btn.id !== selectId[index]}
                           onPress={() => addEvent.changeSelect(btn.name, btn.id, index)}
                           containerStyle={{
-                            width: '33%',
+                            width: '33.33%',
                             marginTop: 5,
                             marginBottom: 5,
                           }}
                           style={{
                             height: 40,
+                            width: '90%',
                           }}
                           fontStyle={{
                             fontSize: 12,

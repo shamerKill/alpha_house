@@ -8,9 +8,9 @@ import { Image } from 'react-native-elements';
 import LinearGradient from 'react-native-linear-gradient';
 import Clipboard from '@react-native-community/clipboard';
 import { showMessage } from 'react-native-flash-message';
-import ComLayoutHead from '../../components/layout/head';
-import { defaultThemeColor, themeWhite, themeGray } from '../../config/theme';
-import showSelector from '../../components/modal/selector';
+import ComLayoutHead from '../../../components/layout/head';
+import { defaultThemeColor, themeWhite, themeGray } from '../../../config/theme';
+import showSelector from '../../../components/modal/selector';
 
 const MyRechargeScreen: FC = () => {
   const navigation = useNavigation();
@@ -24,9 +24,9 @@ const MyRechargeScreen: FC = () => {
   const [qrcode, setQrcode] = useState<ImageSourcePropType>(0);
   const [address, setAddress] = useState('');
   const [coinList] = useState<{name: string; icon: ImageSourcePropType}[]>([
-    { name: 'BTC', icon: require('../../assets/images/coin/BTC.png') },
-    { name: 'USDT', icon: require('../../assets/images/coin/BTC.png') },
-    { name: 'ETH', icon: require('../../assets/images/coin/BTC.png') },
+    { name: 'BTC', icon: require('../../../assets/images/coin/BTC.png') },
+    { name: 'USDT', icon: require('../../../assets/images/coin/BTC.png') },
+    { name: 'ETH', icon: require('../../../assets/images/coin/BTC.png') },
   ]);
   // 复制地址
   const copyAddress = (value: string) => {
@@ -62,7 +62,7 @@ const MyRechargeScreen: FC = () => {
   useEffect(() => {
     setCoinName(coinList[0].name);
     setCoinIcon(coinList[0].icon);
-    setQrcode(require('../../assets/images/memory/qrcode.png'));
+    setQrcode(require('../../../assets/images/memory/qrcode.png'));
     setAddress('12345678798vdfshvb5dfz21v51ddfsfsadfasldkfjasdf');
   }, []);
   return (
@@ -94,7 +94,7 @@ const MyRechargeScreen: FC = () => {
           <StaticImage
             resizeMode="contain"
             style={{ width: 20, height: 20 }}
-            source={require('../../assets/images/icons/list_more.png')} />
+            source={require('../../../assets/images/icons/list_more.png')} />
         </LinearGradient>
       </TouchableNativeFeedback>
 

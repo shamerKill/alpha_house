@@ -1,12 +1,12 @@
 import React, { FC, useState } from 'react';
 import { Text } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
-import ComLayoutHead from '../../components/layout/head';
-import ComLine from '../../components/line';
-import ComFormLabel from '../../components/form/label';
-import showComAlert from '../../components/modal/alert';
-import { defaultThemeColor } from '../../config/theme';
-import ComFormButton from '../../components/form/button';
+import ComLayoutHead from '../../../components/layout/head';
+import ComLine from '../../../components/line';
+import ComFormLabel from '../../../components/form/label';
+import showComAlert from '../../../components/modal/alert';
+import { defaultThemeColor } from '../../../config/theme';
+import ComFormButton from '../../../components/form/button';
 
 const MyBindAccountScreen: FC = () => {
   const route = useRoute<RouteProp<{bindAccount: { state: 'phone'|'email' }|undefined}, 'bindAccount'>>();

@@ -3,15 +3,17 @@ import TypeStackValue from '../stackType';
 import ComIconBotton from '../../components/icon/bottom';
 import MyScreen from '../../views/my';
 import MyRechargeScreen from '../../views/my/recharge';
-import MyReachargeLogScreen from '../../views/my/recharge_log';
+import MyReachargeLogScreen from '../../views/my/recharge/log';
 import MyWithdrawScreen from '../../views/my/withdraw';
-import MyWithdrawLogScreen from '../../views/my/withdraw_log';
-import MySafeScreen from '../../views/my/safe_page';
-import MyBindAccountScreen from '../../views/my/bind_account';
-import MyChangePassScreen from '../../views/my/change_pass';
+import MyWithdrawLogScreen from '../../views/my/withdraw/log';
+import MySafeScreen from '../../views/my/safe';
+import MyBindAccountScreen from '../../views/my/safe/bind_account';
+import MyChangePassScreen from '../../views/my/safe/change_pass';
 import MyOrderInfo from '../../views/my/order_info';
 import MyRecommendScreen from '../../views/my/recommend';
 import MyRealnameScreen from '../../views/my/realname';
+import MyFollowListScreen from '../../views/my/follow/list';
+import MyFollowUserDetails from '../../views/my/follow/user_details';
 
 const MyRoutes: TypeStackValue = [
   {
@@ -44,7 +46,7 @@ const MyRoutes: TypeStackValue = [
         component: MyWithdrawLogScreen,
       },
       {
-        name: 'safePage', // 安全中心
+        name: 'safe', // 安全中心
         component: MySafeScreen,
       },
       {
@@ -66,6 +68,14 @@ const MyRoutes: TypeStackValue = [
       {
         name: 'realname', // 我的邀请
         component: MyRealnameScreen,
+      },
+      {
+        name: 'followList', // 跟单列表
+        component: MyFollowListScreen,
+      },
+      {
+        name: 'followUserDetails', // 跟单导师详情
+        component: MyFollowUserDetails,
       },
     ],
   },

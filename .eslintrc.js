@@ -21,6 +21,7 @@ module.exports = {
     'max-len': ['error', 180],
     'react/no-array-index-key': 0,
     'no-plusplus': 0,
+    '@typescript-eslint/no-use-before-define': 0,
   },
   parserOptions: {
     project: './tsconfig.json',

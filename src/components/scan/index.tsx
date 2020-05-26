@@ -1,8 +1,9 @@
 // 扫码
 import React, { FC, useState, useEffect } from 'react';
-import { View, StatusBar, Text, BackHandler, Animated, Easing } from 'react-native';
+import { View, StatusBar, Text, BackHandler, Animated, Easing, Image } from 'react-native';
 import { RNCamera, RNCameraProps } from 'react-native-camera';
 import { defaultThemeColor } from '../../config/theme';
+import { TouchableNativeFeedback } from 'react-native-gesture-handler';
 
 let changeViewScan: React.Dispatch<React.SetStateAction<boolean>> | null = null;
 let timer = 0;
@@ -76,8 +77,27 @@ const ComScanView: FC = () => {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: 'transparent'
+          backgroundColor: 'transparent',
+          position: 'relative',
         }}>
+          <View
+            style={{
+              position: 'absolute',
+              top: 40,
+              left: 30,
+              width: 30,
+              height: 30,
+            }}>
+            <TouchableNativeFeedback onPress={() => setViewScan(false)}>
+              <Image
+                source={require('../../assets/images/icons/page_close.png')}
+                resizeMode="stretch"
+                style={{
+                  width: 30,
+                  height: 30,
+                }} />
+            </TouchableNativeFeedback>
+          </View>
           <View style={{
             height: 250,
             width: 250,
