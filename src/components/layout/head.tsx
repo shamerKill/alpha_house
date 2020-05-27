@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   View, StyleProp, ViewStyle, TextProps, TouchableNativeFeedback, Image, ScrollViewProps,
 } from 'react-native';
@@ -9,6 +9,7 @@ import {
   themeBlack, themeWhite, defaultThemeBgColor,
 } from '../../config/theme';
 import ComLine from '../line';
+import { modalOutBg } from '../modal/outBg';
 
 interface InLayoutHeadProps {
   title?: string;
@@ -41,8 +42,35 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
   const navigation = useNavigation();
   // 返回事件
   const goBackPage = () => navigation.goBack();
+  const containerStyle = () => {
+    const resultStyle: StyleProp<ViewStyle> = {
+      backgroundColor: themeWhite,
+      borderBottomColor: themeWhite,
+      height: 90,
+    };
+    if (close) {
+      resultStyle.height = 0;
+      resultStyle.backgroundColor = themeWhite;
+    }
+    if (headBg) {
+      resultStyle.backgroundColor = headBg;
+    }
+    if (border) {
+      resultStyle.borderBottomColor = defaultThemeBgColor;
+      resultStyle.borderBottomWidth = 1;
+    }
+    return resultStyle;
+  };
+  useEffect(() => {
+    // 更改页面的时候隐藏弹窗
+    const addListenerEvent = () => {
+      modalOutBg.outBgsetShow(false);
+    };
+    navigation.addListener('state', addListenerEvent);
+    return () => navigation.removeListener('state', addListenerEvent);
+  }, []);
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: themeWhite }}>
       <Header
         // 标题
         rightComponent={rightComponent}
@@ -81,24 +109,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
           }
         }
         // 头部盒子样式
-        containerStyle={(() => {
-          const resultStyle: StyleProp<ViewStyle> = {
-            backgroundColor: themeWhite,
-            borderBottomColor: themeWhite,
-          };
-          if (close) {
-            resultStyle.height = 0;
-            resultStyle.backgroundColor = themeWhite;
-          }
-          if (headBg) {
-            resultStyle.backgroundColor = headBg;
-          }
-          if (border) {
-            resultStyle.borderBottomColor = defaultThemeBgColor;
-            resultStyle.borderBottomWidth = 1;
-          }
-          return resultStyle;
-        })()} />
+        containerStyle={containerStyle()} />
       {
         line
           ? <ComLine />

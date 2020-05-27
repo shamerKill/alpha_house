@@ -16,11 +16,11 @@ type TypeShowSelector = {
 
 const closeSelector = () => {
   modalOutBg.outBgsetShow(false);
-  modalOutBg.outBgsetChildren(undefined);
+  modalOutBg.outBgsetChildren(null);
 };
 
 
-const ComModalSelector: (data: TypeShowSelector) => FC<TypeShowSelector> = ({ data, selected, onPress }) => () => {
+const ComModalSelector: FC<TypeShowSelector> = ({ data, selected, onPress }) => {
   const bottomHeight = isIphoneX() ? 30 : 0;
   return (
     <View style={{
@@ -66,7 +66,7 @@ const ComModalSelector: (data: TypeShowSelector) => FC<TypeShowSelector> = ({ da
 };
 
 const showSelector = (data: TypeShowSelector) => {
-  modalOutBg.outBgsetChildren(ComModalSelector(data));
+  modalOutBg.outBgsetChildren(<ComModalSelector {...data} />);
   modalOutBg.outBgsetShow(true);
   return closeSelector;
 };

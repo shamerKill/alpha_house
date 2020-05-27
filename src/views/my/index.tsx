@@ -28,7 +28,7 @@ const MyScreen: FC = () => {
   ];
   // 更多链接
   const moreList = [
-    { name: '跟单管理', link: 'Home' },
+    { name: '跟单管理', link: 'followManageList' },
     { name: '在线客服', link: 'Home' },
     { name: '建议反馈', link: 'Home' },
   ];

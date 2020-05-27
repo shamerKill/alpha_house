@@ -14,6 +14,9 @@ import MyRecommendScreen from '../../views/my/recommend';
 import MyRealnameScreen from '../../views/my/realname';
 import MyFollowListScreen from '../../views/my/follow/list';
 import MyFollowUserDetails from '../../views/my/follow/user_details';
+import MyFollowModeScreen from '../../views/my/follow/mode';
+import MyFollowManageListScreen from '../../views/my/follow/manage_list';
+import MyFollowEditScreen from '../../views/my/follow/follow_edit';
 
 const MyRoutes: TypeStackValue = [
   {
@@ -76,6 +79,18 @@ const MyRoutes: TypeStackValue = [
       {
         name: 'followUserDetails', // 跟单导师详情
         component: MyFollowUserDetails,
+      },
+      {
+        name: 'followMode', // 设置跟单方式
+        component: MyFollowModeScreen,
+      },
+      {
+        name: 'followManageList', // 跟单管理
+        component: MyFollowManageListScreen,
+      },
+      {
+        name: 'followEdit', // 编辑跟单
+        component: MyFollowEditScreen,
       },
     ],
   },

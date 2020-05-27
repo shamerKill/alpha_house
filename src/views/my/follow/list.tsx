@@ -14,7 +14,7 @@ interface InFollowLi {
   name: string; // 名称
   totalProfit: string; // 累计收益率
   lastThreeWeek: string; // 近3周收益
-  totalPerson: string; // 总人数
+  totalPerson: number; // 总人数
   id: number|string; // 用户ID
 }
 
@@ -33,41 +33,41 @@ const MyFollowListScreen: FC = () => {
       {
         head: require('../../../assets/images/memory/user_head.png'),
         name: '你好',
-        totalProfit: '4909.46',
-        lastThreeWeek: '52.36',
-        totalPerson: '321',
+        totalProfit: '4909.46%',
+        lastThreeWeek: '52.36%',
+        totalPerson: 321,
         id: '1',
       },
       {
         head: require('../../../assets/images/memory/user_head.png'),
         name: '你好',
-        totalProfit: '4909.46',
-        lastThreeWeek: '52.36',
-        totalPerson: '321',
+        totalProfit: '4909.46%',
+        lastThreeWeek: '52.36%',
+        totalPerson: 321,
         id: '2',
       },
       {
         head: require('../../../assets/images/memory/user_head.png'),
         name: '你好',
-        totalProfit: '4909.46',
-        lastThreeWeek: '52.36',
-        totalPerson: '321',
+        totalProfit: '4909.46%',
+        lastThreeWeek: '52.36%',
+        totalPerson: 321,
         id: '3',
       },
       {
         head: require('../../../assets/images/memory/user_head.png'),
         name: '你好',
-        totalProfit: '4909.46',
-        lastThreeWeek: '52.36',
-        totalPerson: '321',
+        totalProfit: '4909.46%',
+        lastThreeWeek: '52.36%',
+        totalPerson: 321,
         id: '5',
       },
       {
         head: require('../../../assets/images/memory/user_head.png'),
         name: '你好',
-        totalProfit: '4909.46',
-        lastThreeWeek: '52.36',
-        totalPerson: '321',
+        totalProfit: '4909.46%',
+        lastThreeWeek: '52.36%',
+        totalPerson: 321,
         id: '7',
       },
     ]);
@@ -124,11 +124,11 @@ const FollowLi: FC<InFollowLi&{withPeopleFunc: (id: InFollowLi['id']) => void;}>
       {/* 数据 */}
       <View style={style.valueView}>
         <View style={style.valueTextView}>
-          <Text style={[style.valueText, style.valueTextLeft]}>{totalProfit}%</Text>
+          <Text style={[style.valueText, style.valueTextLeft]}>{totalProfit}</Text>
           <Text style={[style.valueTextDesc]}>累计收益率</Text>
         </View>
         <View style={style.valueTextView}>
-          <Text style={[style.valueText, style.valueTextCenter]}>{lastThreeWeek}%</Text>
+          <Text style={[style.valueText, style.valueTextCenter]}>{lastThreeWeek}</Text>
           <Text style={[style.valueTextDesc, style.valueTextCenter]}>近3周交易胜率</Text>
         </View>
         <View style={style.valueTextView}>
