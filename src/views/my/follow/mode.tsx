@@ -89,7 +89,7 @@ const MyFollowModeScreen: FC = () => {
     submit: () => {
       const close = showComAlert({
         title: '跟单成功',
-        desc: '跟单成成，请前往跟单管理页面查看详情',
+        desc: '跟单成功，请前往跟单管理页面查看详情',
         success: {
           text: '查看详情',
           onPress: () => {
