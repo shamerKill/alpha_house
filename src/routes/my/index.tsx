@@ -17,6 +17,7 @@ import MyFollowUserDetails from '../../views/my/follow/user_details';
 import MyFollowModeScreen from '../../views/my/follow/mode';
 import MyFollowManageListScreen from '../../views/my/follow/manage_list';
 import MyFollowEditScreen from '../../views/my/follow/follow_edit';
+import MyChatScreen from '../../views/my/chat';
 
 const MyRoutes: TypeStackValue = [
   {
@@ -91,6 +92,10 @@ const MyRoutes: TypeStackValue = [
       {
         name: 'followEdit', // 编辑跟单
         component: MyFollowEditScreen,
+      },
+      {
+        name: 'chat', // 编辑跟单
+        component: MyChatScreen,
       },
     ],
   },

@@ -2,7 +2,7 @@ import React, { FC, useState, useEffect, useRef } from 'react';
 import {
   TouchableNativeFeedback, Text, StyleSheet, View, Image as StaticImage, Animated,
 } from 'react-native';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { TextInput } from 'react-native-gesture-handler';
 import ComLayoutHead from '../../../components/layout/head';
 import {
@@ -16,6 +16,7 @@ import ComFormCheckRadius from '../../../components/form/checkRadius';
 
 const MyFollowEditScreen: FC = () => {
   const { params: { id: orderId } } = useRoute<RouteProp<{followEdit: { id: string|number }}, 'followEdit'>>();
+  const navigation = useNavigation();
   // console.log(orderId);
   const descArr = (min: number, max: number) => ([
     '关闭后不再跟随交易员下单。已跟随开仓的订单，保持同步平仓，不受影响。',
@@ -38,6 +39,25 @@ const MyFollowEditScreen: FC = () => {
   const [dayMoney, setDayMoney] = useState('');
 
   const addEvent = {
+    // 取消跟随
+    closeWith: () => {
+      const close = showComAlert({
+        title: '取消跟随',
+        desc: '停止跟随后将不再跟随交易员下单，交易员将不再出现在跟随列表中，已跟随开仓的订单，将保持同步平仓。',
+        success: {
+          text: '确定',
+          onPress: () => {
+            close();
+            navigation.goBack();
+          },
+        },
+        close: {
+          text: '取消',
+          onPress: () => close(),
+        }
+      });
+    },
+    // 设置数量
     setValue: (setType: React.Dispatch<React.SetStateAction<string>>, value: string, type?: 'cut'|'add') => {
       setType(() => {
         const resultString = value.match(/\d/g)?.join('');
@@ -55,6 +75,7 @@ const MyFollowEditScreen: FC = () => {
       setWithChecked(value);
       ComFormCheckRadius.prototype.setChecked(true);
     },
+    // 提交验证
     verfiy: () => {
       let valueMessage =  '';
       if (parseFloat(dayMoney) < parseFloat(orderMoney)) valueMessage = '单日跟随本金小于单次跟单金额';
@@ -102,7 +123,7 @@ const MyFollowEditScreen: FC = () => {
     <ComLayoutHead
       title="编辑订单"
       rightComponent={(
-        <TouchableNativeFeedback>
+        <TouchableNativeFeedback onPress={addEvent.closeWith}>
           <Text style={style.titleRight}>取消跟随</Text>
         </TouchableNativeFeedback>
       )}>
