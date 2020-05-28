@@ -1,0 +1,251 @@
+import React, {
+  FC, useState, useEffect, useRef,
+} from 'react';
+import {
+  View, StyleSheet, TouchableNativeFeedback, Text, Image as StaticImage, ImageSourcePropType,
+} from 'react-native';
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { TextInput } from 'react-native-gesture-handler';
+import { Image, CheckBox } from 'react-native-elements';
+import { showMessage } from 'react-native-flash-message';
+import ComLayoutHead from '../../../components/layout/head';
+import { setListArr } from '.';
+import { defaultThemeColor, themeWhite } from '../../../config/theme';
+import showComAlert from '../../../components/modal/alert';
+
+const MySettingValueScreen: FC = () => {
+  const { params: { type: settingState = 4 } } = useRoute<RouteProp<{settingValue: { type?: number }}, 'settingValue'>>();
+  const navigation = useNavigation();
+
+  // 默认值，判断是否进行了更改
+  const defaultValue = useRef<string|number|null>(null);
+  // 头像图片
+  const [imagesArr, setImagesArr] = useState<ImageSourcePropType[]>([]);
+  const [selectImage, setSelectImage] = useState(0);
+  // 昵称/个人简介文字
+  const [value, setValue] = useState('');
+  // 地址
+  const [siteArr, setSiteArr] = useState<string[]>([]);
+  const [selectSite, setSelecSite] = useState(0);
+  // 语言版本
+  const [languageArr, setLanguageArr] = useState<string[]>([]);
+  const [selectLanguage, setSelectLanguage] = useState(0);
+
+
+  const addEvent = {
+    save: () => {
+      console.log(defaultValue, [selectImage, value, value, selectSite, selectLanguage][settingState]);
+      if (defaultValue.current === [selectImage, value, value, selectSite, selectLanguage][settingState]) {
+        showMessage({
+          message: '未更改',
+          description: `${setListArr[settingState]}未进行修改无法进行提交`,
+          type: 'warning',
+        });
+        return;
+      }
+      const close = showComAlert({
+        title: '提交确认',
+        desc: `是否提交${setListArr[settingState]}修改`,
+        success: {
+          text: '提交',
+          onPress: () => {
+            close();
+            navigation.goBack();
+          },
+        },
+        close: {
+          text: '考虑一下',
+          onPress: () => {
+            close();
+          },
+        },
+      });
+    },
+    closeText: () => setValue(''),
+  };
+
+  useEffect(() => {
+    const headImage = require('../../../assets/images/memory/user_head.png');
+    switch (settingState) {
+      case 0:
+        setImagesArr([headImage, headImage, headImage, headImage, headImage, headImage]);
+        setSelectImage(0);
+        defaultValue.current = 0;
+        break;
+      case 1:
+        setValue('这是昵称');
+        defaultValue.current = '这是昵称';
+        break;
+      case 2:
+        setValue('这是我的个人简介，你猜猜啊');
+        defaultValue.current = '这是我的个人简介，你猜猜啊';
+        break;
+      case 3:
+        setSiteArr(['中国', '意大利', '韩国', '美国', '泰国', '新加坡']);
+        setSelecSite(0);
+        defaultValue.current = 0;
+        break;
+      case 4:
+        setLanguageArr(['简体中文', '繁体中文', '英文']);
+        setSelectLanguage(0);
+        defaultValue.current = 0;
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  return (
+    <ComLayoutHead
+      title={`${setListArr[settingState]}修改`}
+      rightComponent={(
+        <TouchableNativeFeedback onPress={addEvent.save}>
+          <Text style={style.titleRight}>保存</Text>
+        </TouchableNativeFeedback>
+      )}>
+      {
+        // 头像设置
+        settingState === 0
+          ? (
+            <View style={style.imageBox}>
+              {
+                imagesArr.map((item, index) => (
+                  <View style={style.imageBoxIn} key={index + 1}>
+                    <TouchableNativeFeedback
+                      background={TouchableNativeFeedback.SelectableBackgroundBorderless()}
+                      onPress={() => setSelectImage(index)}>
+                      <View>
+                        <Image
+                          resizeMode="stretch"
+                          style={style.imageBoxImage}
+                          containerStyle={[
+                            style.imageBoxImageBorder,
+                            selectImage === index && {
+                              borderWidth: 5,
+                              margin: 0,
+                              opacity: 1,
+                            },
+                          ]}
+                          source={item} />
+                      </View>
+                    </TouchableNativeFeedback>
+                  </View>
+                ))
+              }
+            </View>
+          )
+          : null
+      }
+      {
+        // 昵称/个人简介设置
+        (settingState === 1 || settingState === 2)
+          ? (
+            <View style={[
+              style.textBox,
+              settingState === 2 && style.areaTextBox,
+            ]}>
+              <TextInput
+                style={[
+                  style.textBoxText,
+                  settingState === 2 && style.areaTextBoxText,
+                ]}
+                placeholder={`请输入您的${setListArr[settingState]}`}
+                value={value}
+                multiline
+                onChange={e => setValue(e.nativeEvent.text)} />
+              <TouchableNativeFeedback onPress={() => addEvent.closeText()}>
+                <StaticImage
+                  resizeMode="contain"
+                  style={style.textBoxClose}
+                  source={require('../../../assets/images/icons/close.png')} />
+              </TouchableNativeFeedback>
+            </View>
+          )
+          : null
+      }
+      {
+        (settingState === 3 || settingState === 4)
+          ? (
+            <View>
+              {
+                [siteArr, languageArr][settingState - 3].map((item, index) => (
+                  <CheckBox
+                    key={index}
+                    center
+                    iconRight
+                    title={item}
+                    checkedIcon="dot-circle-o"
+                    uncheckedIcon="circle-o"
+                    checkedColor={defaultThemeColor}
+                    wrapperStyle={{
+                      justifyContent: 'space-between',
+                    }}
+                    onPress={() => [setSelecSite, setSelectLanguage][settingState - 3](index)}
+                    checked={index === [selectSite, selectLanguage][settingState - 3]} />
+                ))
+              }
+            </View>
+          )
+          : null
+      }
+    </ComLayoutHead>
+  );
+};
+
+const style = StyleSheet.create({
+  titleRight: {
+    color: defaultThemeColor,
+    textAlign: 'right',
+    lineHeight: 50,
+  },
+  imageBox: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    padding: 10,
+  },
+  imageBoxIn: {
+    width: '50%',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  imageBoxImage: {
+    width: 80,
+    height: 80,
+    padding: 4,
+  },
+  imageBoxImageBorder: {
+    borderColor: defaultThemeColor,
+    borderWidth: 1,
+    borderRadius: 80,
+    margin: 4,
+    opacity: 0.7,
+  },
+  textBox: {
+    backgroundColor: themeWhite,
+    marginTop: 10,
+    paddingLeft: 10,
+    paddingRight: 10,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  areaTextBox: {
+    height: 80,
+  },
+  textBoxText: {
+    flex: 1,
+    paddingRight: 10,
+    paddingTop: 15,
+    paddingBottom: 15,
+  },
+  areaTextBoxText: {
+    alignSelf: 'flex-start',
+  },
+  textBoxClose: {
+    width: 20,
+    height: 20,
+    padding: 10,
+  },
+});
+
+export default MySettingValueScreen;

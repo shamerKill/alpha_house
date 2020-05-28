@@ -30,7 +30,7 @@ const MyScreen: FC = () => {
   const moreList = [
     { name: '跟单管理', link: 'followManageList' },
     { name: '在线客服', link: 'chat' },
-    { name: '建议反馈', link: 'Home' },
+    { name: '建议反馈', link: 'feedback' },
   ];
   // 事件
   const addEvent: {
@@ -145,7 +145,7 @@ const MyScreen: FC = () => {
           </TouchableNativeFeedback>
         </View>
         {/* 设置 */}
-        <TouchableNativeFeedback onPress={() => addEvent.goTo('Home')}>
+        <TouchableNativeFeedback onPress={() => addEvent.goTo('settings')}>
           <View style={{
             width: 40,
             height: 40,

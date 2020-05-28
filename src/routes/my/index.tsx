@@ -18,6 +18,9 @@ import MyFollowModeScreen from '../../views/my/follow/mode';
 import MyFollowManageListScreen from '../../views/my/follow/manage_list';
 import MyFollowEditScreen from '../../views/my/follow/follow_edit';
 import MyChatScreen from '../../views/my/chat';
+import MyFeedBack from '../../views/my/feedback';
+import MySettingScreen from '../../views/my/settings';
+import MySettingValueScreen from '../../views/my/settings/set_value';
 
 const MyRoutes: TypeStackValue = [
   {
@@ -96,6 +99,18 @@ const MyRoutes: TypeStackValue = [
       {
         name: 'chat', // 编辑跟单
         component: MyChatScreen,
+      },
+      {
+        name: 'feedback', // 建议反馈
+        component: MyFeedBack,
+      },
+      {
+        name: 'settings', // 个人设置
+        component: MySettingScreen,
+      },
+      {
+        name: 'settingValue', // 设置单项
+        component: MySettingValueScreen,
       },
     ],
   },
