@@ -8,6 +8,7 @@ import ComFormButton from '../../../components/form/button';
 import { themeWhite, defaultThemeBgColor } from '../../../config/theme';
 import ComLine from '../../../components/line';
 import { useGoToWithLogin } from '../../../tools/routeTools';
+import showComAlert from '../../../components/modal/alert';
 
 export const setListArr = [
   '头像', '昵称', '个人简介', '所在地', '语言版本',
@@ -34,6 +35,27 @@ const MySettingScreen: FC = () => {
     title: item,
     ...mapArrAdd[index],
   }));
+
+  const addEvent = {
+    signOut: () => {
+      const close = showComAlert({
+        title: '退出确认',
+        desc: '是否需要退出当前账号？',
+        success: {
+          text: '退出登录',
+          onPress: () => {
+            console.log('退出登录');
+          },
+        },
+        close: {
+          text: '保持登录',
+          onPress: () => {
+            close();
+          },
+        },
+      });
+    },
+  };
 
   useEffect(() => {
     setHead(require('../../../assets/images/memory/user_head.png'));
@@ -81,6 +103,7 @@ const MySettingScreen: FC = () => {
       </View>
       <ComLine />
       <ComFormButton
+        onPress={() => addEvent.signOut()}
         style={style.submitButton}
         title="退出登录" />
     </ComLayoutHead>

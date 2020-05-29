@@ -25,7 +25,7 @@ const Statc = createStackNavigator();
 const TabScreen: FC = () => {
   return (
     <Tab.Navigator
-      initialRouteName="My"
+      initialRouteName="Home"
       tabBarOptions={{
         activeTintColor: defaultThemeColor,
         inactiveTintColor: themeGray,
