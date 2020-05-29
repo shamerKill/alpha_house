@@ -21,6 +21,7 @@ import MyChatScreen from '../../views/my/chat';
 import MyFeedBack from '../../views/my/feedback';
 import MySettingScreen from '../../views/my/settings';
 import MySettingValueScreen from '../../views/my/settings/set_value';
+import CreateRoutes from './create';
 
 const MyRoutes: TypeStackValue = [
   {
@@ -97,7 +98,7 @@ const MyRoutes: TypeStackValue = [
         component: MyFollowEditScreen,
       },
       {
-        name: 'chat', // 编辑跟单
+        name: 'chat', // 聊天
         component: MyChatScreen,
       },
       {
@@ -112,6 +113,8 @@ const MyRoutes: TypeStackValue = [
         name: 'settingValue', // 设置单项
         component: MySettingValueScreen,
       },
+      // 账户登录页面
+      ...CreateRoutes,
     ],
   },
 ];

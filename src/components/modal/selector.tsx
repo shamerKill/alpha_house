@@ -9,7 +9,7 @@ import isIphoneX from '../../tools/isPhoneX';
 import { defaultThemeColor, themeBlack } from '../../config/theme';
 
 type TypeShowSelector = {
-  data: string[],
+  data: (string|{data: string; before?: string; after?: string;})[],
   selected: string,
   onPress: (value: string) => void,
 };
@@ -22,6 +22,14 @@ const closeSelector = () => {
 
 const ComModalSelector: FC<TypeShowSelector> = ({ data, selected, onPress }) => {
   const bottomHeight = isIphoneX() ? 30 : 0;
+  const getData = data.map(item => {
+    if (typeof item === 'string') return item;
+    return `${item.before || ''}${item.data}${item.after || ''}`;
+  });
+  const showColor: boolean[] = data.map(item => {
+    if (typeof item === 'string') return item === selected;
+    return item.data === selected;
+  });
   return (
     <View style={{
       position: 'absolute',
@@ -36,7 +44,7 @@ const ComModalSelector: FC<TypeShowSelector> = ({ data, selected, onPress }) => 
         maxHeight: 250,
       }}>
         {
-          data.map((item, index) => (
+          getData.map((item, index) => (
             <ListItem
               key={index}
               title={item}
@@ -44,7 +52,7 @@ const ComModalSelector: FC<TypeShowSelector> = ({ data, selected, onPress }) => 
               titleStyle={{
                 textAlign: 'center',
                 fontSize: 16,
-                color: item === selected ? defaultThemeColor : themeBlack,
+                color: showColor[index] ? defaultThemeColor : themeBlack,
               }}
               bottomDivider />
           ))

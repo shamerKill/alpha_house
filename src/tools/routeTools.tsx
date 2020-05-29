@@ -3,10 +3,10 @@ import { useNavigation, StackActions } from '@react-navigation/native';
 // 判断是否需要前往登录页面
 export const useGoToWithLogin = (
   verfiyFun?: () => boolean,
-  backName = 'HomeHelpList',
+  backName = 'Login',
 ) => {
   const navigation = useNavigation();
-  let isLogin = true;
+  let isLogin = false;
   if (verfiyFun) {
     isLogin = verfiyFun();
   }

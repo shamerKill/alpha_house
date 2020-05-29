@@ -5,15 +5,15 @@ import {
 import { Image, ListItem } from 'react-native-elements';
 import { showMessage } from 'react-native-flash-message';
 import Clipboard from '@react-native-community/clipboard';
-import { useNavigation } from '@react-navigation/native';
 import ComLayoutHead from '../../components/layout/head';
 import { themeGray } from '../../config/theme';
+import { useGoToWithLogin } from '../../tools/routeTools';
 
 
 const MyScreen: FC = () => {
   // 头部颜色
   const [statusBar, setStatusBar] = useState('#ccc9fe');
-  const navigation = useNavigation();
+  const goToWithLogin = useGoToWithLogin();
   // 个人资产按钮
   const userMoneyBtns = [
     { icon: require('../../assets/images/icons/user_center_add.png'), name: '充值', link: 'recharge' },
@@ -51,7 +51,7 @@ const MyScreen: FC = () => {
       });
     },
     goTo(link) {
-      navigation.navigate(link);
+      goToWithLogin(link);
     },
   };
   // 用户信息
