@@ -22,6 +22,7 @@ interface InLayoutHeadProps {
   animated?: true;
   onScroll?: ScrollViewProps['onScroll'],
   rightComponent?: HeaderSubComponent,
+  leftComponent?: HeaderSubComponent,
   line?: true;
 }
 
@@ -37,6 +38,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
   onScroll,
   animated,
   rightComponent,
+  leftComponent,
   line,
 }) => {
   const navigation = useNavigation();
@@ -86,6 +88,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
         // 左侧组件
         leftComponent={(() => {
           if (close) return undefined;
+          if (leftComponent) return leftComponent;
           return (
             <TouchableNativeFeedback onPress={goBackPage}>
               <View style={{

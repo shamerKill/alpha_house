@@ -1,7 +1,9 @@
 import React from 'react';
 import TypeStackValue from '../stackType';
-import HomeScreen from '../../views/home';
 import ComIconBotton from '../../components/icon/bottom';
+import MarketScreen from '../../views/market/index';
+import MarketSearchScreen from '../../views/market/search';
+import MarketEdit from '../../views/market/edit';
 
 const MarketRoutes: TypeStackValue = [
   {
@@ -15,8 +17,17 @@ const MarketRoutes: TypeStackValue = [
           : require('../../assets/images/icons/market_none.png')
       } />
     ),
-    component: HomeScreen,
-    screens: [],
+    component: MarketScreen,
+    screens: [
+      {
+        name: 'MarketSearch',
+        component: MarketSearchScreen,
+      },
+      {
+        name: 'MarketEdit',
+        component: MarketEdit,
+      },
+    ],
   },
 ];
 

@@ -6,7 +6,7 @@ export const useGoToWithLogin = (
   backName = 'Login',
 ) => {
   const navigation = useNavigation();
-  let isLogin = false;
+  let isLogin = true;
   if (verfiyFun) {
     isLogin = verfiyFun();
   }

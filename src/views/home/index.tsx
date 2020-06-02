@@ -391,7 +391,7 @@ const HomeScreenMarket: FC<{
                 onMomentumScrollEnd={e => coinMarketChange(e.nativeEvent.contentOffset.x)}
                 showsHorizontalScrollIndicator={false}
                 ref={marketView}
-                style={{ flexDirection: 'row' }}>
+                style={{ flexDirection: 'row', height: screenHeight }}>
                 <View style={{ width: screenWidth }}>
                   { coinMarketU.map(item => (
                     <HomeScreenMarketLine key={item.id} {...item} />

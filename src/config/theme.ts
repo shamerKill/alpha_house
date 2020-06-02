@@ -1,5 +1,3 @@
-import { StyleSheet } from 'react-native';
-
 // 头部背景色
 export const defaultThemeBarColor = '#f5f5f5';
 // 背景色
@@ -15,16 +13,13 @@ export const themeWhite = '#ffffff';
 // 灰色
 export const themeGray = '#abb1cb';
 // 字体灰色
-export const themeTextGray = '#666';
+export const themeTextGray = '#666666';
 // 红色
 export const themeRed = '#f65449';
 // 绿色
 export const themeGreen = '#32b28f';
 
-const theme = StyleSheet.create({
-  default: {
-    backgroundColor: defaultThemeBgColor,
-  },
-});
-
-export default theme;
+// 处理半透明
+export const getThemeOpacity = (color: string, opacity: number) => {
+  return (color + Math.round((opacity * 255)).toString(16));
+};
