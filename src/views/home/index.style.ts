@@ -132,6 +132,11 @@ const homeStyle = StyleSheet.create({
   },
   navListView: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+  },
+  navListViewBtns: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10,
   },

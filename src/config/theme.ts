@@ -18,6 +18,8 @@ export const themeTextGray = '#666666';
 export const themeRed = '#f65449';
 // 绿色
 export const themeGreen = '#32b28f';
+// 深蓝色
+export const themeMoreBlue = '#241e59';
 
 // 处理半透明
 export const getThemeOpacity = (color: string, opacity: number) => {

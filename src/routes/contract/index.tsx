@@ -1,7 +1,7 @@
 import React from 'react';
 import TypeStackValue from '../stackType';
-import HomeScreen from '../../views/home';
 import ComIconBotton from '../../components/icon/bottom';
+import ContractScreen from '../../views/contract/index';
 
 const ContractRoutes: TypeStackValue = [
   {
@@ -15,7 +15,7 @@ const ContractRoutes: TypeStackValue = [
             : require('../../assets/images/icons/contract_none.png')
         } />
     ),
-    component: HomeScreen,
+    component: ContractScreen,
     screens: [],
   },
 ];

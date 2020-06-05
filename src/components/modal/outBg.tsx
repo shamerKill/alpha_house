@@ -1,24 +1,28 @@
 // 弹窗框背景
 import React, {
-  FC, useState, useEffect,
+  FC, useState, useEffect, useRef,
 } from 'react';
-import { Animated } from 'react-native';
+import { Animated, TouchableNativeFeedback, View } from 'react-native';
 
 export const modalOutBg: {
   outBgsetShow: React.Dispatch<React.SetStateAction<boolean>>;
   outBgsetChildren: React.Dispatch<React.ReactElement|null>;
+  outBgCanClose: React.Dispatch<React.SetStateAction<boolean>>;
 } = {
   outBgsetShow: () => {},
   outBgsetChildren: () => {},
+  outBgCanClose: () => {},
 };
 
 const ComModalOutBg: FC = () => {
   const [children, setChildren] = useState<React.ReactElement|null>();
   const [show, setShow] = useState(false);
+  const [bgCanClose, setBgCanClose] = useState(false);
   const insertBgStart = new Animated.Value(0);
   useEffect(() => {
     modalOutBg.outBgsetShow = setShow;
     modalOutBg.outBgsetChildren = setChildren;
+    modalOutBg.outBgCanClose = setBgCanClose;
   }, []);
   useEffect(() => {
     if (show) {
@@ -43,12 +47,22 @@ const ComModalOutBg: FC = () => {
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 10,
       }}>
       { children }
+      <TouchableNativeFeedback onPress={() => bgCanClose && setShow(false)}>
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          zIndex: -1,
+        }} />
+      </TouchableNativeFeedback>
     </Animated.View>
   );
 };

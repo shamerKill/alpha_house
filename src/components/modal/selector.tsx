@@ -8,10 +8,10 @@ import { modalOutBg } from './outBg';
 import isIphoneX from '../../tools/isPhoneX';
 import { defaultThemeColor, themeBlack } from '../../config/theme';
 
-type TypeShowSelector = {
+export type TypeShowSelector = {
   data: (string|{data: string; before?: string; after?: string;})[],
-  selected: string,
-  onPress: (value: string) => void,
+  selected: string
+  onPress: ((value: string) => void)| ((value: {data: string; before?: string; after?: string;}) => void),
 };
 
 const closeSelector = () => {
@@ -48,7 +48,7 @@ const ComModalSelector: FC<TypeShowSelector> = ({ data, selected, onPress }) => 
             <ListItem
               key={index}
               title={item}
-              onPress={() => onPress(item)}
+              onPress={() => onPress(data[index])}
               titleStyle={{
                 textAlign: 'center',
                 fontSize: 16,

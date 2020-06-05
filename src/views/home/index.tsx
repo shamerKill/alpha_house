@@ -205,9 +205,6 @@ const HomeScreenNav: FC<{ adv: TypeHomeNavProp }> = ({ adv }) => {
     {
       icon: require('../../assets/images/icons/nav_quarter.png'), name: '季度合约', link: '', key: 'nav_3',
     },
-    {
-      icon: require('../../assets/images/icons/nav_blend.png'), name: '混合合约', link: '', key: 'nav_4',
-    },
   ];
   return (
     <View>
@@ -223,7 +220,7 @@ const HomeScreenNav: FC<{ adv: TypeHomeNavProp }> = ({ adv }) => {
           ))
         }
       </View>
-      <View style={homeStyle.navListView}>
+      <View style={homeStyle.navListViewBtns}>
         <TouchableNativeFeedback onPress={() => goTolink('HomeHelpList')} style={{ flex: 1 }}>
           <View style={homeStyle.navBtnView}>
             <Image style={homeStyle.navBtnImage} source={require('../../assets/images/icons/help_center.png')} />
