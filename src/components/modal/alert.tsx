@@ -6,7 +6,7 @@ import { themeWhite, defaultThemeColor, themeGray } from '../../config/theme';
 
 type TypeComAlert = {
   title?: string;
-  desc?: string;
+  desc?: string|React.ReactElement;
   success?: {
     text: string;
     onPress: () => void;
@@ -43,12 +43,16 @@ const ComAlert: FC<TypeComAlert> = ({
       }}>
         {title}
       </Text>
-      <Text style={{
+      <View style={{
         paddingTop: 10,
         paddingBottom: 10,
       }}>
-        {desc}
-      </Text>
+        {
+          typeof desc === 'string'
+            ? <Text>{desc}</Text>
+            : desc
+        }
+      </View>
       <View style={{ flexDirection: 'row-reverse' }}>
         {
           success

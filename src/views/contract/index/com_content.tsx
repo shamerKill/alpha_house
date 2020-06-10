@@ -14,6 +14,7 @@ import {
 } from '../../../config/theme';
 import showSelector, { TypeShowSelector } from '../../../components/modal/selector';
 import { numberToFormatString } from '../../../tools/number';
+import showComAlert from '../../../components/modal/alert';
 
 // 买卖列表类型
 type TypeSellBuyList = {
@@ -246,10 +247,17 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
 
 
 // 页面
-const ContractUSDTView: FC<{coinType: string}> = ({
+const ContractContentView: FC<{
+  coinType: string;
+  selectType: 0|1|2;
+  changeConTypeCallback: (data: { coinType?: string; contractType?: 0|1|2 }) => void;
+}> = ({
   coinType,
+  selectType,
+  changeConTypeCallback,
 }) => {
   console.log(coinType);
+  console.log(selectType);
 
   // 左边列表数据
   const [leftList, setLeftList] = useState<TypeLeftOutList[]>([]);
@@ -269,6 +277,8 @@ const ContractUSDTView: FC<{coinType: string}> = ({
   const [leverValue, setLaverValue] = useState<string>('10');
   // 限价委托价格
   const [fixedPrice, setFixedPrice] = useState('');
+  // 是否以市价执行
+  const [isMarketPrice, setMarketPrice] = useState(false);
   // 限价委托数量
   const [fixedValue, setFixedValue] = useState('');
   // 数量百分比
@@ -324,10 +334,58 @@ const ContractUSDTView: FC<{coinType: string}> = ({
         },
       });
     },
+    // 点击市价按钮
+    onMarketPrice: () => {
+      let changeMarketType = false;
+      setMarketPrice(state => {
+        changeMarketType = !state;
+        return changeMarketType;
+      });
+      // 如果是市价转成限价，返回
+      if (!changeMarketType) return;
+      const close = showComAlert({
+        title: '温馨提示',
+        desc: (
+          <View>
+            <Text style={{ color: getThemeOpacity(themeBlack, 0.6) }}>市价:</Text>
+            <Text style={{ color: getThemeOpacity(themeBlack, 0.6) }}>按当时市场价格即刻成交的指令。您在下达这种指令时无需指明具体的价位，而是要求以当时市场上可执行的最好价格达成交易，可能会产生较大的风险，请悉知。</Text>
+          </View>
+        ),
+        close: {
+          text: '不再提示',
+          onPress: () => {
+            close();
+          },
+        },
+        success: {
+          text: '知道了',
+          onPress: () => {
+            close();
+          },
+        },
+      });
+    },
     // 开空0/开多1
     openOrder: (type: 0|1) => {
-      console.log(type);
-      console.log(newPrice);
+      const close = showComAlert({
+        title: ['开空', '开多'][type],
+        desc: [
+          (<Text>确定以限价{newPrice.current}价格<Text style={{ color: themeRed }}>买入空单（卖出多单）</Text>，开仓{fixedValue}手？</Text>),
+          (<Text>确定以限价{newPrice.current}价格<Text style={{ color: themeGreen }}>买入多单</Text>，开仓{fixedValue}手？</Text>),
+        ][type],
+        success: {
+          text: '确定',
+          onPress: () => {
+            close();
+          },
+        },
+        close: {
+          text: '取消',
+          onPress: () => {
+            close();
+          },
+        },
+      });
     },
   };
 
@@ -368,7 +426,8 @@ const ContractUSDTView: FC<{coinType: string}> = ({
     <View style={style.pageView}>
       <ContractHeadView
         coinType={coinType}
-        leftList={leftList} />
+        leftList={leftList}
+        changeCallback={changeConTypeCallback} />
       {/* 个人信息 */}
       <View style={style.topInfoView}>
         <Text style={style.topInfoViewText}>
@@ -460,17 +519,34 @@ const ContractUSDTView: FC<{coinType: string}> = ({
                   {/* 价格 */}
                   <View style={style.priceSetView}>
                     <View style={style.priceSetViewLeft}>
-                      <TextInput
-                        keyboardType="number-pad"
-                        style={style.priceSetInputInput}
-                        value={fixedPrice}
-                        onChange={e => setFixedPrice(e.nativeEvent.text)}
-                        placeholder="价格" />
-                      <Text style={style.priceSetInputText}>USDT</Text>
+                      {
+                        isMarketPrice
+                          ? (
+                            <Text style={{ color: themeGray }}>以市价执行</Text>
+                          )
+                          : (
+                            <TextInput
+                              keyboardType="number-pad"
+                              style={style.priceSetInputInput}
+                              value={fixedPrice}
+                              onChange={e => setFixedPrice(e.nativeEvent.text)}
+                              placeholder="价格" />
+                          )
+                      }
+                      {
+                        !isMarketPrice && <Text style={style.priceSetInputText}>USDT</Text>
+                      }
                     </View>
-                    <StaticTouchableNativeFeedback onPress={() => setFixedPrice(newPrice.current)}>
+                    <StaticTouchableNativeFeedback onPress={() => addEvent.onMarketPrice()}>
                       <View style={style.priceSetViewRight}>
-                        <Text style={style.priceSetViewRightText}>市价</Text>
+                        <Text style={[
+                          style.priceSetViewRightText,
+                          {
+                            color: isMarketPrice ? defaultThemeColor : themeBlack,
+                          },
+                        ]}>
+                          市价
+                        </Text>
                       </View>
                     </StaticTouchableNativeFeedback>
                   </View>
@@ -906,4 +982,4 @@ const style = StyleSheet.create({
   },
 });
 
-export default ContractUSDTView;
+export default ContractContentView;

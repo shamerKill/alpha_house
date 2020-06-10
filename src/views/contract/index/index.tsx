@@ -7,9 +7,8 @@ import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, defaultThemeBgColor, themeGray, defaultThemeColor,
 } from '../../../config/theme';
-import ContractUSDTView from './usdt_page';
-import ContractCoinView from './coin_page';
-import ContractMixView from './mix_page';
+import ContractContentView from './com_content';
+import ComContractIndexBotton from './index_botton';
 
 
 const ContractScreen: FC = () => {
@@ -17,13 +16,14 @@ const ContractScreen: FC = () => {
   let { params: routeParams } = useRoute<RouteProp<{constract: { contractType: typeof selectType; coinType: string; }}, 'constract'>>();
   if (!routeParams) routeParams = { contractType: 0, coinType: 'BTC/USDT' };
 
+  // 合约类型 usdt合约0，币本位合约1，混合合约2
   const [selectType, setSelectType] = useState<0|1|2>(0);
 
   const addEvent = {
     // 更改合约类型页面
-    changeSelectType: (id: typeof selectType) => {
-      setSelectType(id);
-      navigation.navigate('Contract', { ...routeParams, contractType: id });
+    changeSelectType: ({ coinType = routeParams.coinType, contractType = routeParams.contractType }: { coinType?: string; contractType?: typeof selectType }) => {
+      setSelectType(contractType);
+      navigation.navigate('Contract', { contractType, coinType });
     },
   };
 
@@ -33,7 +33,7 @@ const ContractScreen: FC = () => {
       overScroll
       scrollStyle={{ backgroundColor: themeWhite }}>
       <View style={style.headView}>
-        <TouchableNativeFeedback onPress={() => addEvent.changeSelectType(0)}>
+        <TouchableNativeFeedback onPress={() => addEvent.changeSelectType({ contractType: 0 })}>
           <View style={style.headTouchView}>
             <Text style={[
               style.headTouchText,
@@ -47,7 +47,7 @@ const ContractScreen: FC = () => {
             }
           </View>
         </TouchableNativeFeedback>
-        <TouchableNativeFeedback onPress={() => addEvent.changeSelectType(1)}>
+        <TouchableNativeFeedback onPress={() => addEvent.changeSelectType({ contractType: 1 })}>
           <View style={style.headTouchView}>
             <Text style={[
               style.headTouchText,
@@ -61,7 +61,7 @@ const ContractScreen: FC = () => {
             }
           </View>
         </TouchableNativeFeedback>
-        <TouchableNativeFeedback onPress={() => addEvent.changeSelectType(2)}>
+        <TouchableNativeFeedback onPress={() => addEvent.changeSelectType({ contractType: 2 })}>
           <View style={style.headTouchView}>
             <Text style={[
               style.headTouchText,
@@ -77,15 +77,11 @@ const ContractScreen: FC = () => {
         </TouchableNativeFeedback>
       </View>
       <ScrollView style={style.contentScrollView}>
-        {
-          selectType === 0 && <ContractUSDTView coinType={routeParams.coinType} />
-        }
-        {
-          selectType === 1 && <ContractCoinView coinType={routeParams.coinType} />
-        }
-        {
-          selectType === 2 && <ContractMixView coinType={routeParams.coinType} />
-        }
+        <ContractContentView
+          changeConTypeCallback={addEvent.changeSelectType}
+          selectType={selectType}
+          coinType={routeParams.coinType} />
+        <ComContractIndexBotton selectType={selectType} coinType={routeParams.coinType} />
       </ScrollView>
     </ComLayoutHead>
   );

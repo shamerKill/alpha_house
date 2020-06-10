@@ -4,22 +4,22 @@ import React, {
 import {
   View, Image, StyleSheet, Text, TouchableNativeFeedback, SafeAreaView, ScrollView, Animated,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { TypeLeftOutList } from './type';
 import { modalOutBg } from '../../../components/modal/outBg';
 import {
   themeWhite, defaultThemeColor, defaultThemeBgColor, themeBlack, themeGray, themeGreen, themeRed, themeMoreBlue, getThemeOpacity,
 } from '../../../config/theme';
 
-const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutList[];}> = ({
+const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutList[]; changeCoin: (id: TypeLeftOutList['id']) => void;}> = ({
   coinType,
   leftList,
+  changeCoin,
 }) => {
   const animatedValue = useRef(new Animated.Value(-400));
 
   const addEvent = {
     changeCoinType: (id: TypeLeftOutList['id']) => {
-      console.log(id);
+      changeCoin(id);
       modalOutBg.outBgsetShow(false);
     },
   };
@@ -81,24 +81,28 @@ const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutList[];}>
 const ContractHeadView: FC<{
   coinType: string;
   leftList: TypeLeftOutList[];
+  changeCallback: (data: { coinType?: string; contractType?: 0|1|2 }) => void;
 }> = ({
   coinType,
   leftList,
+  changeCallback,
 }) => {
-  const navigation = useNavigation();
-
   const [showMore, setShowMore] = useState(false);
 
   const addEvent = {
     // 显示左侧内容
     showLeftChange: () => {
-      modalOutBg.outBgsetChildren(<ContractHeadLeftView leftList={leftList} coinType={coinType} />);
+      modalOutBg.outBgsetChildren(<ContractHeadLeftView
+        changeCoin={(id) => addEvent.goToLink(id)}
+        leftList={leftList}
+        coinType={coinType} />);
       modalOutBg.outBgsetShow(true);
       modalOutBg.outBgCanClose(true);
     },
     // 前往页面
-    goToLink: (link: string) => {
-      navigation.navigate(link);
+    goToLink: (id: TypeLeftOutList['id']) => {
+      if (typeof id === 'string') changeCallback({ coinType: id });
+      else changeCallback({ coinType: id.toString() });
     },
     // 显示更多内容
   };
@@ -166,6 +170,7 @@ const style = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     position: 'relative',
+    zIndex: 2,
   },
   headLeftView: {
     flexDirection: 'row',

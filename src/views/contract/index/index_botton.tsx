@@ -1,0 +1,677 @@
+import React, { FC, useState, useEffect } from 'react';
+import {
+  View, Text, Image as StaticImage, StyleSheet, TouchableNativeFeedback,
+} from 'react-native';
+import {
+  themeBlack, getThemeOpacity, themeGray, defaultThemeBgColor, themeGreen, themeRed, defaultThemeColor,
+} from '../../../config/theme';
+import {
+  TypePositionData, TypePlanEntrustement, TypeGeneralEntrustemnt, TypeStopOrder,
+} from './type';
+
+
+// 持仓列表视图
+const ComContractIndexListPosition: FC<{data: TypePositionData}> = ({ data }) => {
+  // 盈亏颜色
+  const color = parseFloat(data.profitRatio) < 0 ? themeRed : themeGreen;
+  return (
+    <View style={style.listView}>
+      {/* 头部 */}
+      <View style={style.listTop}>
+        <Text style={[
+          style.listTitle,
+          {
+            color: [themeRed, themeGreen][data.type],
+          },
+        ]}>
+          {data.type === 0 ? '开空' : '开多'}
+          &nbsp;&nbsp;
+          {data.coinType}
+          &nbsp;&nbsp;
+          {data.leverType}X
+        </Text>
+      </View>
+      {/* 中部 */}
+      <View style={style.listCenter}>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerLeft,
+        ]}>
+          <Text style={style.listCenterValue}>{data.price}</Text>
+          <Text style={style.listCenterDesc}>持仓均价</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerCenter,
+        ]}>
+          <Text style={[
+            style.listCenterValue,
+            { color },
+          ]}>
+            {data.profitValue}
+          </Text>
+          <Text style={style.listCenterDesc}>未实现盈亏</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerRight,
+        ]}>
+          <Text style={[
+            style.listCenterValue,
+            { color },
+          ]}>
+            {data.profitRatio}
+          </Text>
+          <Text style={style.listCenterDesc}>收益率</Text>
+        </View>
+      </View>
+      {/* 详情 */}
+      <View style={style.listInfo}>
+        <Text style={style.listInfoText}>总仓&nbsp;{data.allValue}</Text>
+        <Text style={style.listInfoText}>占用保证金&nbsp;{data.useBond}</Text>
+        <Text style={style.listInfoText}>预估强评价&nbsp;{data.willBoomPrice}</Text>
+        <Text style={style.listInfoText}>维持保证金率&nbsp;{data.useBondRatio}</Text>
+        <Text style={style.listInfoText}>止盈手数&nbsp;{data.stopWinValue}</Text>
+        <Text style={style.listInfoText}>止损手数&nbsp;{data.stopLowValue}</Text>
+      </View>
+      {/* 按钮 */}
+      <View style={style.listBtns}>
+        <TouchableNativeFeedback>
+          <View style={style.listBtn}>
+            <Text style={style.listBtnText}>止盈</Text>
+          </View>
+        </TouchableNativeFeedback>
+        <View style={style.listBtnsLine} />
+        <TouchableNativeFeedback>
+          <View style={style.listBtn}>
+            <Text style={style.listBtnText}>止损</Text>
+          </View>
+        </TouchableNativeFeedback>
+        <View style={style.listBtnsLine} />
+        <TouchableNativeFeedback>
+          <View style={style.listBtn}>
+            <Text style={style.listBtnText}>平仓</Text>
+          </View>
+        </TouchableNativeFeedback>
+      </View>
+    </View>
+  );
+};
+
+// 普通委托
+const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = ({ data }) => {
+  return (
+    <View style={style.listView}>
+      {/* 头部 */}
+      <View style={style.listTop}>
+        <Text style={[
+          style.listTitle,
+          {
+            color: [themeRed, themeGreen][data.type],
+          },
+        ]}>
+          {data.type === 0 ? '开空' : '开多'}
+          &nbsp;&nbsp;
+          {data.coinType}
+          &nbsp;&nbsp;
+          {data.leverType}X
+        </Text>
+        <Text style={style.listTopTime}>{data.time}</Text>
+      </View>
+      {/* 中部 */}
+      <View style={style.listCenter}>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerLeft,
+        ]}>
+          <Text style={style.listCenterValue}>{data.willNumber}</Text>
+          <Text style={style.listCenterDesc}>委托量</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerCenter,
+        ]}>
+          <Text style={[style.listCenterValue]}>
+            {data.willPrice}
+          </Text>
+          <Text style={style.listCenterDesc}>委托价格</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerRight,
+        ]}>
+          <Text style={[style.listCenterValue]}>
+            {data.haveNumber}
+          </Text>
+          <Text style={style.listCenterDesc}>已成交</Text>
+        </View>
+      </View>
+      {/* 详情 */}
+      <View style={style.listInfo}>
+        <Text style={style.listInfoText}>可撤&nbsp;{data.backValue}</Text>
+        <Text style={style.listInfoText}>状态&nbsp;{['未成交', '部分成交'][data.state]}</Text>
+        <Text style={style.listInfoText}>止盈触发价&nbsp;{data.winStartPrice}</Text>
+        <Text style={style.listInfoText}>止盈执行价&nbsp;{data.winDoPrice}</Text>
+        <Text style={style.listInfoText}>止损触发价&nbsp;{data.lowStartPrice}</Text>
+        <Text style={style.listInfoText}>止损执行价&nbsp;{data.lowDoPrice}</Text>
+      </View>
+      {/* 按钮 */}
+      <View style={style.listBtns}>
+        <TouchableNativeFeedback>
+          <View style={style.listBtn}>
+            <Text style={style.listBtnText}>撤销</Text>
+          </View>
+        </TouchableNativeFeedback>
+        <View style={style.listBtnsLine} />
+        <TouchableNativeFeedback>
+          <View style={style.listBtn}>
+            <Text style={style.listBtnText}>预设止盈止损</Text>
+          </View>
+        </TouchableNativeFeedback>
+      </View>
+    </View>
+  );
+};
+
+// 计划委托
+const ComContractIndexListPlan: FC<{data: TypePlanEntrustement}> = ({ data }) => {
+  return (
+    <View style={style.listView}>
+      {/* 头部 */}
+      <View style={style.listTop}>
+        <Text style={[
+          style.listTitle,
+          {
+            color: [themeRed, themeGreen][data.type],
+          },
+        ]}>
+          {data.type === 0 ? '开空' : '开多'}
+          &nbsp;&nbsp;
+          {data.coinType}
+          &nbsp;&nbsp;
+          {data.leverType}X
+        </Text>
+        <TouchableNativeFeedback>
+          <View style={style.listTopRight}>
+            <Text style={style.listTopRightText}>撤销</Text>
+          </View>
+        </TouchableNativeFeedback>
+      </View>
+      {/* 中部 */}
+      <View style={style.listCenter}>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerLeft,
+        ]}>
+          <Text style={style.listCenterValue}>{data.startPrice}</Text>
+          <Text style={style.listCenterDesc}>触发价格</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerCenter,
+        ]}>
+          <Text style={[style.listCenterValue]}>
+            {data.doPrice}
+          </Text>
+          <Text style={style.listCenterDesc}>执行价格</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerRight,
+        ]}>
+          <Text style={[style.listCenterValue]}>
+            {data.number}
+          </Text>
+          <Text style={style.listCenterDesc}>数量</Text>
+        </View>
+      </View>
+      {/* 详情 */}
+      <View style={style.listInfo}>
+        <Text style={style.listInfoText}>方式&nbsp;{['限价', '市价'][data.doPriceType]}</Text>
+        <Text style={style.listInfoText}>状态&nbsp;{['未触发', '已触发'][data.state]}</Text>
+        <Text style={[style.listInfoText, { width: '100%' }]}>委托时间&nbsp;{data.sendTime}</Text>
+        <Text style={[style.listInfoText, { width: '100%' }]}>触发时间&nbsp;{data.doTime}</Text>
+      </View>
+    </View>
+  );
+};
+
+// 止盈止损
+const ComContractIndexListOrder: FC<{data: TypeStopOrder}> = ({ data }) => {
+  return (
+    <View style={style.listView}>
+      {/* 头部 */}
+      <View style={[style.listTop, { justifyContent: 'flex-start' }]}>
+        <Text style={[
+          style.listTitle,
+          {
+            color: [themeRed, themeGreen][data.type],
+          },
+        ]}>
+          {data.type === 0 ? '开空' : '开多'}
+          &nbsp;&nbsp;
+          {data.coinType}
+          &nbsp;&nbsp;
+          {data.leverType}X
+        </Text>
+        <Text style={style.listTitleDesc}>{['未触发', '触发'][data.state]}</Text>
+      </View>
+      {/* 中部 */}
+      <View style={style.listCenter}>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerLeft,
+        ]}>
+          <Text style={style.listCenterValue}>{data.startPrice}</Text>
+          <Text style={style.listCenterDesc}>触发价格</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerCenter,
+        ]}>
+          <Text style={[style.listCenterValue]}>
+            {data.doPrice}
+          </Text>
+          <Text style={style.listCenterDesc}>执行价格</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerRight,
+        ]}>
+          <Text style={[style.listCenterValue, { color: [themeRed, themeGreen][data.stopType] }]}>
+            {['止损', '止盈'][data.stopType]}
+          </Text>
+          <Text style={style.listCenterDesc}>盈损</Text>
+        </View>
+      </View>
+      {/* 详情 */}
+      <View style={style.listInfo}>
+        <Text style={style.listInfoText}>方式&nbsp;{['限价', '市价'][data.doPriceType]}</Text>
+        <Text style={style.listInfoText}>状态&nbsp;{['未触发', '已触发'][data.state]}</Text>
+        <Text style={[style.listInfoText, { width: '100%' }]}>委托时间&nbsp;{data.sendTime}</Text>
+        <Text style={[style.listInfoText, { width: '100%' }]}>触发时间&nbsp;{data.doTime}</Text>
+      </View>
+      {/* 按钮 */}
+      <View style={style.listBtns}>
+        <TouchableNativeFeedback>
+          <View style={style.listBtn}>
+            <Text style={style.listBtnText}>修改</Text>
+          </View>
+        </TouchableNativeFeedback>
+        <View style={style.listBtnsLine} />
+        <TouchableNativeFeedback>
+          <View style={style.listBtn}>
+            <Text style={style.listBtnText}>撤销</Text>
+          </View>
+        </TouchableNativeFeedback>
+      </View>
+    </View>
+  );
+};
+
+const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2}> = ({
+  coinType,
+  selectType,
+}) => {
+  console.log(coinType);
+  console.log(selectType);
+  const tabDataArr = [
+    '持仓', '普通委托', '计划委托', '止盈止损',
+  ];
+
+  // 选项卡的第几个
+  const [selectTab, setSelectTab] = useState(3);
+  // 持仓数据
+  const [positionData, setPositionData] = useState<TypePositionData[]>([]);
+  // 普通委托数据
+  const [generalEntrustementData, setGeneralEntrustementData] = useState<TypeGeneralEntrustemnt[]>([]);
+  // 计划委托数据
+  const [planementData, setPlanementData] = useState<TypePlanEntrustement[]>([]);
+  // 止盈止损数据类型
+  const [orderData, setOrderData] = useState<TypeStopOrder[]>([]);
+
+  useEffect(() => {
+    setPositionData([
+      {
+        id: 1,
+        type: 0 as TypePositionData['type'],
+        coinType: 'BTC/USDT',
+        leverType: '20',
+        price: '9512.32',
+        profitValue: '-0.78',
+        profitRatio: '-21.23%',
+        allValue: '1.39',
+        useBond: '2.12',
+        willBoomPrice: '12.31',
+        useBondRatio: '0.50%',
+        stopWinValue: '0',
+        stopLowValue: '0',
+      },
+      {
+        id: 2,
+        type: 1 as TypePositionData['type'],
+        coinType: 'ETH/USDT',
+        leverType: '20',
+        price: '9512.32',
+        profitValue: '0.78',
+        profitRatio: '21.23%',
+        allValue: '1.39',
+        useBond: '2.12',
+        willBoomPrice: '12.31',
+        useBondRatio: '0.50%',
+        stopWinValue: '0',
+        stopLowValue: '0',
+      },
+    ]);
+    setGeneralEntrustementData([
+      {
+        id: 1,
+        type: 0 as TypeGeneralEntrustemnt['type'],
+        coinType: 'BTC/USDT',
+        leverType: '20',
+        willNumber: 12,
+        willPrice: '9512.32',
+        haveNumber: 1,
+        backValue: 11,
+        state: 0 as TypeGeneralEntrustemnt['state'],
+        winStartPrice: '9123.12',
+        winDoPrice: '9123.22',
+        lowStartPrice: '9612.21',
+        lowDoPrice: '9622.21',
+        time: '2019/12/14 08:12:12',
+      },
+      {
+        id: 2,
+        type: 1 as TypeGeneralEntrustemnt['type'],
+        coinType: 'BTC/USDT',
+        leverType: '20',
+        willNumber: 12,
+        willPrice: '9512.32',
+        haveNumber: 1,
+        backValue: 11,
+        state: 1 as TypeGeneralEntrustemnt['state'],
+        winStartPrice: '9123.12',
+        winDoPrice: '9123.22',
+        lowStartPrice: '9612.21',
+        lowDoPrice: '9622.21',
+        time: '2019/12/14 08:12:12',
+      },
+    ]);
+    setPlanementData([
+      {
+        id: 1,
+        type: 0 as TypePlanEntrustement['type'],
+        coinType: 'BTC/USDT',
+        leverType: '20',
+        startPrice: '9512.32',
+        doPrice: '9512.32',
+        number: 11,
+        doPriceType: 0 as TypePlanEntrustement['doPriceType'],
+        state: 0 as TypePlanEntrustement['state'],
+        sendTime: '2019/12/14 08:12:12',
+        doTime: '2019/12/14 08:12:12',
+      },
+      {
+        id: 2,
+        type: 1 as TypePlanEntrustement['type'],
+        coinType: 'BTC/USDT',
+        leverType: '20',
+        startPrice: '9512.32',
+        doPrice: '9512.32',
+        number: 11,
+        doPriceType: 0 as TypePlanEntrustement['doPriceType'],
+        state: 0 as TypePlanEntrustement['state'],
+        sendTime: '2019/12/14 08:12:12',
+        doTime: '2019/12/14 08:12:12',
+      },
+    ]);
+    setOrderData([
+      {
+        id: 1,
+        type: 0 as TypePlanEntrustement['type'],
+        coinType: 'BTC/USDT',
+        leverType: '20',
+        startPrice: '9512.32',
+        doPrice: '9512.32',
+        stopType: 0 as TypeStopOrder['stopType'],
+        state: 0 as TypeStopOrder['state'],
+        doPriceType: 0 as TypeStopOrder['doPriceType'],
+        sendTime: '2019/12/14 08:12:12',
+        doTime: '2019/12/14 08:12:12',
+      },
+      {
+        id: 2,
+        type: 1 as TypePlanEntrustement['type'],
+        coinType: 'BTC/USDT',
+        leverType: '20',
+        startPrice: '9512.32',
+        doPrice: '9512.32',
+        stopType: 1 as TypeStopOrder['stopType'],
+        state: 1 as TypeStopOrder['state'],
+        doPriceType: 1 as TypeStopOrder['doPriceType'],
+        sendTime: '2019/12/14 08:12:12',
+        doTime: '2019/12/14 08:12:12',
+      },
+    ]);
+  }, []);
+
+  return (
+    <View>
+      {/* 选项卡 */}
+      <View style={style.tabView}>
+        <View style={style.tabViewLeft}>
+          {
+            tabDataArr.map((item, index) => (
+              <TouchableNativeFeedback
+                key={index}
+                onPress={() => setSelectTab(index)}>
+                <View style={style.tabViewBtn}>
+                  <Text style={[
+                    style.tabViewBtnText,
+                    selectTab === index && { color: themeBlack, fontWeight: 'bold' },
+                  ]}>
+                    {item}
+                  </Text>
+                </View>
+              </TouchableNativeFeedback>
+            ))
+          }
+        </View>
+        <TouchableNativeFeedback>
+          <View style={style.tabViewRight}>
+            <StaticImage
+              resizeMode="contain"
+              style={style.tabViewRightImage}
+              source={require('../../../assets/images/icons/contract_list_log.png')} />
+            <Text style={style.tabViewRightText}>全部</Text>
+          </View>
+        </TouchableNativeFeedback>
+      </View>
+      {/* 列表 */}
+      {/* 持仓 */}
+      {
+        selectTab === 0
+        && (
+          positionData.map(item => (
+            <ComContractIndexListPosition
+              key={item.id}
+              data={item} />
+          ))
+        )
+      }
+      {/* 普通委托 */}
+      {
+        selectTab === 1
+        && (
+          generalEntrustementData.map(item => (
+            <ComContractIndexListGeneral
+              key={item.id}
+              data={item} />
+          ))
+        )
+      }
+      {/* 计划委托 */}
+      {
+        selectTab === 2
+        && (
+          planementData.map(item => (
+            <ComContractIndexListPlan
+              key={item.id}
+              data={item} />
+          ))
+        )
+      }
+      {/* 止盈止损 */}
+      {
+        selectTab === 3
+        && (
+          orderData.map(item => (
+            <ComContractIndexListOrder
+              key={item.id}
+              data={item} />
+          ))
+        )
+      }
+    </View>
+  );
+};
+
+const style = StyleSheet.create({
+  tabView: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 10,
+    paddingRight: 10,
+    height: 44,
+    borderBottomWidth: 1,
+    borderBottomColor: defaultThemeBgColor,
+  },
+  tabViewLeft: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  tabViewBtn: {
+    height: 44,
+    padding: 8,
+    justifyContent: 'center',
+  },
+  tabViewBtnText: {
+    color: getThemeOpacity(themeBlack, 0.5),
+  },
+  tabViewRight: {
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 5,
+  },
+  tabViewRightImage: {
+    width: 14,
+    height: 14,
+  },
+  tabViewRightText: {
+    color: themeGray,
+    paddingLeft: 5,
+  },
+  // 列表视图
+  listView: {
+    paddingLeft: 10,
+    paddingRight: 10,
+    borderBottomWidth: 10,
+    borderBottomColor: defaultThemeBgColor,
+  },
+  listTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: defaultThemeBgColor,
+    alignItems: 'center',
+  },
+  listTopRight: {
+    padding: 10,
+    marginRight: -10,
+  },
+  listTopRightText: {
+    color: defaultThemeColor,
+  },
+  listTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
+  listTitleDesc: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: defaultThemeColor,
+    backgroundColor: getThemeOpacity(defaultThemeColor, 0.2),
+    borderRadius: 2,
+    paddingTop: 2,
+    paddingBottom: 2,
+    paddingLeft: 15,
+    paddingRight: 15,
+    marginLeft: 10,
+  },
+  listTopTime: {
+    fontSize: 12,
+    color: themeGray,
+  },
+  listCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: defaultThemeBgColor,
+  },
+  listCenterInner: {
+    flex: 1,
+  },
+  listCenterInnerLeft: {},
+  listCenterInnerCenter: {
+    alignItems: 'center',
+  },
+  listCenterInnerRight: {
+    alignItems: 'flex-end',
+  },
+  listCenterValue: {
+    fontWeight: 'bold',
+    paddingBottom: 3,
+  },
+  listCenterDesc: {
+    fontSize: 12,
+    color: themeGray,
+  },
+  listInfo: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingTop: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: defaultThemeBgColor,
+  },
+  listInfoText: {
+    width: '50%',
+    paddingBottom: 5,
+    fontSize: 11,
+    color: getThemeOpacity(themeBlack, 0.6),
+  },
+  listBtns: {
+    flexDirection: 'row',
+  },
+  listBtnsLine: {
+    height: 20,
+    width: 1,
+    backgroundColor: defaultThemeBgColor,
+    marginTop: 10,
+  },
+  listBtn: {
+    height: 40,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  listBtnText: {
+    color: defaultThemeColor,
+  },
+});
+
+export default ComContractIndexBottom;
