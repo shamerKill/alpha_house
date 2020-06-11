@@ -18,7 +18,7 @@ const MyScreen: FC = () => {
   const userMoneyBtns = [
     { icon: require('../../assets/images/icons/user_center_add.png'), name: '充值', link: 'recharge' },
     { icon: require('../../assets/images/icons/user_center_cut.png'), name: '提币', link: 'withdraw' },
-    { icon: require('../../assets/images/icons/user_center_change.png'), name: '转账', link: 'Home' },
+    { icon: require('../../assets/images/icons/user_center_change.png'), name: '转账', link: 'transfer' },
   ];
   // 主要显示按钮
   const centerShowBtns = [

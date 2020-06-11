@@ -2,6 +2,8 @@ import React from 'react';
 import TypeStackValue from '../stackType';
 import ComIconBotton from '../../components/icon/bottom';
 import ContractScreen from '../../views/contract/index';
+import ContractOrderCloseScreen from '../../views/contract/order_close';
+import ContractWillCloseScreen from '../../views/contract/will_close';
 
 const ContractRoutes: TypeStackValue = [
   {
@@ -16,7 +18,16 @@ const ContractRoutes: TypeStackValue = [
         } />
     ),
     component: ContractScreen,
-    screens: [],
+    screens: [
+      {
+        name: 'ContractOrderClose',
+        component: ContractOrderCloseScreen,
+      },
+      {
+        name: 'ContractWillClose',
+        component: ContractWillCloseScreen,
+      },
+    ],
   },
 ];
 

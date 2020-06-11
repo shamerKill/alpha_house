@@ -2,18 +2,61 @@ import React, { FC, useState, useEffect } from 'react';
 import {
   View, Text, Image as StaticImage, StyleSheet, TouchableNativeFeedback,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import {
   themeBlack, getThemeOpacity, themeGray, defaultThemeBgColor, themeGreen, themeRed, defaultThemeColor,
 } from '../../../config/theme';
 import {
   TypePositionData, TypePlanEntrustement, TypeGeneralEntrustemnt, TypeStopOrder,
 } from './type';
+import showComAlert from '../../../components/modal/alert';
 
 
 // 持仓列表视图
 const ComContractIndexListPosition: FC<{data: TypePositionData}> = ({ data }) => {
+  const navigation = useNavigation();
+
   // 盈亏颜色
   const color = parseFloat(data.profitRatio) < 0 ? themeRed : themeGreen;
+
+  const addEvent = {
+    // 止盈止损弹窗
+    stopAlert: () => {
+      return new Promise(resolve => {
+        const close = showComAlert({
+          title: '温馨提示',
+          desc: '止盈止损触发后将按照设定的方式和价格向市场进行委托，成交价格受市场深度影响。满足触发条件时将立即触发，请在知晓风险的情况下使用。',
+          success: {
+            text: '知道了',
+            onPress: () => {
+              close();
+              resolve();
+            },
+          },
+          close: {
+            text: '不再提示',
+            onPress: () => {
+              close();
+              resolve();
+            },
+          },
+        });
+      });
+    },
+    // 止盈
+    stopWin: async () => {
+      await addEvent.stopAlert();
+      navigation.navigate('ContractOrderClose', { id: data.id });
+    },
+    // 止损
+    stopLow: async () => {
+      await addEvent.stopAlert();
+      navigation.navigate('ContractOrderClose', { id: data.id });
+    },
+    // 平仓
+    closeOrder: () => {
+    },
+  };
   return (
     <View style={style.listView}>
       {/* 头部 */}
@@ -76,19 +119,19 @@ const ComContractIndexListPosition: FC<{data: TypePositionData}> = ({ data }) =>
       </View>
       {/* 按钮 */}
       <View style={style.listBtns}>
-        <TouchableNativeFeedback>
+        <TouchableNativeFeedback onPress={() => addEvent.stopWin()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>止盈</Text>
           </View>
         </TouchableNativeFeedback>
         <View style={style.listBtnsLine} />
-        <TouchableNativeFeedback>
+        <TouchableNativeFeedback onPress={() => addEvent.stopLow()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>止损</Text>
           </View>
         </TouchableNativeFeedback>
         <View style={style.listBtnsLine} />
-        <TouchableNativeFeedback>
+        <TouchableNativeFeedback onPress={() => addEvent.closeOrder()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>平仓</Text>
           </View>
@@ -100,6 +143,48 @@ const ComContractIndexListPosition: FC<{data: TypePositionData}> = ({ data }) =>
 
 // 普通委托
 const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = ({ data }) => {
+  const navigation = useNavigation();
+  const addEvent = {
+    // 撤销订单
+    backOrder: () => {
+      const close = showComAlert({
+        desc: '确定撤销此委托单么？',
+        success: {
+          text: '确定',
+          onPress: () => {
+            close();
+          },
+        },
+        close: {
+          text: '取消',
+          onPress: () => {
+            close();
+          },
+        },
+      });
+    },
+    // 预设止盈止损
+    willStopOrder: () => {
+      const close = showComAlert({
+        title: '温馨提示',
+        desc: (<Text style={{ lineHeight: 20 }}>预设止盈止损并非实际存在的止盈止损单，需委托成交后才可发起。因行情变动剧烈，预设单不保证预设一定生效。下单委托成交后，默认将按照您的实际成交数量全部挂上止盈止损单。如您撤销挂单委托，预设止盈止损单将同时失效。</Text>),
+        success: {
+          text: '知道了',
+          onPress: () => {
+            close();
+            navigation.navigate('ContractWillClose', { id: data.id });
+          },
+        },
+        close: {
+          text: '不再提示',
+          onPress: () => {
+            close();
+            navigation.navigate('ContractWillClose', { id: data.id });
+          },
+        },
+      });
+    },
+  };
   return (
     <View style={style.listView}>
       {/* 头部 */}
@@ -157,13 +242,13 @@ const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = ({ data 
       </View>
       {/* 按钮 */}
       <View style={style.listBtns}>
-        <TouchableNativeFeedback>
+        <TouchableNativeFeedback onPress={() => addEvent.backOrder()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>撤销</Text>
           </View>
         </TouchableNativeFeedback>
         <View style={style.listBtnsLine} />
-        <TouchableNativeFeedback>
+        <TouchableNativeFeedback onPress={() => addEvent.willStopOrder()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>预设止盈止损</Text>
           </View>
@@ -320,7 +405,7 @@ const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2}> = ({
   ];
 
   // 选项卡的第几个
-  const [selectTab, setSelectTab] = useState(3);
+  const [selectTab, setSelectTab] = useState(0);
   // 持仓数据
   const [positionData, setPositionData] = useState<TypePositionData[]>([]);
   // 普通委托数据

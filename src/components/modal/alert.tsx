@@ -35,24 +35,32 @@ const ComAlert: FC<TypeComAlert> = ({
       borderRadius: 5,
       width: 300,
     }}>
-      <Text style={{
-        textAlign: 'center',
-        fontSize: 16,
-        fontWeight: 'bold',
-        paddingBottom: 10,
-      }}>
-        {title}
-      </Text>
-      <View style={{
-        paddingTop: 10,
-        paddingBottom: 10,
-      }}>
-        {
-          typeof desc === 'string'
-            ? <Text>{desc}</Text>
-            : desc
-        }
-      </View>
+      {
+        title && (
+          <Text style={{
+            textAlign: 'center',
+            fontSize: 16,
+            fontWeight: 'bold',
+            paddingBottom: 10,
+          }}>
+            {title}
+          </Text>
+        )
+      }
+      {
+        desc && (
+          <View style={{
+            paddingTop: 10,
+            paddingBottom: 10,
+          }}>
+            {
+              typeof desc === 'string'
+                ? <Text>{desc}</Text>
+                : desc
+            }
+          </View>
+        )
+      }
       <View style={{ flexDirection: 'row-reverse' }}>
         {
           success

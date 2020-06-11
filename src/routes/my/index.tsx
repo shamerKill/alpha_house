@@ -22,6 +22,9 @@ import MyFeedBack from '../../views/my/feedback';
 import MySettingScreen from '../../views/my/settings';
 import MySettingValueScreen from '../../views/my/settings/set_value';
 import CreateRoutes from './create';
+import MyTransferScreen from '../../views/my/transfer';
+import MytransferAccountsScreen from '../../views/my/transfer/accounts';
+import MyTransferLogsScreen from '../../views/my/transfer/logs';
 
 const MyRoutes: TypeStackValue = [
   {
@@ -112,6 +115,18 @@ const MyRoutes: TypeStackValue = [
       {
         name: 'settingValue', // 设置单项
         component: MySettingValueScreen,
+      },
+      {
+        name: 'transfer', // 转账
+        component: MyTransferScreen,
+      },
+      {
+        name: 'transferAccounts', // 转账选择账户
+        component: MytransferAccountsScreen,
+      },
+      {
+        name: 'transferLogs', // 转账选择账户
+        component: MyTransferLogsScreen,
       },
       // 账户登录页面
       ...CreateRoutes,

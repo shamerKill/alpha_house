@@ -314,8 +314,34 @@ const ContractContentView: FC<{
         data,
         selected: entrustTypeData[entrustType],
         onPress: (value: string) => {
-          setEntrustType(entrustTypeData.indexOf(value) as typeof entrustType);
+          const type = entrustTypeData.indexOf(value) as typeof entrustType;
+          if (type === entrustType) return;
+          setEntrustType(type);
           close();
+          // 计划委托
+          if (type === 1) {
+            showComAlert({
+              title: '温馨提示',
+              desc: (
+                <View>
+                  <Text>计划委托：</Text>
+                  <Text style={{ color: getThemeOpacity(themeBlack, 0.6) }}>计划委托在成功触发之前，不会冻结仓位和保证金。计划委托不一定成功触发，可能会因价格、仓位保证金等问题而失败。触发成功后限价单因市场等问题也并不一定成交，请悉知。</Text>
+                </View>
+              ),
+              close: {
+                text: '不再提示',
+                onPress: () => {
+                  close();
+                },
+              },
+              success: {
+                text: '知道了',
+                onPress: () => {
+                  close();
+                },
+              },
+            });
+          }
         },
       });
     },
@@ -347,7 +373,7 @@ const ContractContentView: FC<{
         title: '温馨提示',
         desc: (
           <View>
-            <Text style={{ color: getThemeOpacity(themeBlack, 0.6) }}>市价:</Text>
+            <Text>市价:</Text>
             <Text style={{ color: getThemeOpacity(themeBlack, 0.6) }}>按当时市场价格即刻成交的指令。您在下达这种指令时无需指明具体的价位，而是要求以当时市场上可执行的最好价格达成交易，可能会产生较大的风险，请悉知。</Text>
           </View>
         ),
@@ -367,11 +393,49 @@ const ContractContentView: FC<{
     },
     // 开空0/开多1
     openOrder: (type: 0|1) => {
+      // 如果是平单
+      if (doType === 1) {
+        addEvent.closeOrder(type);
+        return;
+      }
+      // 限价委托还是计划委托
+      const showTextArr = [
+        [
+          // 开空
+          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeRed }}>买入空单（卖出多单）</Text>，开仓{fixedValue}手？</Text>),
+          // 开多
+          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeGreen }}>买入多单</Text>，开仓{fixedValue}手？</Text>),
+        ],
+        [
+          (<Text><Text style={{ color: themeRed }}>买入空单</Text>，开仓{coinType} {willValues}手触发价格：{willDoPrice}；执行价格：{willTransPrice}；</Text>),
+          (<Text><Text style={{ color: themeGreen }}>买入多单</Text>，开仓{coinType} {willValues}手触发价格：{willDoPrice}；执行价格：{willTransPrice}；</Text>),
+        ],
+      ][entrustType];
       const close = showComAlert({
         title: ['开空', '开多'][type],
+        desc: showTextArr[type],
+        success: {
+          text: '确定',
+          onPress: () => {
+            close();
+          },
+        },
+        close: {
+          text: '取消',
+          onPress: () => {
+            close();
+          },
+        },
+      });
+    },
+    // 平多1/平空0
+    closeOrder: (type: 0|1) => {
+      console.log(type);
+      const close = showComAlert({
+        title: ['平空', '平多'][type],
         desc: [
-          (<Text>确定以限价{newPrice.current}价格<Text style={{ color: themeRed }}>买入空单（卖出多单）</Text>，开仓{fixedValue}手？</Text>),
-          (<Text>确定以限价{newPrice.current}价格<Text style={{ color: themeGreen }}>买入多单</Text>，开仓{fixedValue}手？</Text>),
+          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeGreen }}>卖出空单</Text>，平仓{fixedValue}手？</Text>),
+          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeRed }}>卖出多单</Text>，平仓{fixedValue}手？</Text>),
         ][type],
         success: {
           text: '确定',
@@ -623,19 +687,39 @@ const ContractContentView: FC<{
               <TouchableNativeFeedback onPress={() => addEvent.openOrder(1)}>
                 <View style={[
                   style.doFuncBtnView,
-                  { backgroundColor: themeGreen },
+                  { backgroundColor: [themeGreen, themeRed][doType] },
                 ]}>
-                  <Text style={style.doFuncBtnText}>开多</Text>
-                  <Text style={style.doFuncBtnDesc}>看涨</Text>
+                  {
+                    doType === 0
+                      ? (
+                        <>
+                          <Text style={style.doFuncBtnText}>开多</Text>
+                          <Text style={style.doFuncBtnDesc}>看涨</Text>
+                        </>
+                      )
+                      : (
+                        <Text style={style.doFuncBtnText}>平多</Text>
+                      )
+                  }
                 </View>
               </TouchableNativeFeedback>
               <TouchableNativeFeedback onPress={() => addEvent.openOrder(0)}>
                 <View style={[
                   style.doFuncBtnView,
-                  { backgroundColor: themeRed },
+                  { backgroundColor: [themeRed, themeGreen][doType] },
                 ]}>
-                  <Text style={style.doFuncBtnText}>开空</Text>
-                  <Text style={style.doFuncBtnDesc}>看涨</Text>
+                  {
+                    doType === 0
+                      ? (
+                        <>
+                          <Text style={style.doFuncBtnText}>开空</Text>
+                          <Text style={style.doFuncBtnDesc}>看跌</Text>
+                        </>
+                      )
+                      : (
+                        <Text style={style.doFuncBtnText}>平空</Text>
+                      )
+                  }
                 </View>
               </TouchableNativeFeedback>
             </View>
