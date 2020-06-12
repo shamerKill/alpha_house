@@ -44,8 +44,9 @@ const MyFollowModeScreen: FC = () => {
       const close = showSelector({
         data: ['USDT', 'ETH', 'BTC'],
         selected: coinType,
-        onPress: (select: string) => {
-          setCoinType(select);
+        onPress: (value) => {
+          if (typeof value !== 'string') return;
+          setCoinType(value);
           close();
         },
       });

@@ -47,12 +47,12 @@ const AccountVerfiyCodeScreen: FC = () => {
     // 发送验证码倒计时
     setTimer: () => {
       setTime(60);
-      timer.current = setInterval(() => {
+      timer.current = Number(setInterval(() => {
         setTime(state => {
           if (state <= 1) clearInterval(timer.current);
           return state - 1;
         });
-      }, 1000);
+      }, 1000));
     },
     // 开始竖线动画
     lineAimate: (): Animated.CompositeAnimation => {

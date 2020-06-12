@@ -121,7 +121,7 @@ const MarketSearchScreen: FC = () => {
       setSearchLoading(true);
       clearTimeout(searchLoadingTime.current);
       // 获取数据
-      searchLoadingTime.current = setTimeout(() => {
+      searchLoadingTime.current = Number(setTimeout(() => {
         setSearchList([
           { name: '搜索BTC/USDT 永续', id: 0, isFollow: false },
           { name: '搜索BTC/ETH', id: 1, isFollow: true },
@@ -136,7 +136,7 @@ const MarketSearchScreen: FC = () => {
             useNativeDriver: false,
           },
         ).start();
-      }, 1000);
+      }, 1000));
     }
   }, [search]);
 

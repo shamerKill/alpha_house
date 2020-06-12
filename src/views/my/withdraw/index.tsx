@@ -45,7 +45,8 @@ const MyWithdrawScreen: FC = () => {
       const close = showSelector({
         data: coinList.map(item => item.name),
         selected: coinName,
-        onPress: (value: string) => {
+        onPress: (value) => {
+          if (typeof value !== 'string') return;
           coinList.filter(item => item.name === value).forEach(item => {
             setCoinName(item.name);
             setCoinIcon(item.icon);

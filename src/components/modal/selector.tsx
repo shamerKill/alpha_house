@@ -8,10 +8,11 @@ import { modalOutBg } from './outBg';
 import isIphoneX from '../../tools/isPhoneX';
 import { defaultThemeColor, themeBlack } from '../../config/theme';
 
-export type TypeShowSelector = {
-  data: (string|{data: string; before?: string; after?: string;})[],
+export type TypeShowSelector<T> = {
+  title?: string;
+  data: T[],
   selected: string
-  onPress: ((value: string) => void)| ((value: {data: string; before?: string; after?: string;}) => void),
+  onPress: ((value: T) => void),
 };
 
 const closeSelector = () => {
@@ -19,8 +20,9 @@ const closeSelector = () => {
   modalOutBg.outBgsetChildren(null);
 };
 
-
-const ComModalSelector: FC<TypeShowSelector> = ({ data, selected, onPress }) => {
+const ComModalSelector: FC<TypeShowSelector<string|{data: string; before?: string; after?: string;}>> = ({
+  data, selected, onPress, title,
+}) => {
   const bottomHeight = isIphoneX() ? 30 : 0;
   const getData = data.map(item => {
     if (typeof item === 'string') return item;
@@ -37,13 +39,23 @@ const ComModalSelector: FC<TypeShowSelector> = ({ data, selected, onPress }) => 
       left: 0,
       width: '100%',
     }}>
-      <ScrollView style={{
-        borderTopRightRadius: 10,
-        borderTopLeftRadius: 10,
-        backgroundColor: '#fff',
-        maxHeight: 250,
-      }}>
+      <View style={{ borderTopLeftRadius: 10, borderTopRightRadius: 10, overflow: 'hidden' }}>
         {
+          title && (
+            <ListItem
+              title={title}
+              titleStyle={{
+                textAlign: 'center',
+                fontSize: 18,
+                color: themeBlack,
+              }}
+              bottomDivider />
+          )
+        }
+        <ScrollView style={{
+          maxHeight: 250,
+        }}>
+          {
           getData.map((item, index) => (
             <ListItem
               key={index}
@@ -57,7 +69,8 @@ const ComModalSelector: FC<TypeShowSelector> = ({ data, selected, onPress }) => 
               bottomDivider />
           ))
         }
-      </ScrollView>
+        </ScrollView>
+      </View>
       <Button
         ViewComponent={LinearGradient}
         buttonStyle={{ height: 50 }}
@@ -73,7 +86,7 @@ const ComModalSelector: FC<TypeShowSelector> = ({ data, selected, onPress }) => 
   );
 };
 
-const showSelector = (data: TypeShowSelector) => {
+const showSelector = (data: TypeShowSelector<string|{data: string; before?: string; after?: string;}>) => {
   modalOutBg.outBgsetChildren(<ComModalSelector {...data} />);
   modalOutBg.outBgsetShow(true);
   return closeSelector;

@@ -12,7 +12,7 @@ import { TypeLeftOutList } from './type';
 import {
   defaultThemeBgColor, themeGray, themeBlack, themeWhite, themeGreen, themeTextGray, getThemeOpacity, defaultThemeColor, themeRed,
 } from '../../../config/theme';
-import showSelector, { TypeShowSelector } from '../../../components/modal/selector';
+import showSelector from '../../../components/modal/selector';
 import { numberToFormatString } from '../../../tools/number';
 import showComAlert from '../../../components/modal/alert';
 
@@ -51,9 +51,9 @@ const ComSliderView: FC<{
     backSliderHadler: (ratio: number) => {
       setRatioValue(ratio);
       clearTimeout(sliderTimer.current);
-      sliderTimer.current = setTimeout(() => {
+      sliderTimer.current = Number(setTimeout(() => {
         setFixedValueRatio(ratio);
-      }, 200);
+      }, 200));
     },
   };
   return (
@@ -313,7 +313,8 @@ const ContractContentView: FC<{
       const close = showSelector({
         data,
         selected: entrustTypeData[entrustType],
-        onPress: (value: string) => {
+        onPress: (value) => {
+          if (typeof value !== 'string') return;
           const type = entrustTypeData.indexOf(value) as typeof entrustType;
           if (type === entrustType) return;
           setEntrustType(type);
@@ -354,7 +355,7 @@ const ContractContentView: FC<{
           after: 'X',
         })),
         selected: leverValue,
-        onPress: (value: TypeShowSelector['data'][0]) => {
+        onPress: (value) => {
           if (typeof value !== 'string') setLaverValue(value.data);
           close();
         },

@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
-  themeBlack, getThemeOpacity, themeGray, defaultThemeBgColor, themeGreen, themeRed, defaultThemeColor,
+  themeBlack, getThemeOpacity, themeGray, defaultThemeBgColor, themeGreen, themeRed, defaultThemeColor, themeWhite,
 } from '../../../config/theme';
 import {
   TypePositionData, TypePlanEntrustement, TypeGeneralEntrustemnt, TypeStopOrder,
@@ -142,7 +142,7 @@ const ComContractIndexListPosition: FC<{data: TypePositionData}> = ({ data }) =>
 };
 
 // 普通委托
-const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = ({ data }) => {
+export const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = ({ data }) => {
   const navigation = useNavigation();
   const addEvent = {
     // 撤销订单
@@ -259,7 +259,7 @@ const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = ({ data 
 };
 
 // 计划委托
-const ComContractIndexListPlan: FC<{data: TypePlanEntrustement}> = ({ data }) => {
+export const ComContractIndexListPlan: FC<{data: TypePlanEntrustement}> = ({ data }) => {
   return (
     <View style={style.listView}>
       {/* 头部 */}
@@ -322,7 +322,7 @@ const ComContractIndexListPlan: FC<{data: TypePlanEntrustement}> = ({ data }) =>
 };
 
 // 止盈止损
-const ComContractIndexListOrder: FC<{data: TypeStopOrder}> = ({ data }) => {
+export const ComContractIndexListOrder: FC<{data: TypeStopOrder}> = ({ data }) => {
   return (
     <View style={style.listView}>
       {/* 头部 */}
@@ -398,6 +398,7 @@ const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2}> = ({
   coinType,
   selectType,
 }) => {
+  const navigation = useNavigation();
   console.log(coinType);
   console.log(selectType);
   const tabDataArr = [
@@ -562,7 +563,7 @@ const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2}> = ({
             ))
           }
         </View>
-        <TouchableNativeFeedback>
+        <TouchableNativeFeedback onPress={() => navigation.navigate('ContractLogs')}>
           <View style={style.tabViewRight}>
             <StaticImage
               resizeMode="contain"
@@ -663,6 +664,7 @@ const style = StyleSheet.create({
     paddingRight: 10,
     borderBottomWidth: 10,
     borderBottomColor: defaultThemeBgColor,
+    backgroundColor: themeWhite,
   },
   listTop: {
     flexDirection: 'row',

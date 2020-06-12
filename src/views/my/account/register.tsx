@@ -58,6 +58,7 @@ const RegisterScreen: FC = () => {
         ],
         selected: phonePrefix,
         onPress: (value) => {
+          if (typeof value !== 'string') return;
           setPhonefix(value.split(' ')[1]);
           close();
         },

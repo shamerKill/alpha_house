@@ -30,7 +30,8 @@ const MyRealnameScreen: FC = () => {
       const close = showSelector({
         data: selectType,
         selected: '',
-        onPress: (value: string) => {
+        onPress: (value) => {
+          if (typeof value !== 'string') return;
           addEvent.addImage(type, selectType.indexOf(value));
           close();
         },

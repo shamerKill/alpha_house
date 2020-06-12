@@ -33,7 +33,8 @@ const MyTransferScreen: FC = () => {
       const close = showSelector({
         data: coinArr,
         selected: coinType,
-        onPress: (data: string) => {
+        onPress: (data) => {
+          if (typeof data !== 'string') return;
           if (data === coinType) return;
           setCoinType(data);
           close();

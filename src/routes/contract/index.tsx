@@ -4,6 +4,7 @@ import ComIconBotton from '../../components/icon/bottom';
 import ContractScreen from '../../views/contract/index';
 import ContractOrderCloseScreen from '../../views/contract/order_close';
 import ContractWillCloseScreen from '../../views/contract/will_close';
+import ContractLogsAllScreen from '../../views/contract/logs';
 
 const ContractRoutes: TypeStackValue = [
   {
@@ -26,6 +27,10 @@ const ContractRoutes: TypeStackValue = [
       {
         name: 'ContractWillClose',
         component: ContractWillCloseScreen,
+      },
+      {
+        name: 'ContractLogs',
+        component: ContractLogsAllScreen,
       },
     ],
   },
