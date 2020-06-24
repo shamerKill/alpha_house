@@ -92,7 +92,6 @@ const MarketEdit: FC = () => {
       const selectLength = listData.filter(item => item.isSelected).length;
       if (selectLength === 0) return;
       const close = showComAlert({
-        title: '',
         desc: `是否删除选中的${selectLength}条数据`,
         success: {
           text: '删除',
@@ -133,13 +132,13 @@ const MarketEdit: FC = () => {
       <SafeAreaView style={style.listSafeView}>
         <ScrollView style={style.listScrollView}>
           {
-          listData.map(item => (
-            <MarketEditList
-              key={item.id}
-              onPress={addEvent.listSelectBtn}
-              {...item} />
-          ))
-        }
+            listData.map(item => (
+              <MarketEditList
+                key={item.id}
+                onPress={addEvent.listSelectBtn}
+                {...item} />
+            ))
+          }
         </ScrollView>
         {/* 底部选项 */}
         <View style={style.bottomView}>

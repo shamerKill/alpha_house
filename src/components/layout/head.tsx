@@ -18,6 +18,7 @@ interface InLayoutHeadProps {
   headBg?: string;
   border?: true;
   scrollStyle?: ViewStyle;
+  containerStyle?: ViewStyle;
   overScroll?: true;
   animated?: true;
   onScroll?: ScrollViewProps['onScroll'],
@@ -34,6 +35,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
   border,
   title,
   scrollStyle,
+  containerStyle,
   overScroll,
   onScroll,
   animated,
@@ -44,7 +46,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
   const navigation = useNavigation();
   // 返回事件
   const goBackPage = () => navigation.goBack();
-  const containerStyle = () => {
+  const containerStyleDefault = () => {
     const resultStyle: StyleProp<ViewStyle> = {
       backgroundColor: themeWhite,
       borderBottomColor: themeWhite,
@@ -112,7 +114,10 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
           }
         }
         // 头部盒子样式
-        containerStyle={containerStyle()} />
+        containerStyle={[
+          containerStyleDefault(),
+          containerStyle,
+        ]} />
       {
         line
           ? <ComLine />

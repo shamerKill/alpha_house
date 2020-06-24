@@ -11,6 +11,7 @@ import {
 } from '../../../config/theme';
 import ComFormButton from '../../../components/form/button';
 import showSelector from '../../../components/modal/selector';
+import showPayPass from '../../../components/modal/paypass';
 
 const MyTransferScreen: FC = () => {
   const navigation = useNavigation();
@@ -69,6 +70,16 @@ const MyTransferScreen: FC = () => {
       } else {
         setChangeValue('0');
       }
+    },
+    // 获取密码
+    getPass: () => {
+      showPayPass({
+        submitPass: addEvent.sendTrans,
+      });
+    },
+    // 发送交易
+    sendTrans: (pass: string) => {
+      console.log(pass);
     },
   };
 
@@ -192,7 +203,8 @@ const MyTransferScreen: FC = () => {
           </View>
           <ComFormButton
             containerStyle={style.submitBtn}
-            title="转账" />
+            title="转账"
+            onPress={addEvent.getPass} />
         </ScrollView>
       </SafeAreaView>
     </View>

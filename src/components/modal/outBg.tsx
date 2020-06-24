@@ -1,6 +1,6 @@
 // 弹窗框背景
 import React, {
-  FC, useState, useEffect, useRef,
+  FC, useState, useEffect,
 } from 'react';
 import { Animated, TouchableNativeFeedback, View } from 'react-native';
 

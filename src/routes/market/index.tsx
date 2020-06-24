@@ -4,6 +4,7 @@ import ComIconBotton from '../../components/icon/bottom';
 import MarketScreen from '../../views/market/index';
 import MarketSearchScreen from '../../views/market/search';
 import MarketEdit from '../../views/market/edit';
+import MarketKlineScreen from '../../views/market/kline';
 
 const MarketRoutes: TypeStackValue = [
   {
@@ -26,6 +27,10 @@ const MarketRoutes: TypeStackValue = [
       {
         name: 'MarketEdit',
         component: MarketEdit,
+      },
+      {
+        name: 'MarketKline',
+        component: MarketKlineScreen,
       },
     ],
   },

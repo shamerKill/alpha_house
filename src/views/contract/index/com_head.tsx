@@ -10,7 +10,7 @@ import {
   themeWhite, defaultThemeColor, defaultThemeBgColor, themeBlack, themeGray, themeGreen, themeRed, themeMoreBlue, getThemeOpacity,
 } from '../../../config/theme';
 
-const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutList[]; changeCoin: (id: TypeLeftOutList['id']) => void;}> = ({
+export const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutList[]; changeCoin: (id: TypeLeftOutList['id']) => void;}> = ({
   coinType,
   leftList,
   changeCoin,

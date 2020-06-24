@@ -1,6 +1,6 @@
 import React from 'react';
 import TypeStackValue from '../stackType';
-import HomeScreen from '../../views/home';
+import TranscationScreen from '../../views/transaction';
 import ComIconBotton from '../../components/icon/bottom';
 
 const TransactionRoutes: TypeStackValue = [
@@ -15,7 +15,7 @@ const TransactionRoutes: TypeStackValue = [
           : require('../../assets/images/icons/transaction_none.png')
       } />
     ),
-    component: HomeScreen,
+    component: TranscationScreen,
     screens: [],
   },
 ];

@@ -2,6 +2,8 @@ import React, { FC } from 'react';
 import {
   View, StyleSheet, Text, Image, ViewStyle,
 } from 'react-native';
+import { TouchableNativeFeedback } from 'react-native-gesture-handler';
+import { useNavigation } from '@react-navigation/native';
 import { TypeMarketListLine } from './type';
 import {
   themeWhite, defaultThemeBgColor, themeBlack, themeGray, themeRed, themeGreen, getThemeOpacity,
@@ -40,38 +42,41 @@ const ComMarketLine: FC<{data: TypeMarketListLine}> = ({ data }) => {
     volume,
     type,
   } = data;
+  const navigation = useNavigation();
   return (
-    <View style={style.lineView}>
-      <View style={style.lineLeft}>
-        <View style={style.lineLeftText}>
+    <TouchableNativeFeedback onPress={() => navigation.navigate('MarketKline', { name })}>
+      <View style={style.lineView}>
+        <View style={style.lineLeft}>
           <View style={style.lineLeftText}>
-            <Text style={style.lineLeftTopText}>{name}</Text>
-            {
+            <View style={style.lineLeftText}>
+              <Text style={style.lineLeftTopText}>{name}</Text>
+              {
               type !== undefined
                 && (
                   <ComMarketLineTypeView type={type} />
                 )
             }
+            </View>
+            <Text style={style.lineLeftTopText}>{priceUSDT}</Text>
           </View>
-          <Text style={style.lineLeftTopText}>{priceUSDT}</Text>
+          <View style={style.lineLeftTextDesc}>
+            <Text style={style.lineLeftTextDescText}>24h&nbsp;&nbsp;&nbsp;{volume}</Text>
+            <Text style={style.lineLeftTextDescText}>&yen;{priceRMB}</Text>
+          </View>
         </View>
-        <View style={style.lineLeftTextDesc}>
-          <Text style={style.lineLeftTextDescText}>24h&nbsp;&nbsp;&nbsp;{volume}</Text>
-          <Text style={style.lineLeftTextDescText}>&yen;{priceRMB}</Text>
+        <View style={style.lineRight}>
+          <Text style={[
+            style.lineRightText,
+            parseFloat(ratio) > 0
+              ? style.lineRightTextAdd
+              : style.lineRightTextCut,
+            parseFloat(ratio) === 0 && style.lineRightTextZero,
+          ]}>
+            {ratio}
+          </Text>
         </View>
       </View>
-      <View style={style.lineRight}>
-        <Text style={[
-          style.lineRightText,
-          parseFloat(ratio) > 0
-            ? style.lineRightTextAdd
-            : style.lineRightTextCut,
-          parseFloat(ratio) === 0 && style.lineRightTextZero,
-        ]}>
-          {ratio}
-        </Text>
-      </View>
-    </View>
+    </TouchableNativeFeedback>
   );
 };
 
