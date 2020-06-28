@@ -22,6 +22,7 @@ module.exports = {
     'react/no-array-index-key': 0,
     'no-plusplus': 0,
     '@typescript-eslint/no-use-before-define': 0,
+    'spaced-comment': 0,
   },
   parserOptions: {
     project: './tsconfig.json',

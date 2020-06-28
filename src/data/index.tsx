@@ -3,8 +3,8 @@ import { createStore, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import { createEpicMiddleware } from 'redux-observable';
 import RoutesBase from '../routes';
-import rootReducers from './reducers';
-import rootEpics from './epics';
+import rootReducers from './redux/reducers';
+import rootEpics from './redux/epics';
 
 
 const Store = () => {

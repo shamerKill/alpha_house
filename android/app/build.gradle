@@ -211,6 +211,7 @@ dependencies {
     
     implementation project(':react-native-splash-screen')
     implementation project(':react-native-fs')
+    implementation project(':realm')
 
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
 

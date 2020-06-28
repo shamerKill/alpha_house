@@ -9,4 +9,5 @@ graph TD
   realm -->|通知数据更新| value
   value -->|通知视图更新| view
   fetch -->|通知本地数据更新| realm
+  fetch -->|通知视图更新| value
 ```

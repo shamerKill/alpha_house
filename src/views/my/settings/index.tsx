@@ -3,6 +3,7 @@ import {
   View, StyleSheet, Text, ImageSourcePropType, Image as StaticImage, TouchableNativeFeedback,
 } from 'react-native';
 import { Image } from 'react-native-elements';
+import { useNavigation } from '@react-navigation/native';
 import ComLayoutHead from '../../../components/layout/head';
 import ComFormButton from '../../../components/form/button';
 import { themeWhite, defaultThemeBgColor } from '../../../config/theme';
@@ -17,6 +18,7 @@ export const setListArr = [
 const MySettingScreen: FC = () => {
   const moreImageSource = require('../../../assets/images/icons/list_more.png');
   const goToWithLogin = useGoToWithLogin();
+  const navigation = useNavigation();
 
   const [head, setHead] = useState<ImageSourcePropType>(require('../../../assets/images/memory/user_head.png'));
   const [nickName, setNickName] = useState('');
@@ -44,7 +46,7 @@ const MySettingScreen: FC = () => {
         success: {
           text: '退出登录',
           onPress: () => {
-            console.log('退出登录');
+            navigation.navigate('Login');
           },
         },
         close: {
