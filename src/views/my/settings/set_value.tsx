@@ -86,7 +86,7 @@ const MySettingValueScreen: FC = () => {
         defaultValue.current = 0;
         break;
       case 4:
-        setLanguageArr(['简体中文', '繁体中文', '英文']);
+        setLanguageArr(['简体中文']);
         setSelectLanguage(0);
         defaultValue.current = 0;
         break;

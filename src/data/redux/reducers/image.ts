@@ -1,36 +1,21 @@
 import { combineReducers } from 'redux';
-import { InImageState, InitImageState } from '../state/image';
-import ReducersType from './reducers_type';
+import { InitImageState } from '../state/image';
+import { SelfReducersType } from './reducers_type';
 import { ActionsType } from '../state';
+import { TypeImageData } from '../../@types/images';
 
-export type TypeBannerReducer = ReducersType<InImageState['banner'], 'data'>;
-const bannerReducer: TypeBannerReducer = (state = InitImageState.banner, action) => {
+const bannerReducer: SelfReducersType<TypeImageData['banner']> = (state = InitImageState.banner, action) => {
   switch (action.type) {
-    case ActionsType.FETCH_BANNER:
-      return {
+    case ActionsType.CHANGE_BANNER:
+      return [
         ...state,
-        isLoading: true,
-        error: false,
-      };
-    case ActionsType.FETCH_BANNER_SUCCESS:
-      return {
-        ...state,
-        isLoading: false,
-        error: false,
-        data: [...action.data],
-      };
-    case ActionsType.FETCH_BANNER_ERROR:
-      return {
-        ...state,
-        isLoading: false,
-        error: true,
-      };
+      ];
     default:
       return state;
   }
 };
 
-const imageReducer = combineReducers<InImageState>({
+const imageReducer = combineReducers<TypeImageData>({
   banner: bannerReducer,
 });
 

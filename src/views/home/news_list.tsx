@@ -5,13 +5,12 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import ComLayoutHead from '../../components/layout/head';
 import { themeGray } from '../../config/theme';
+import ajax from '../../data/fetch';
+import useGetDispatch from '../../data/redux/dispatch';
+import { InState, ActionsType } from '../../data/redux/state';
+import { TypeNewsList } from '../../data/@types/baseList';
 
-interface InHomeNewsCard {
-  time: string;
-  title: string;
-  desc: string;
-  readed: boolean;
-  id: string;
+interface InHomeNewsCard extends TypeNewsList {
   onPress?: (event: GestureResponderEvent) => void;
 }
 const HomeNewsCard: FC<InHomeNewsCard> = ({
@@ -92,51 +91,34 @@ const HomeNewsCard: FC<InHomeNewsCard> = ({
 
 const HomeNewsList: FC = () => {
   const navigation = useNavigation();
-  const [newsList, setNewsList] = useState<InHomeNewsCard[]>([]);
+  const [newsListState, dispatchNewsList] = useGetDispatch<InState['listState']['newsList']>('listState', 'newsList');
+  const [newsList, setNewsList] = useState<InState['listState']['newsList']>([]);
   // 点击进入详情事件
-  const goToDetails = (id: string) => {
+  const goToDetails = (id: string|number) => {
     navigation.navigate('HomeNewsDetails', {
       newsId: id,
     });
   };
   useEffect(() => {
-    setNewsList([
-      {
-        title: '关于季度合约停服升级的说明',
-        time: '2020-05-10 20:23:12',
-        desc: '季度合约将于5月7日17季度合约将于5月7日17季度合约将于5月7日17:00停服升级，预计半小',
-        readed: false,
-        id: '1',
-      },
-      {
-        title: '关于季度合约停服升级的说明',
-        time: '2020-05-10 20:23:12',
-        desc: '季度合约将于5月7日17季度合约将于5月7日17季度合约将于5月7日17:00停服升级，预计半小',
-        readed: true,
-        id: '2',
-      },
-      {
-        title: '关于季度合约停服升级的说明',
-        time: '2020-05-10 20:23:12',
-        desc: '季度合约将于5月7日17季度合约将于5月7日17季度合约将于5月7日17:00停服升级，预计半小',
-        readed: true,
-        id: '3',
-      },
-      {
-        title: '关于季度合约停服升级的说明',
-        time: '2020-05-10 20:23:12',
-        desc: '季度合约将于5月7日17季度合约将于5月7日17季度合约将于5月7日17:00停服升级，预计半小',
-        readed: true,
-        id: '4',
-      },
-      {
-        title: '关于季度合约停服升级的说明',
-        time: '2020-05-10 20:23:12',
-        desc: '季度合约将于5月7日17季度合约将于5月7日17季度合约将于5月7日17:00停服升级，预计半小',
-        readed: true,
-        id: '5',
-      },
-    ]);
+    ajax.get('/v1/article/article_list?types=1').then(data => {
+      if (data.status === 200) {
+        const result: InState['listState']['newsList'] = Object.values(data.data).map((item: any) => ({
+          readed: item.isRead,
+          title: item.list.title,
+          time: item.list.create_time,
+          desc: item.list.content,
+          id: item.list.id,
+        }));
+        setNewsList(result);
+        dispatchNewsList({
+          type: ActionsType.CHANGE_NEWS_LIST,
+          data: result,
+        });
+      }
+    }).catch(err => {
+      console.log(err);
+    });
+    setNewsList(newsListState);
   }, []);
   return (
     <ComLayoutHead

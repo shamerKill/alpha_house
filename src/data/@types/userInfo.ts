@@ -13,6 +13,8 @@ export interface TypeUserInfo {
   avatar: ImageURISource; // 用户头像数据
   account: string; // 用户账号
   accountType: 'email'|'phone'; // 用户账号类型
+  upUserCode: string; // 上级邀请码
+  token: string; // 登录token
   id: string; // 用户编号
   nickname: string; // 用户昵称
   introduce: string; // 个人简介

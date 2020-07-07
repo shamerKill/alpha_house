@@ -1,3 +1,6 @@
+import { ActionsType } from '../redux/state/index';
+import rootStore from '../store';
+
 type TypeClassFetchFuncOptions = {
   token?: string;
 };
@@ -36,16 +39,16 @@ export class Fetch {
   }
 
   // get方法
-  async get(
+  async get<T = any>(
     uri: string, // 请求路径
     options?: TypeClassFetchFuncOptions,
-  ) {
-    const token = options?.token || this.token;
+  ): Promise<{ data?: T, message: string; status: number }> {
+    const token = options?.token || rootStore.getState().userState.userInfo.token || this.token;
     // 添加头部信息
     const fetchHeader: { [key: string]: string } = {
       'Content-Type': 'application/x-www-form-urlencoded',
     };
-    if (token) fetchHeader['Content-Token'] = token;
+    if (token) fetchHeader.cookie = `JAVASESSID=${token}`;
     try {
       const result = await this.promise(
         // 链接
@@ -67,21 +70,21 @@ export class Fetch {
   }
 
   // post方法
-  async post(
+  async post<T = any>(
     uri: string, // 请求路径
     body: {
       [key: string]: any;
     }, // 请求内容
-    options?: TypeClassFetchFuncOptions,
-  ) {
-    const token = options?.token || this.token;
+    options?: TypeClassFetchFuncOptions & { setToken?: true; },
+  ): Promise<{ data?: T, message: string; status: number }> {
+    const token = options?.token || rootStore.getState().userState.userInfo.token || this.token;
     // 处理传入数据
     const fdBody = Object.keys(body).map(key => `${key}=${Fetch.valueToString(body[key])}`).join('&');
     // 添加头部信息
     const fetchHeader: { [key: string]: string } = {
       'Content-Type': 'application/x-www-form-urlencoded',
     };
-    if (token) fetchHeader['Content-Token'] = token;
+    if (token) fetchHeader.cookie = `JAVASESSID=${token}`;
     try {
       const result = await this.promise(
         // 链接
@@ -94,7 +97,17 @@ export class Fetch {
           headers: new Headers(fetchHeader),
         },
       );
-      return await result.json();
+      const resultJson = await result.json();
+      if (options?.setToken) {
+        this.token = resultJson.data;
+        rootStore.dispatch({
+          type: ActionsType.CHANGE_USER_INFO,
+          data: {
+            token: resultJson.data,
+          },
+        });
+      }
+      return resultJson;
     } catch (err) {
       return {
         status: -10086,
@@ -115,6 +128,6 @@ export class Fetch {
 }
 
 const ajax = new Fetch({
-  baseURI: 'http://192.168.3.39:3001',
+  baseURI: 'http://192.168.3.167:3001',
 });
 export default ajax;

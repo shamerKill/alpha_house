@@ -31,7 +31,7 @@
   - redux
   - redux-observable
   - rxjs
-  - realm
+  - async-storage
 
 ### 网络处理
   - fetch

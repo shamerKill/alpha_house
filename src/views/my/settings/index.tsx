@@ -3,13 +3,18 @@ import {
   View, StyleSheet, Text, ImageSourcePropType, Image as StaticImage, TouchableNativeFeedback,
 } from 'react-native';
 import { Image } from 'react-native-elements';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, StackActions } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import ComFormButton from '../../../components/form/button';
 import { themeWhite, defaultThemeBgColor } from '../../../config/theme';
 import ComLine from '../../../components/line';
 import { useGoToWithLogin } from '../../../tools/routeTools';
 import showComAlert from '../../../components/modal/alert';
+import ajax from '../../../data/fetch';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { InState, ActionsType } from '../../../data/redux/state';
+import { defaultUserInfoState } from '../../../data/redux/state/user';
 
 export const setListArr = [
   '头像', '昵称', '个人简介', '所在地', '语言版本',
@@ -20,11 +25,14 @@ const MySettingScreen: FC = () => {
   const goToWithLogin = useGoToWithLogin();
   const navigation = useNavigation();
 
-  const [head, setHead] = useState<ImageSourcePropType>(require('../../../assets/images/memory/user_head.png'));
-  const [nickName, setNickName] = useState('');
-  const [desc, setDesc] = useState('');
-  const [site, setSite] = useState('');
-  const [language, setLanguage] = useState('');
+  const [userInfoState, dispatchUserInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
+  const [, dispatchUserIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
+
+  const [head, setHead] = useState<ImageSourcePropType|null>(null);
+  const [nickName, setNickName] = useState(userInfoState.nickname);
+  const [desc, setDesc] = useState(userInfoState.introduce);
+  const [site, setSite] = useState(userInfoState.location);
+  const [language, setLanguage] = useState(userInfoState.language);
 
   const mapArrAdd = [
     { pic: head },
@@ -46,7 +54,7 @@ const MySettingScreen: FC = () => {
         success: {
           text: '退出登录',
           onPress: () => {
-            navigation.navigate('Login');
+            addEvent.signOutSend();
           },
         },
         close: {
@@ -57,6 +65,35 @@ const MySettingScreen: FC = () => {
         },
       });
     },
+    signOutSend: () => {
+      ajax.get('/v1/power/login_out').then(data => {
+        if (data.status === 200) {
+          navigation.dispatch(StackActions.replace('Login'));
+          showMessage({
+            message: '退出成功',
+            type: 'success',
+          });
+          dispatchUserInfo({
+            type: ActionsType.CHANGE_USER_INFO,
+            data: {
+              ...defaultUserInfoState,
+            },
+          });
+          dispatchUserIsLogin({
+            type: ActionsType.CHANGE_USER_LOGIN,
+            data: false,
+          });
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+          navigation.navigate('Login');
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    },
   };
 
   useEffect(() => {
@@ -65,6 +102,7 @@ const MySettingScreen: FC = () => {
     setDesc('这是我的个人简介你的简介是什么这是我的个人简介你的简介是什么');
     setSite('中国');
     setLanguage('中文简体');
+    if (userInfoState.avatar?.uri) setHead(userInfoState.avatar);
   }, []);
 
   return (

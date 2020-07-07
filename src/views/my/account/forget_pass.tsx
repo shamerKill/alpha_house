@@ -1,24 +1,35 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useRef } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { Text, Input } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, themeGray, defaultThemeColor, defaultThemeBgColor,
 } from '../../../config/theme';
 import ComFormButton from '../../../components/form/button';
+import { isPhone, isEmail } from '../../../tools/verify';
 
 const AccountForgetPass: FC = () => {
   const navigation = useNavigation();
+  const loading = useRef(false);
   const [account, setAccount] = useState('');
 
   const addEvent = {
     verfiyBeforeSend: () => {
-      console.log(account);
+      if (!isPhone(account) && !isEmail(account)) {
+        showMessage({
+          message: '账号输入错误',
+          type: 'warning',
+        });
+        return;
+      }
+      if (loading.current) return;
+      // TODO: 需要获取验证码
       addEvent.send();
     },
     send: () => {
-      navigation.navigate('AccountVerfiyCode', { type: 'forget' });
+      navigation.navigate('AccountVerfiyCode', { type: 'forget', data: { account } });
     },
   };
 
@@ -56,7 +67,7 @@ const AccountForgetPass: FC = () => {
 
 const style = StyleSheet.create({
   codeDesc: {
-    paddingTop: 10,
+    paddingTop: 20,
     fontSize: 16,
     paddingBottom: 10,
   },

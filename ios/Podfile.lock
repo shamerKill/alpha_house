@@ -68,9 +68,6 @@ PODS:
     - boost-for-react-native
     - DoubleConversion
     - glog
-  - GCDWebServer (3.5.4):
-    - GCDWebServer/Core (= 3.5.4)
-  - GCDWebServer/Core (3.5.4)
   - glog (0.3.5)
   - OpenSSL-Universal (1.0.2.19):
     - OpenSSL-Universal/Static (= 1.0.2.19)
@@ -313,12 +310,13 @@ PODS:
     - React-cxxreact (= 0.62.2)
     - React-jsi (= 0.62.2)
     - ReactCommon/callinvoker (= 0.62.2)
-  - RealmJS (6.0.2):
-    - GCDWebServer
+  - RNCAsyncStorage (1.11.0):
     - React
   - RNCClipboard (1.2.2):
     - React
   - RNCMaskedView (0.1.10):
+    - React
+  - RNDeviceInfo (5.6.1):
     - React
   - RNFS (2.16.6):
     - React
@@ -399,9 +397,10 @@ DEPENDENCIES:
   - React-RCTVibration (from `../node_modules/react-native/Libraries/Vibration`)
   - ReactCommon/callinvoker (from `../node_modules/react-native/ReactCommon`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
-  - RealmJS (from `../node_modules/realm`)
+  - "RNCAsyncStorage (from `../node_modules/@react-native-community/async-storage`)"
   - "RNCClipboard (from `../node_modules/@react-native-community/clipboard`)"
   - "RNCMaskedView (from `../node_modules/@react-native-community/masked-view`)"
+  - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNImageCropPicker (from `../node_modules/react-native-image-crop-picker`)
@@ -423,7 +422,6 @@ SPEC REPOS:
     - Flipper-PeerTalk
     - Flipper-RSocket
     - FlipperKit
-    - GCDWebServer
     - OpenSSL-Universal
     - TOCropViewController
     - YogaKit
@@ -489,12 +487,14 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/Libraries/Vibration"
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
-  RealmJS:
-    :path: "../node_modules/realm"
+  RNCAsyncStorage:
+    :path: "../node_modules/@react-native-community/async-storage"
   RNCClipboard:
     :path: "../node_modules/@react-native-community/clipboard"
   RNCMaskedView:
     :path: "../node_modules/@react-native-community/masked-view"
+  RNDeviceInfo:
+    :path: "../node_modules/react-native-device-info"
   RNFS:
     :path: "../node_modules/react-native-fs"
   RNGestureHandler:
@@ -528,7 +528,6 @@ SPEC CHECKSUMS:
   Flipper-RSocket: 64e7431a55835eb953b0bf984ef3b90ae9fdddd7
   FlipperKit: 6dc9b8f4ef60d9e5ded7f0264db299c91f18832e
   Folly: 30e7936e1c45c08d884aa59369ed951a8e68cf51
-  GCDWebServer: 2c156a56c8226e2d5c0c3f208a3621ccffbe3ce4
   glog: 1f3da668190260b06b429bb211bfbee5cd790c28
   OpenSSL-Universal: 8b48cc0d10c1b2923617dfe5c178aa9ed2689355
   RCTRequired: cec6a34b3ac8a9915c37e7e4ad3aa74726ce4035
@@ -555,9 +554,10 @@ SPEC CHECKSUMS:
   React-RCTText: fae545b10cfdb3d247c36c56f61a94cfd6dba41d
   React-RCTVibration: 4356114dbcba4ce66991096e51a66e61eda51256
   ReactCommon: ed4e11d27609d571e7eee8b65548efc191116eb3
-  RealmJS: fa482f7607e70a17abfc5e7817cfca1042186b62
+  RNCAsyncStorage: db711e29e5e0500d9bd21aa0c2e397efa45302b1
   RNCClipboard: a254f6e568bc713b7ef49646e216661369882030
   RNCMaskedView: f5c7d14d6847b7b44853f7acb6284c1da30a3459
+  RNDeviceInfo: ab2ab4ca9e7f2bc4f35d62ab6ce2b66f2cbf1e7a
   RNFS: 2bd9eb49dc82fa9676382f0585b992c424cd59df
   RNGestureHandler: 8f09cd560f8d533eb36da5a6c5a843af9f056b38
   RNImageCropPicker: 38865ab4af1b0b2146ad66061196bc0184946855

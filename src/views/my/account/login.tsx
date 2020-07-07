@@ -1,32 +1,112 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, {
+  FC, useState, useEffect, useRef,
+} from 'react';
 import {
   View, Text, TouchableNativeFeedback, Image, StyleSheet,
 } from 'react-native';
-import { useNavigation, StackActions } from '@react-navigation/native';
+import {
+  useNavigation, StackActions, useRoute, RouteProp,
+} from '@react-navigation/native';
 import { Input } from 'react-native-elements';
+import { showMessage } from 'react-native-flash-message';
+import { getUniqueId } from 'react-native-device-info';
 import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, themeTextGray, defaultThemeColor, defaultThemeBgColor,
 } from '../../../config/theme';
 import ComFormButton from '../../../components/form/button';
+import { InState, ActionsType } from '../../../data/redux/state';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { isPhone, isEmail, isPass } from '../../../tools/verify';
+import ajax from '../../../data/fetch';
+import { defaultUserInfoState } from '../../../data/redux/state/user';
 
 const LoginScreen: FC = () => {
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<{'login'?: { name: string; params?: object }}, 'login'>>();
+  const loading = useRef(false);
+  const [userInfoState, dispatchUserInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
+  const [, dispatchUserIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
+
+  let defaultAccount = '';
+  if (userInfoState.account) {
+    if (userInfoState.accountType === 'email') defaultAccount = userInfoState.account;
+    else [, defaultAccount] = userInfoState.account.split(' ');
+  }
 
   // 语言
   const [language, setLanguage] = useState('');
   // 账号密码
-  const [account, setAccount] = useState('');
+  const [account, setAccount] = useState(defaultAccount);
   const [pass, setPass] = useState('');
 
   const addEvent = {
     verfiyBeforeSend: () => {
-      console.log('检查数据');
+      const message = '账号或密码输入错误';
+      if (!isPhone(account) && !isEmail(account)) {
+        showMessage({
+          message,
+          type: 'warning',
+        });
+        return;
+      }
+      if (!isPass(pass)) {
+        showMessage({
+          message,
+          type: 'warning',
+        });
+        return;
+      }
       addEvent.send();
     },
     send: () => {
-      navigation.dispatch(StackActions.popToTop());
-      navigation.dispatch(StackActions.replace('Home'));
+      if (loading.current) return;
+      loading.current = true;
+      ajax.post<string>('/v1/power/sign_in', {
+        Account: account,
+        Password: pass,
+        DeviceInfo: getUniqueId(),
+      }).then(data => {
+        if (data.status === 200) {
+          showMessage({
+            message: '登录成功',
+            type: 'success',
+          });
+          let accountType: typeof defaultUserInfoState['accountType'] = 'email';
+          if (isPhone(account)) accountType = 'phone';
+          dispatchUserInfo({
+            type: ActionsType.CHANGE_USER_INFO,
+            data: {
+              ...defaultUserInfoState,
+              account,
+              accountType,
+              token: data.data,
+            },
+          });
+          dispatchUserIsLogin({
+            type: ActionsType.CHANGE_USER_LOGIN,
+            data: true,
+          });
+          addEvent.goToHome();
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch((err) => {
+        console.log(err);
+      }).finally(() => {
+        loading.current = false;
+      });
+    },
+    goToHome: () => {
+      if (route.params) {
+        navigation.dispatch(StackActions.replace(route.params.name, route.params.params));
+      } else {
+        navigation.dispatch(StackActions.popToTop());
+        navigation.dispatch(StackActions.replace('Home'));
+      }
     },
     goToLink: (link: string, obj?: object) => {
       navigation.navigate(link, obj);

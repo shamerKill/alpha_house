@@ -14,8 +14,8 @@ import {
 const AccountVerfiyCodeScreen: FC = () => {
   const screenWidth = Math.floor(Dimensions.get('window').width) - 20;
 
-  const route = useRoute<RouteProp<{verfiyCode: { type: 'register' | 'forget' }}, 'verfiyCode'>>();
-  console.log(route);
+  const route = useRoute<RouteProp<{verfiyCode: { type: 'register' | 'forget', data: { account: string } }}, 'verfiyCode'>>();
+
   const navigation = useNavigation();
 
   const timer = useRef(0);
@@ -41,8 +41,14 @@ const AccountVerfiyCodeScreen: FC = () => {
     },
     // 提交验证码
     send: () => {
-      console.log(code);
-      navigation.navigate('AccountSetPass', { type: route.params.type });
+      // TODO: 需要验证验证码
+      navigation.navigate('AccountSetPass', {
+        type: route.params.type,
+        data: {
+          ...route.params.data,
+          verifyCode: code,
+        },
+      });
     },
     // 发送验证码倒计时
     setTimer: () => {
@@ -74,7 +80,7 @@ const AccountVerfiyCodeScreen: FC = () => {
   }, [code]);
 
   useEffect(() => {
-    setAccount('188****8888');
+    setAccount(route.params.data?.account || '');
     setCode('');
     addEvent.setTimer();
     const lineAimate = addEvent.lineAimate();

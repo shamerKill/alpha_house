@@ -10,7 +10,17 @@ export type RMBToDollar = string;
 export interface TypeNotice {
   title: string; // 公告标题
   id: string; // 公告id
-  hasInner: boolean; // 是否需要链接页面
+  hasInner?: boolean; // 是否需要链接页面
+}
+/**
+ * 消息列表类型
+**/
+export interface TypeNewsList {
+  time: string;
+  title: string;
+  desc: string;
+  readed: boolean;
+  id: string|number;
 }
 /**
  * banner图类型

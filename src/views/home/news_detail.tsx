@@ -3,18 +3,42 @@ import { View, Text } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import ComLayoutHead from '../../components/layout/head';
 import { defaultThemeColor, themeWhite, themeGray } from '../../config/theme';
+import ajax from '../../data/fetch';
+import useGetDispatch from '../../data/redux/dispatch';
+import { InState, ActionsType } from '../../data/redux/state';
 
 const HomeNewsDetails: FC = () => {
   const route = useRoute<RouteProp<{newsDetails:{newsId:string}}, 'newsDetails'>>();
+  const [newsListState, dispatchNewsList] = useGetDispatch<InState['listState']['newsList']>('listState', 'newsList');
   const id = route.params.newsId;
   const [title, setTitle] = useState('');
   const [time, setTime] = useState('');
   const [desc, setDesc] = useState('');
   useEffect(() => {
-    console.log(id);
-    setTitle('季度合约定服升级的说明');
-    setTime('2020-05-10 20:23:12');
-    setDesc('季度合约交易区于5月7日17:00停服升级，预计半小时。期间，您将无法进行开平仓、资金划转、止盈止损、计划委托等操作，请提前把控仓位风险。因此为您带来不便，还请谅解！');
+    ajax.get(`/v1/article/article_detail?id=${id}`).then(data => {
+      if (data.status === 200) {
+        setTitle(data.data.title);
+        setTime(data.data.create_time);
+        setDesc(data.data.content);
+      }
+    }).catch(err => {
+      console.log(err);
+    });
+    const result = newsListState.map(item => {
+      if (item.id === id) {
+        const rul = { ...item };
+        setTitle(rul.title);
+        setTime(rul.time);
+        setDesc(rul.desc);
+        rul.readed = true;
+        return rul;
+      }
+      return item;
+    });
+    dispatchNewsList({
+      type: ActionsType.CHANGE_NEWS_LIST,
+      data: result,
+    });
   }, []);
   return (
     <ComLayoutHead title="消息详情">

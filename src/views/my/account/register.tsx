@@ -7,12 +7,14 @@ import {
 import { ScrollView } from 'react-native-gesture-handler';
 import { CheckBox } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, themeGray, themeBlack, defaultThemeBgColor, themeTextGray, defaultThemeColor,
 } from '../../../config/theme';
 import showSelector from '../../../components/modal/selector';
 import ComFormButton from '../../../components/form/button';
+import { isPhone, isEmail } from '../../../tools/verify';
 
 const RegisterScreen: FC = () => {
   const navigation = useNavigation();
@@ -23,11 +25,13 @@ const RegisterScreen: FC = () => {
   const emailRef = useRef<TextInput>(null);
 
   const [accountType, setAccountType] = useState<'phone'|'email'>('phone');
-
   const [phone, setPhone] = useState('');
   const [phonePrefix, setPhonefix] = useState('+86');
   const [email, setEmail] = useState('');
+  const [upUserCode, setUpUserCode] = useState('');
   const [agreement, setAgreement] = useState(false);
+  // 是否在请求中
+  const [loading, setLoading] = useState(false);
 
   const addEvent = {
     // 更改注册类型
@@ -39,7 +43,7 @@ const RegisterScreen: FC = () => {
       }
       // 切换焦点
       [emailRef, phoneRef][accountObj[account]].current?.blur();
-      [phoneRef, emailRef][accountObj[account]].current?.focus();
+      // [phoneRef, emailRef][accountObj[account]].current?.focus();
       if (scrollRef.current) {
         try {
           (scrollRef.current as any).scrollTo({ x: accountObj[account] * screenWidth, y: 0 });
@@ -51,10 +55,6 @@ const RegisterScreen: FC = () => {
       const close = showSelector({
         data: [
           { data: '+86', before: '中国 ' },
-          { data: '+01', before: '美国 ' },
-          { data: '+04', before: '日本 ' },
-          { data: '+123', before: '中东 ' },
-          { data: '+321', before: '韩国 ' },
         ],
         selected: phonePrefix,
         onPress: (value) => {
@@ -66,15 +66,36 @@ const RegisterScreen: FC = () => {
     },
     // 下一步
     verfiyBeforeSend: () => {
-      console.log('检查数据');
-      addEvent.send();
+      if (loading) return;
+      let message = '';
+      // 需要阅读并同意
+      if (!agreement) message = '请同意用户注册协议';
+      // 验证账号
+      if (accountType === 'email' && !isEmail(email)) message = '请检查邮箱格式';
+      if (accountType === 'phone' && !isPhone(phone)) message = '请检查手机号格式';
+      if (message === '') {
+        // 发送数据
+        addEvent.send();
+      } else {
+        showMessage({
+          message,
+          type: 'warning',
+        });
+      }
     },
     // 提交
     send: () => {
-      addEvent.goToLink('AccountVerfiyCode', { type: 'register' });
-    },
-    goToLink: (link: string, obj?: object) => {
-      navigation.navigate(link, obj);
+      setLoading(true);
+      // TODO: 没有验证码
+      navigation.navigate('AccountVerfiyCode', {
+        type: 'register',
+        data: {
+          accountType,
+          account: accountType === 'email' ? email : `${phonePrefix} ${phone}`,
+          upUserCode,
+        },
+      });
+      setLoading(false);
     },
   };
 
@@ -153,6 +174,22 @@ const RegisterScreen: FC = () => {
               onChangeText={value => setEmail(value)} />
           </View>
         </ScrollView>
+        <View style={[style.formInputView, { width: screenWidth }]}>
+          <TextInput
+            style={[
+              style.formInputInput,
+              {
+                paddingTop: 20,
+                paddingBottom: 10,
+                paddingLeft: 0,
+              },
+            ]}
+            ref={emailRef}
+            keyboardType="email-address"
+            placeholder="邀请码(选填)"
+            value={upUserCode}
+            onChangeText={value => setUpUserCode(value)} />
+        </View>
         <CheckBox
           containerStyle={style.checkBoxView}
           checked={agreement}
@@ -162,7 +199,7 @@ const RegisterScreen: FC = () => {
           title={(
             <View style={style.checkBoxViewInner}>
               <Text style={style.checkBoxViewText}>我已阅读并同意</Text>
-              <TouchableNativeFeedback onPress={() => addEvent.goToLink('RegisterAgreement')}>
+              <TouchableNativeFeedback onPress={() => navigation.navigate('RegisterAgreement')}>
                 <View>
                   <Text style={[style.checkBoxViewText, style.checkBoxViewLink]}>《用户注册协议》</Text>
                 </View>
@@ -176,7 +213,7 @@ const RegisterScreen: FC = () => {
         <View style={style.formRegisterView}>
           <View style={style.formRegisterText}>
             <Text>已有账号?</Text>
-            <TouchableNativeFeedback onPress={() => addEvent.goToLink('Login')}>
+            <TouchableNativeFeedback onPress={() => navigation.navigate('Login')}>
               <Text style={style.formRegisterTextLink}>马上登录</Text>
             </TouchableNativeFeedback>
           </View>

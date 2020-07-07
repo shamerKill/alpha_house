@@ -1,26 +1,10 @@
+import { TypeImageData } from '../../@types/images';
+
 export const ActionsImageType = {
-  // banner图
-  FETCH_BANNER: 'FETCH_BANNER',
-  FETCH_BANNER_SUCCESS: 'FETCH_BANNER_SUCCESS',
-  FETCH_BANNER_ERROR: 'FETCH_BANNER_ERROR',
+  // banner图成功
+  CHANGE_BANNER: 'CHANGE_BANNER',
 };
 
-export interface InImageState {
-  // 轮播图
-  banner: {
-    isLoading?: boolean;
-    error?: boolean;
-    data: {
-      source: string;
-      link?: string;
-    }[];
-  }
-}
-
-export const InitImageState: InImageState = {
-  banner: {
-    isLoading: false,
-    error: false,
-    data: [],
-  },
+export const InitImageState: TypeImageData = {
+  banner: [],
 };

@@ -15,19 +15,30 @@ import homeStyle from './index.style';
 import { positiveNumber } from '../../tools/number';
 import ComLine from '../../components/line';
 import ComLayoutHead from '../../components/layout/head';
+import useGetDispatch from '../../data/redux/dispatch';
+import { InState, ActionsType } from '../../data/redux/state';
+import ajax from '../../data/fetch';
+import { TypeNotice } from '../../data/@types/baseList';
+import { useGoToWithLogin } from '../../tools/routeTools';
 
 // 头部
-const HomeScreenHead: FC<{ user: string; }> = ({ user }) => {
+const HomeScreenHead: FC = () => {
+  const [userInfoState] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
   const searchImg = require('../../assets/images/icons/search.png');
   const commentsImg = require('../../assets/images/icons/comments.png');
-  const navigation = useNavigation();
+  const gotoWithLogin = useGoToWithLogin();
+  const gotoWithLoginDispatch = useGoToWithLogin(true);
   // 点击搜索按钮
-  const searchBtn = () => alert('点击搜索');
+  const searchBtn = () => gotoWithLoginDispatch('MarketSearch');
   // 点击公告按钮
-  const commentBtn = () => navigation.navigate('HomeNewsList');
+  const commentBtn = () => gotoWithLogin('HomeNewsList');
   return (
     <View style={homeStyle.homeHead}>
-      <Text style={homeStyle.homeHeadText}>Hi,{user}</Text>
+      <Text style={homeStyle.homeHeadText}>
+        {
+          userInfoState.account ? `Hi,${userInfoState.account}` : '未登录'
+        }
+      </Text>
       <TouchableNativeFeedback
         onPress={searchBtn}>
         <Image
@@ -47,14 +58,36 @@ const HomeScreenHead: FC<{ user: string; }> = ({ user }) => {
 };
 
 // banner
-type TypeBannerArr = {pic: ImageSourcePropType, id: number}[];
-const HomeScreenBanner: FC<{ bannerArr: TypeBannerArr }> = ({ bannerArr }) => {
+const HomeScreenBanner: FC = () => {
+  const [bannerState, dispatchBannerState] = useGetDispatch<InState['imageState']['banner']>('imageState', 'banner');
+  // 轮播图
+  const [banner, setBanner] = useState<InState['imageState']['banner']>(bannerState);
   // 读秒
   const swiperTime = 4;
+  useEffect(() => {
+    ajax.get<{address: string; id: number; link: string;}[]>('/v1/index/rotation').then(data => {
+      if (data.status === 200) {
+        if (data.data) {
+          const result = data.data.map(item => ({
+            source: { uri: item.address },
+            id: item.id,
+            link: item.link,
+          }));
+          setBanner(result);
+          dispatchBannerState({
+            type: ActionsType.CHANGE_BANNER,
+            data: result,
+          });
+        }
+      }
+    }).catch(err => {
+      console.log(err);
+    });
+  }, []);
   return (
     <View style={homeStyle.banner}>
       {
-        bannerArr.length
+        banner.length
           ? (
             <Swiper
               autoplay
@@ -63,12 +96,12 @@ const HomeScreenBanner: FC<{ bannerArr: TypeBannerArr }> = ({ bannerArr }) => {
               dotStyle={homeStyle.bannerSlideBottomDotStyle}
               activeDotStyle={homeStyle.bannerSlideBottomActiveDotStyle}>
               {
-          bannerArr.map(item => (
-            <View style={homeStyle.bannerSlide} key={item.id}>
-              <Image resizeMode="stretch" style={homeStyle.bannerSlideImage} source={item.pic} />
-            </View>
-          ))
-        }
+                banner.map(item => (
+                  <View style={homeStyle.bannerSlide} key={item.id}>
+                    <Image resizeMode="stretch" style={homeStyle.bannerSlideImage} source={item.source} />
+                  </View>
+                ))
+              }
             </Swiper>
           ) : <View />
       }
@@ -77,14 +110,30 @@ const HomeScreenBanner: FC<{ bannerArr: TypeBannerArr }> = ({ bannerArr }) => {
 };
 
 // 公告
-type TypeCommentArr = {title: string; id: string;}[];
-const HomeScreenComment: FC<{ commentArr: TypeCommentArr }> = ({ commentArr }) => {
+const HomeScreenComment: FC = () => {
+  // 公告
+  const [comments, setComments] = useState<TypeNotice[]>([]);
   // 读秒
   const swiperTime = 5;
   // 点击
   const commitClick = (id: string) => {
     alert(id);
   };
+  useEffect(() => {
+    ajax.get('/v1/article/article_list?types=1').then(data => {
+      if (data.status === 200) {
+        if (data.data) {
+          const result = Object.values(data.data).map((item: any) => ({
+            title: item.list.title,
+            id: item.list.id,
+          }));
+          setComments(result);
+        }
+      }
+    }).catch((err) => {
+      console.log(err);
+    });
+  }, []);
   return (
     <View style={homeStyle.commentView}>
       <Image
@@ -92,7 +141,7 @@ const HomeScreenComment: FC<{ commentArr: TypeCommentArr }> = ({ commentArr }) =
         resizeMode="contain"
         source={require('../../assets/images/icons/comments.png')} />
       {
-        commentArr.length
+        comments.length
           ? (
             <Swiper
               autoplay
@@ -101,7 +150,7 @@ const HomeScreenComment: FC<{ commentArr: TypeCommentArr }> = ({ commentArr }) =
               showsPagination={false}
               autoplayTimeout={swiperTime}>
               {
-                commentArr.map(item => (
+                comments.map(item => (
                   <TouchableNativeFeedback key={item.id} onPress={() => commitClick(item.id)}>
                     <View style={homeStyle.commentView}>
                       <Text style={homeStyle.commentText}>{ item.title }</Text>
@@ -195,31 +244,8 @@ const HomeScreenNav: FC<{ adv: TypeHomeNavProp }> = ({ adv }) => {
     if (link) navigation.navigate(link);
     console.log(link);
   };
-  const navList = [
-    {
-      icon: require('../../assets/images/icons/nav_usdt.png'), name: 'USDT合约', link: '', key: 'nav_1',
-    },
-    {
-      icon: require('../../assets/images/icons/nav_coin.png'), name: '币本位合约', link: '', key: 'nav_2',
-    },
-    {
-      icon: require('../../assets/images/icons/nav_quarter.png'), name: '季度合约', link: '', key: 'nav_3',
-    },
-  ];
   return (
     <View>
-      <View style={homeStyle.navListView}>
-        {
-          navList.map(nav => (
-            <TouchableNativeFeedback key={nav.key} onPress={() => goTolink(nav.link)}>
-              <View style={homeStyle.navListLi}>
-                <Image style={homeStyle.navListImage} source={nav.icon} />
-                <Text style={homeStyle.navListText}>{nav.name}</Text>
-              </View>
-            </TouchableNativeFeedback>
-          ))
-        }
-      </View>
       <View style={homeStyle.navListViewBtns}>
         <TouchableNativeFeedback onPress={() => goTolink('HomeHelpList')} style={{ flex: 1 }}>
           <View style={homeStyle.navBtnView}>
@@ -424,12 +450,6 @@ const HomeScreenMarket: FC<{
 };
 
 const HomeScreen: FC = () => {
-  // 用户
-  const [userPhone] = useState('188****8888');
-  // 轮播图
-  const [banner, setBanner] = useState<TypeBannerArr>([]);
-  // 公告
-  const [comments, setComments] = useState<TypeCommentArr>([]);
   // 中部行情
   const [marketBlock, setMarketBlock] = useState<TypeHomeRowMarketValue[]>([]);
   // nav的广告图片和链接
@@ -442,18 +462,6 @@ const HomeScreen: FC = () => {
   const [coinMarketRange, setCoinMarketRange] = useState<TypeHomeScreenMarketLine[]>([]);
   // 处理数据
   useEffect(() => {
-    const bannerMem = require('../../assets/images/memory/banner1.png');
-    setBanner([
-      { pic: bannerMem, id: 1 },
-      { pic: bannerMem, id: 2 },
-      { pic: bannerMem, id: 3 },
-    ]);
-    setComments([
-      { title: '这是第一个公告这是第一个公告这是第一个公告', id: '1' },
-      { title: '这是第2个公告', id: '2' },
-      { title: '这是第3个公告', id: '3' },
-      { title: '这是第4个公告', id: '4' },
-    ]);
     setMarketBlock([
       {
         keyV: '1BTC/USDT永续', price: '9900.76', range: '+3.98%', type: 'USDT合约',
@@ -501,11 +509,11 @@ const HomeScreen: FC = () => {
       <ScrollView style={homeStyle.homeView}>
         <View style={homeStyle.homeViewInner}>
           {/* 头部 */}
-          <HomeScreenHead user={userPhone} />
+          <HomeScreenHead />
           {/* banner */}
-          <HomeScreenBanner bannerArr={banner} />
+          <HomeScreenBanner />
           {/* adv */}
-          <HomeScreenComment commentArr={comments} />
+          <HomeScreenComment />
           {/* market */}
           <HomeScreenRowMarket value={marketBlock} />
         </View>
