@@ -26,7 +26,8 @@ const ComModalOutBg: FC = () => {
   }, []);
   useEffect(() => {
     if (show) {
-      insertBgStart.setValue(0);
+      // FIXME: 异步操作时动画不执行，先取消动画
+      insertBgStart.setValue(1);
       Animated.timing(
         insertBgStart,
         {

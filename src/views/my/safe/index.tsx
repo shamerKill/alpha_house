@@ -3,14 +3,18 @@ import { ListItem } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 import ComLayoutHead from '../../../components/layout/head';
 import ComLine from '../../../components/line';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { InState } from '../../../data/redux/state';
 
 const MySafeScreen: FC = () => {
+  const [userInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
   const navigation = useNavigation();
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+
   useEffect(() => {
-    setPhone('188****8888');
-    setEmail('');
+    if (userInfo.accountType === 'email') setEmail(userInfo.account);
+    else setPhone(userInfo.account);
   }, []);
   return (
     <ComLayoutHead title="安全中心">
@@ -31,27 +35,37 @@ const MySafeScreen: FC = () => {
         title="修改交易密码"
         chevron />
       <ComLine />
-      <ListItem
-        onPress={() => navigation.navigate('bindAccount', { state: 'phone' })}
-        containerStyle={{
-          height: 50,
-        }}
-        title="绑定手机号"
-        rightSubtitle={
+      {
+        userInfo.accountType === 'phone' && (
+          <ListItem
+            // onPress={() => navigation.navigate('bindAccount', { state: 'phone' })}
+            onPress={() => {}}
+            containerStyle={{
+              height: 50,
+            }}
+            title="绑定手机号"
+            rightSubtitle={
           phone || '未绑定'
         }
-        bottomDivider
-        chevron />
-      <ListItem
-        onPress={() => navigation.navigate('bindAccount', { state: 'email' })}
-        containerStyle={{
-          height: 50,
-        }}
-        rightSubtitle={
+            bottomDivider
+            chevron />
+        )
+      }
+      {
+        userInfo.accountType === 'email' && (
+          <ListItem
+            // onPress={() => navigation.navigate('bindAccount', { state: 'email' })}
+            onPress={() => {}}
+            containerStyle={{
+              height: 50,
+            }}
+            rightSubtitle={
           email || '未绑定'
         }
-        title="绑定邮箱"
-        chevron />
+            title="绑定邮箱"
+            chevron />
+        )
+      }
     </ComLayoutHead>
   );
 };

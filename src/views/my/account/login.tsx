@@ -67,6 +67,7 @@ const LoginScreen: FC = () => {
         Password: pass,
         DeviceInfo: getUniqueId(),
       }).then(data => {
+        console.log(data);
         if (data.status === 200) {
           showMessage({
             message: '登录成功',

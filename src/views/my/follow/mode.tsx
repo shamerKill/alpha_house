@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useState, useEffect, useRef } from 'react';
 import {
   View, StyleSheet, Image as StaticImage, TouchableNativeFeedback,
 } from 'react-native';
@@ -17,23 +17,26 @@ import { modalOutBg } from '../../../components/modal/outBg';
 import MyFollowAgreenmentOut from './follow_agreement';
 import showComAlert from '../../../components/modal/alert';
 import { useGoToWithLogin } from '../../../tools/routeTools';
+import ajax from '../../../data/fetch';
+import storage from '../../../data/database';
 
 const MyFollowModeScreen: FC = () => {
-  const { params: { id: userId } } = useRoute<RouteProp<{followMode: {id: string|number}}, 'followMode'>>();
+  const { params: { id: userId, name } } = useRoute<RouteProp<{followMode: {id: string|number, name: string}}, 'followMode'>>();
   const navigation = useNavigation();
   const goToWithLogin = useGoToWithLogin();
   console.log(userId);
-  const descArr = (min: number, max: number) => ([
-    `例如您设置跟单金额 x USDT，不论交易员下单多少本金，您的下单本金均为 x USDT。单次最低跟单金额为 ${min} USDT。`,
-    `单日累计跟随本金到达此数值后，将不再您跟随下单，最大为：${max} USDT。`,
+  const descArr = (min: number, max: number, coinType: string) => ([
+    `例如您设置跟单金额 x ${coinType}，不论交易员下单多少本金，您的下单本金均为 x ${coinType}。单次最低跟单金额为 ${min} ${coinType}。`,
+    `单日累计跟随本金到达此数值后，将不再您跟随下单，最大为：${max} ${coinType}。`,
   ]);
+  const coinDataArr = useRef<{id: number; symbol: string; num: number}[]>([]);
 
   const [maxValue, setMaxValue] = useState(0);
   const [minValue, setMinValue] = useState(0);
   // 跟随导师
-  const [userName, setUserName] = useState('');
+  const [userName] = useState(name);
   // 跟单币种
-  const [coinType, setCoinType] = useState('USDT');
+  const [coinType, setCoinType] = useState('');
   // 跟单金额
   const [orderMoney, setOrderMoney] = useState('2');
   // 单日跟随本金
@@ -42,25 +45,31 @@ const MyFollowModeScreen: FC = () => {
   const addEvent = {
     selectCoin: () => {
       const close = showSelector({
-        data: ['USDT', 'ETH', 'BTC'],
+        data: coinDataArr.current.map(item => item.symbol),
         selected: coinType,
         onPress: (value) => {
           if (typeof value !== 'string') return;
+          const data = coinDataArr.current.filter(item => item.symbol === value)[0];
           setCoinType(value);
+          setMinValue(data.num);
+          setOrderMoney(`${data.num}`);
+          setDayMoney(`${data.num * 100}`);
+          setMaxValue(data.num * 1000);
           close();
         },
       });
     },
     setValue: (setType: React.Dispatch<React.SetStateAction<string>>, value: string, type?: 'cut'|'add') => {
       setType(() => {
-        const resultString = value.match(/\d/g)?.join('');
+        const resultString = value.match(/[\d|\.]/g)?.join('');
         if (!resultString) return '0';
         let result = parseFloat(resultString);
         if (type) {
           if (type === 'cut') (result !== 0) && result--;
           if (type === 'add') result++;
+          return result.toString();
         }
-        return result.toString();
+        return resultString;
       });
     },
     verfiy: () => {
@@ -75,6 +84,20 @@ const MyFollowModeScreen: FC = () => {
           type: 'warning',
         });
       }
+      storage.get<number>('followAgreenType').then(data => {
+        if (new Date().getTime() - data > 60 * 60 * 24) {
+          addEvent.showModel();
+          storage.save('followAgreenType', new Date().getTime());
+        } else {
+          addEvent.submit();
+        }
+      }).catch(err => {
+        // 没有数据
+        addEvent.showModel();
+        storage.save('followAgreenType', new Date().getTime());
+      });
+    },
+    showModel: () => {
       modalOutBg.outBgsetShow(true);
       modalOutBg.outBgsetChildren(
         <MyFollowAgreenmentOut
@@ -88,6 +111,21 @@ const MyFollowModeScreen: FC = () => {
       );
     },
     submit: () => {
+      ajax.post('/v1/track/action_track', {
+        trackID: userId,
+        contract_type: 1,
+        symbol: coinDataArr.current.filter(item => item.symbol === coinType)[0].id,
+        num: orderMoney,
+        day_num: dayMoney,
+      }).then(data => {
+        if (data.status === 200) addEvent.submitSuccess();
+        else showMessage({
+          message: data.message,
+          type: 'warning',
+        });
+      }).catch(err => console.log(err));
+    },
+    submitSuccess: () => {
       const close = showComAlert({
         title: '跟单成功',
         desc: '跟单成功，请前往跟单管理页面查看详情',
@@ -106,15 +144,20 @@ const MyFollowModeScreen: FC = () => {
           }
         },
       });
-    },
+    }
   };
 
   useEffect(() => {
-    setUserName('其少金融学院');
-    setMinValue(2);
-    setMaxValue(200);
-    setOrderMoney('2');
-    setDayMoney('200');
+    ajax.get('/v1/track/edit_view?id=').then(data => {
+      if (data.status === 200) {
+        coinDataArr.current = data.data.value;
+        setCoinType(data.data.value[0].symbol);
+        setMinValue(data.data.value[0].num);
+        setOrderMoney(`${data.data.value[0].num}`);
+        setDayMoney(`${data.data.value[0].num * 100}`);
+        setMaxValue(data.data.value[0].num * 1000);
+      }
+    }).catch(err => console.log(err));
   }, []);
   return (
     <ComLayoutHead
@@ -151,7 +194,7 @@ const MyFollowModeScreen: FC = () => {
             </TouchableNativeFeedback>
             <TextInput
               style={style.tabListInput}
-              keyboardType="number-pad"
+              keyboardType="numeric"
               value={orderMoney}
               onChange={e => addEvent.setValue(setOrderMoney, e.nativeEvent.text)} />
             <TouchableNativeFeedback onPress={() => addEvent.setValue(setOrderMoney, orderMoney, 'add')}>
@@ -163,7 +206,7 @@ const MyFollowModeScreen: FC = () => {
               </View>
             </TouchableNativeFeedback>
           </View>
-          <Text style={style.tabListDesc}>{descArr(minValue, maxValue)[0]}</Text>
+          <Text style={style.tabListDesc}>{descArr(minValue, maxValue, coinType)[0]}</Text>
         </View>
         <View style={style.tabListView}>
           <Text style={style.tabListTitle}>单日跟随本金{coinType}</Text>
@@ -190,7 +233,7 @@ const MyFollowModeScreen: FC = () => {
               </View>
             </TouchableNativeFeedback>
           </View>
-          <Text style={style.tabListDesc}>{descArr(minValue, maxValue)[1]}</Text>
+          <Text style={style.tabListDesc}>{descArr(minValue, maxValue, coinType)[1]}</Text>
         </View>
       </View>
 

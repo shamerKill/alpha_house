@@ -5,14 +5,19 @@ import { Text, View, Image } from 'react-native';
 import ComLayoutHead from '../../components/layout/head';
 import { themeWhite, defaultThemeBgColor } from '../../config/theme';
 import { webViewStackResize, webViewStackImage } from '../../web/tools';
+import ajax from '../../data/fetch';
 
 const HomeHelpDetails: FC = () => {
   const { params: { id } } = useRoute<RouteProp<{'Details': { id: string }}, 'Details'>>();
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   useEffect(() => {
-    setTitle('收不到短信怎么办？');
-    setDesc('<p>收不到短信怎么办？</p><p>情况一：可能是短信通道暂时拥堵，您需稍等片刻，刷新手机短信</p>');
+    ajax.get(`/v1/help/help_detail?id=${id}`).then(data => {
+      if (data.status === 200) {
+        setTitle(data.data.title);
+        setDesc(data.data.content);
+      }
+    }).catch(err => console.log(err));
   });
   return (
     <ComLayoutHead

@@ -1,4 +1,4 @@
-import { ImageURISource } from 'react-native';
+import { ImageSourcePropType } from 'react-native';
 import { TypeTransactionPairInfo } from './baseList';
 
 /**
@@ -10,7 +10,7 @@ export type TypeUserIsLogin = boolean;
  * 用户信息类型
 **/
 export interface TypeUserInfo {
-  avatar: ImageURISource; // 用户头像数据
+  avatar: ImageSourcePropType; // 用户头像数据
   account: string; // 用户账号
   accountType: 'email'|'phone'; // 用户账号类型
   upUserCode: string; // 上级邀请码

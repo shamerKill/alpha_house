@@ -68,8 +68,8 @@ const ComMarketLine: FC<{data: TypeMarketListLine}> = ({ data }) => {
           <Text style={[
             style.lineRightText,
             parseFloat(ratio) > 0
-              ? style.lineRightTextAdd
-              : style.lineRightTextCut,
+              ? style.lineRightTextCut
+              : style.lineRightTextAdd,
             parseFloat(ratio) === 0 && style.lineRightTextZero,
           ]}>
             {ratio}

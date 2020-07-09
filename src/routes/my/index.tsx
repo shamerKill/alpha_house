@@ -77,7 +77,7 @@ const MyRoutes: TypeStackValue = [
         component: MyRecommendScreen,
       },
       {
-        name: 'realname', // 我的邀请
+        name: 'realname', // 实名认证
         component: MyRealnameScreen,
       },
       {

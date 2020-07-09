@@ -6,10 +6,12 @@ import {
 } from 'react-native';
 import { Text } from 'react-native-elements';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, themeGray, defaultThemeBgColor, defaultThemeColor, themeTextGray,
 } from '../../../config/theme';
+import ajax from '../../../data/fetch';
 
 const AccountVerfiyCodeScreen: FC = () => {
   const screenWidth = Math.floor(Dimensions.get('window').width) - 20;
@@ -27,6 +29,8 @@ const AccountVerfiyCodeScreen: FC = () => {
   const [time, setTime] = useState(60);
   const [code, setCode] = useState('');
   const [codeArr, setCodeArr] = useState<string[]>([]);
+  // 是否在请求中
+  const [loading, setLoading] = useState(false);
 
   const addEvent = {
     // 对焦输入框
@@ -41,13 +45,52 @@ const AccountVerfiyCodeScreen: FC = () => {
     },
     // 提交验证码
     send: () => {
-      // TODO: 需要验证验证码
-      navigation.navigate('AccountSetPass', {
-        type: route.params.type,
-        data: {
-          ...route.params.data,
-          verifyCode: code,
-        },
+      // 验证验证码
+      const accountArr = route.params.data.account.split(' ');
+      console.log(accountArr);
+      ajax.post('/v1/power/check_sms', {
+        mobile: accountArr.length === 1 ? accountArr[0] : accountArr[1],
+        type: 1,
+        mobile_area: accountArr.length === 1 ? '00' : accountArr[0],
+        code,
+      }).then(data => {
+        console.log(data);
+        if (data.status === 200) {
+          navigation.navigate('AccountSetPass', {
+            type: route.params.type,
+            data: {
+              ...route.params.data,
+              verifyCode: code,
+            },
+          });
+        } else {
+          console.log(data.message);
+        }
+      }).catch(err => {
+        console.log(err);
+      });
+    },
+    sendCode: () => {
+      if (loading) return;
+      const accountArr = route.params.data.account.split(' ');
+      // 发送验证码
+      ajax.post('/v1/power/send_sms', {
+        mobile: accountArr.length === 1 ? accountArr[0] : accountArr[1],
+        type: 1, // 注册短信
+        mobile_area: accountArr.length === 1 ? accountArr[0] : accountArr[0],
+      }).then(data => {
+        if (data.status === 200) {
+          addEvent.setTimer();
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        setLoading(false);
       });
     },
     // 发送验证码倒计时
@@ -126,7 +169,7 @@ const AccountVerfiyCodeScreen: FC = () => {
           time > 0
             ? (<Text style={style.timeTextStyle}>{time}s后可重新发送</Text>)
             : (
-              <TouchableNativeFeedback onPress={() => addEvent.setTimer()}>
+              <TouchableNativeFeedback onPress={() => addEvent.sendCode()}>
                 <View style={style.timeTextView}>
                   <Text style={[style.timeTextStyle, style.timeTextAgain]}>重新发送</Text>
                 </View>

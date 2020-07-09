@@ -8,9 +8,15 @@ import Clipboard from '@react-native-community/clipboard';
 import ComLayoutHead from '../../components/layout/head';
 import { themeGray } from '../../config/theme';
 import { useGoToWithLogin } from '../../tools/routeTools';
+import ajax from '../../data/fetch';
+import getHeadImage from '../../tools/getHeagImg';
+import useGetDispatch from '../../data/redux/dispatch';
+import { InState, ActionsType } from '../../data/redux/state';
 
 
 const MyScreen: FC = () => {
+  const [userInfo, dispatchUserInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   // 头部颜色
   const [statusBar, setStatusBar] = useState('#ccc9fe');
   const goToWithLogin = useGoToWithLogin();
@@ -43,6 +49,7 @@ const MyScreen: FC = () => {
       else setStatusBar('#ccc9fe');
     },
     onCopy(value) {
+      if (value === '--') return;
       Clipboard.setString(value);
       showMessage({
         message: '',
@@ -62,14 +69,30 @@ const MyScreen: FC = () => {
   const [userBTC, setUserBTC] = useState('');
   const [userRMB, setUserRMB] = useState('');
   useEffect(() => {
-    setUserHead(require('../../assets/images/memory/user_head.png'));
-    setUserPhone('188****8888');
-    setUserId('18556226');
-    setUserBTC('10086');
-  });
-  useEffect(() => {
-    setUserRMB((Number(userBTC) * 10000).toFixed(2));
-  }, [userBTC]);
+    if (routePage !== 'My') return;
+    setUserHead(getHeadImage()[0]);
+    setUserPhone(userInfo.account || '未登录');
+    setUserId(userInfo.id);
+    setUserBTC(userInfo.assets);
+    setUserRMB('--');
+    ajax.post('/v1/userinfo', {}).then(data => {
+      if (data.status === 200) {
+        dispatchUserInfo({
+          type: ActionsType.CHANGE_USER_INFO,
+          data: {
+            avatar: getHeadImage()[Number(data.data.headimg)],
+            id: `${data.data.unique_id}`,
+            assets: data.data.goldbtc,
+          },
+        });
+        setUserHead(getHeadImage()[Number(data.data.headimg)]);
+        setUserPhone(data.data.mobile);
+        setUserId(`${data.data.unique_id}`);
+        setUserRMB(data.data.goldcoin);
+        setUserBTC(data.data.goldbtc);
+      }
+    }).catch(err => console.log(err));
+  }, [routePage]);
   return (
     <ComLayoutHead
       close
@@ -101,12 +124,19 @@ const MyScreen: FC = () => {
         position: 'relative',
       }}>
         {/* 头像 */}
-        <Image
-          source={userHead}
-          resizeMode="stretch"
-          style={{
-            width: 60, height: 60,
-          }} />
+        <View style={{
+          width: 60,
+          height: 60,
+          borderRadius: 30,
+          overflow: 'hidden',
+        }}>
+          <Image
+            source={userHead}
+            resizeMode="stretch"
+            style={{
+              width: 60, height: 60,
+            }} />
+        </View>
         {/* 身份信息 */}
         <View>
           <Text style={{

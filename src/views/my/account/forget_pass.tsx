@@ -9,6 +9,7 @@ import {
 } from '../../../config/theme';
 import ComFormButton from '../../../components/form/button';
 import { isPhone, isEmail } from '../../../tools/verify';
+import ajax from '../../../data/fetch';
 
 const AccountForgetPass: FC = () => {
   const navigation = useNavigation();
@@ -25,11 +26,30 @@ const AccountForgetPass: FC = () => {
         return;
       }
       if (loading.current) return;
-      // TODO: 需要获取验证码
       addEvent.send();
     },
     send: () => {
-      navigation.navigate('AccountVerfiyCode', { type: 'forget', data: { account } });
+      if (loading.current) return;
+      loading.current = true;
+      // 发送验证码
+      ajax.post('/v1/power/send_sms', {
+        mobile: account,
+        type: 2, // 注册短信
+        mobile_area: '00',
+      }).then(data => {
+        if (data.status === 200) {
+          navigation.navigate('AccountVerfiyCode', { type: 'forget', data: { account } });
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        loading.current = false;
+      });
     },
   };
 

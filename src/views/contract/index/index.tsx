@@ -3,6 +3,7 @@ import {
   View, TouchableNativeFeedback, Text, StyleSheet, ScrollView,
 } from 'react-native';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, defaultThemeBgColor, themeGray, defaultThemeColor,
@@ -22,6 +23,14 @@ const ContractScreen: FC = () => {
   const addEvent = {
     // 更改合约类型页面
     changeSelectType: ({ coinType = routeParams.coinType, contractType = routeParams.contractType }: { coinType?: string; contractType?: typeof selectType }) => {
+      // FIXME: 没有比本位合约和混合合约
+      if (contractType !== 0) {
+        showMessage({
+          message: '功能暂未开放，敬请期待',
+          type: 'info',
+        });
+        return;
+      }
       setSelectType(contractType);
       navigation.navigate('Contract', { contractType, coinType });
     },

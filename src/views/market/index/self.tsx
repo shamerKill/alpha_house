@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   View, Image, Text, StyleSheet,
 } from 'react-native';
@@ -7,6 +7,7 @@ import { TypeMarketListLine } from './type';
 import ComMarketLine from './com_line';
 import { themeGray, defaultThemeBgColor, themeBlack } from '../../../config/theme';
 import { useGoToWithLogin } from '../../../tools/routeTools';
+import ajax from '../../../data/fetch';
 
 const MarketSelfView: FC<{data: TypeMarketListLine[]}> = ({ data }) => {
   const goToWidthLogin = useGoToWithLogin();
@@ -16,6 +17,14 @@ const MarketSelfView: FC<{data: TypeMarketListLine[]}> = ({ data }) => {
       goToWidthLogin('Home');
     },
   };
+
+  useEffect(() => {
+    ajax.post('/v1/user/follow_market', {}).then(res => {
+      console.log(res);
+    }).catch(err => {
+      console.log(err);
+    });
+  }, []);
 
   return (
     <View>

@@ -8,6 +8,7 @@ import { TouchableNativeFeedback, ScrollView } from 'react-native-gesture-handle
 import Swiper from 'react-native-swiper';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import {
   themeRed, themeGreen, themeBlack, themeGray,
 } from '../../config/theme';
@@ -20,6 +21,7 @@ import { InState, ActionsType } from '../../data/redux/state';
 import ajax from '../../data/fetch';
 import { TypeNotice } from '../../data/@types/baseList';
 import { useGoToWithLogin } from '../../tools/routeTools';
+import Socket, { marketSocket } from '../../data/fetch/socket';
 
 // 头部
 const HomeScreenHead: FC = () => {
@@ -192,7 +194,12 @@ const HomeScreenRowMarketBlock: FC<{ value: TypeHomeRowMarketValue; }> = ({ valu
     </View>
   );
 };
-const HomeScreenRowMarket: FC<{ value: TypeHomeRowMarketValue[] }> = ({ value }) => {
+const HomeScreenRowMarket: FC = () => {
+  const socket = useRef<Socket|null>(null);
+  const subSocket = useRef(false);
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  // 中部行情
+  const [marketBlock, setMarketBlock] = useState<TypeHomeRowMarketValue[]>([]);
   const pugWidth = 100;
   const dotWidth = 40;
   // const dotWidth = value.length ? (3 / value.length) * 100 : 0;
@@ -208,6 +215,46 @@ const HomeScreenRowMarket: FC<{ value: TypeHomeRowMarketValue[] }> = ({ value })
     if (range < 0) range = 0;
     setDotLeft(changeWidth * range);
   };
+  useEffect(() => {
+    const tickerImg = 'gold.market.ALL.ticker';
+    const socketListener = (message: any) => {
+      const resultData: {
+        [key: string]: {
+          close: string;
+          open: string;
+          symbol: string;
+        }
+      } = message.Tick;
+      const result = Object.values(resultData).map(coin => {
+        const close = parseFloat(coin.close);
+        const open = parseFloat(coin.open);
+        const range = Math.floor(((close - open) / open) * 10000) / 100;
+        return {
+          keyV: `${coin.symbol.replace('USDT', '')}/USDT 永续`,
+          price: coin.close,
+          range: `${range}%`,
+          type: 'USDT合约',
+        };
+      });
+      setMarketBlock(result);
+    };
+    if (routePage === 'Home') {
+      marketSocket.getSocket().then(ws => {
+        socket.current = ws;
+        ws.addListener(socketListener, tickerImg);
+        ws.send(tickerImg, 'req');
+        ws.send(tickerImg, 'sub');
+        subSocket.current = false;
+      }).catch(err => {
+        console.log(err);
+      });
+    } else if (socket.current) {
+      if (subSocket.current) return;
+      subSocket.current = true;
+      socket.current.send(tickerImg, 'unsub');
+      socket.current.removeListener(tickerImg);
+    }
+  }, [routePage]);
   return (
     <View style={homeStyle.marketSwiper}>
       <ScrollView
@@ -217,7 +264,7 @@ const HomeScreenRowMarket: FC<{ value: TypeHomeRowMarketValue[] }> = ({ value })
         onScroll={scrollEvent}
         style={homeStyle.marketScroll}>
         {
-          value.map(item => (
+          marketBlock.map(item => (
             <HomeScreenRowMarketBlock value={item} key={item.keyV} />
           ))
         }
@@ -242,7 +289,12 @@ const HomeScreenNav: FC<{ adv: TypeHomeNavProp }> = ({ adv }) => {
   const navigation = useNavigation();
   const goTolink = (link: string) => {
     if (link) navigation.navigate(link);
-    console.log(link);
+    else {
+      showMessage({
+        message: '功能开发中',
+        type: 'info',
+      });
+    }
   };
   return (
     <View>
@@ -450,8 +502,6 @@ const HomeScreenMarket: FC<{
 };
 
 const HomeScreen: FC = () => {
-  // 中部行情
-  const [marketBlock, setMarketBlock] = useState<TypeHomeRowMarketValue[]>([]);
   // nav的广告图片和链接
   const [navAd, setNavAd] = useState<TypeHomeNavProp>(null);
   // 币币行情USET/BTC/ETH
@@ -462,20 +512,6 @@ const HomeScreen: FC = () => {
   const [coinMarketRange, setCoinMarketRange] = useState<TypeHomeScreenMarketLine[]>([]);
   // 处理数据
   useEffect(() => {
-    setMarketBlock([
-      {
-        keyV: '1BTC/USDT永续', price: '9900.76', range: '+3.98%', type: 'USDT合约',
-      },
-      {
-        keyV: '2BTC/USDT永续', price: '9900.76', range: '-3.98%', type: 'USDT合约',
-      },
-      {
-        keyV: '3BTC/USDT永续', price: '9900.76', range: '-3.98%', type: 'USDT合约',
-      },
-      {
-        keyV: '4BTC/USDT永续', price: '9900.76', range: '+3.98%', type: 'USDT合约',
-      },
-    ]);
     setNavAd({
       pic: require('../../assets/images/memory/nav_1.png'),
       link: '',
@@ -515,7 +551,7 @@ const HomeScreen: FC = () => {
           {/* adv */}
           <HomeScreenComment />
           {/* market */}
-          <HomeScreenRowMarket value={marketBlock} />
+          <HomeScreenRowMarket />
         </View>
         <ComLine />
         <View style={homeStyle.homeViewInner}>

@@ -1,9 +1,11 @@
 import { ActionsType } from '../redux/state/index';
 import rootStore from '../store';
 
-type TypeClassFetchFuncOptions = {
+interface TypeClassFetchFuncOptions {
   token?: string;
-};
+  headers?: { [key: string]: string };
+  noHeaders?: boolean;
+}
 
 export class Fetch {
   // 声明fetch方法
@@ -44,6 +46,7 @@ export class Fetch {
     options?: TypeClassFetchFuncOptions,
   ): Promise<{ data?: T, message: string; status: number }> {
     const token = options?.token || rootStore.getState().userState.userInfo.token || this.token;
+    this.token = token;
     // 添加头部信息
     const fetchHeader: { [key: string]: string } = {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -78,24 +81,34 @@ export class Fetch {
     options?: TypeClassFetchFuncOptions & { setToken?: true; },
   ): Promise<{ data?: T, message: string; status: number }> {
     const token = options?.token || rootStore.getState().userState.userInfo.token || this.token;
+    this.token = token;
     // 处理传入数据
-    const fdBody = Object.keys(body).map(key => `${key}=${Fetch.valueToString(body[key])}`).join('&');
+    const fdBody = options?.noHeaders ? body : Object.keys(body).map(key => `${key}=${typeof body[key] === 'object' ? JSON.stringify(body[key]) : body[key].toString()}`).join('&');
     // 添加头部信息
-    const fetchHeader: { [key: string]: string } = {
+    let fetchHeader: { [key: string]: string } = {
       'Content-Type': 'application/x-www-form-urlencoded',
     };
     if (token) fetchHeader.cookie = `JAVASESSID=${token}`;
+    if (options?.headers) {
+      fetchHeader = {
+        ...fetchHeader,
+        ...options.headers,
+      };
+    }
     try {
+      const req: RequestInit = {
+        method: 'POST',
+        body: fdBody as string,
+      };
+      if (!options?.noHeaders) {
+        // 头部信息
+        req.headers = new Headers(fetchHeader);
+      }
       const result = await this.promise(
         // 链接
         `${this.baseURI}${uri}`,
         // 设置
-        {
-          method: 'POST',
-          body: fdBody,
-          // 头部信息
-          headers: new Headers(fetchHeader),
-        },
+        req,
       );
       const resultJson = await result.json();
       if (options?.setToken) {
@@ -109,6 +122,7 @@ export class Fetch {
       }
       return resultJson;
     } catch (err) {
+      console.log(err);
       return {
         status: -10086,
         message: err.meesage || 'no message',
@@ -128,6 +142,6 @@ export class Fetch {
 }
 
 const ajax = new Fetch({
-  baseURI: 'http://192.168.3.167:3001',
+  baseURI: 'http://192.168.3.17:3001',
 });
 export default ajax;

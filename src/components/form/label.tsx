@@ -12,7 +12,7 @@ const ComFormLabel: FC<{
   disabled?: true;
   password?: true;
   // 验证码
-  getCode?: () => void;
+  getCode?: (data: any) => void;
   codeTimer?: number;
   closeCode?: {clearTimer:() => void};
 }> = ({
@@ -28,10 +28,9 @@ const ComFormLabel: FC<{
   codeTimer = 61,
 }) => {
   // 添加静态停止倒计时方法
-  let timer = useRef(0);
+  let timer = useRef(setTimeout(() => {}, 0));
   const [codeState, setCodeState] = useState(codeTimer);
   const startTimer = () => {
-    getCode && getCode();
     setCodeState(codeTimer - 1);
     timer.current = setInterval(() => {
       setCodeState(state => {
@@ -43,6 +42,10 @@ const ComFormLabel: FC<{
         }
       });
     }, 1000);
+    getCode && getCode(() => {
+      setCodeState(codeTimer);
+      clearInterval(timer.current);
+    });
   };
   useEffect(() => {
     clearInterval(timer.current);

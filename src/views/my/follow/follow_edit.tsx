@@ -13,21 +13,22 @@ import { showMessage } from 'react-native-flash-message';
 import showComAlert from '../../../components/modal/alert';
 import ComFormButton from '../../../components/form/button';
 import ComFormCheckRadius from '../../../components/form/checkRadius';
+import ajax from '../../../data/fetch';
 
 const MyFollowEditScreen: FC = () => {
-  const { params: { id: orderId } } = useRoute<RouteProp<{followEdit: { id: string|number }}, 'followEdit'>>();
+  const { params: { id: orderId, name } } = useRoute<RouteProp<{followEdit: { id: string|number, name: string }}, 'followEdit'>>();
   const navigation = useNavigation();
-  // console.log(orderId);
-  const descArr = (min: number, max: number) => ([
+  const coinID = useRef('');
+  const descArr = (min: number, max: number, coin: string) => ([
     '关闭后不再跟随交易员下单。已跟随开仓的订单，保持同步平仓，不受影响。',
-    `例如您设置跟单金额 x USDT，不论交易员下单多少本金，您的下单本金均为 x USDT。单次最低跟单金额为 ${min} USDT。`,
-    `单日累计跟随本金到达此数值后，将不再您跟随下单，最大为：${max} USDT。`,
+    `例如您设置跟单金额 x ${coin}，不论交易员下单多少本金，您的下单本金均为 x ${coin}。单次最低跟单金额为 ${min} ${coin}。`,
+    `单日累计跟随本金到达此数值后，将不再您跟随下单，最大为：${max} ${coin}。`,
   ]);
 
   const [maxValue, setMaxValue] = useState(0);
   const [minValue, setMinValue] = useState(0);
   // 跟单名字
-  const [withName, setWithName] = useState('');
+  const [withName] = useState(name);
   // 跟单币种
   const [withCoin, setWithCoin] = useState('');
   // 跟单开关
@@ -48,7 +49,7 @@ const MyFollowEditScreen: FC = () => {
           text: '确定',
           onPress: () => {
             close();
-            navigation.goBack();
+            addEvent.submit(true);
           },
         },
         close: {
@@ -60,14 +61,15 @@ const MyFollowEditScreen: FC = () => {
     // 设置数量
     setValue: (setType: React.Dispatch<React.SetStateAction<string>>, value: string, type?: 'cut'|'add') => {
       setType(() => {
-        const resultString = value.match(/\d/g)?.join('');
+        const resultString = value.match(/[\d|\.]/g)?.join('');
         if (!resultString) return '0';
         let result = parseFloat(resultString);
         if (type) {
           if (type === 'cut') (result !== 0) && result--;
           if (type === 'add') result++;
+          return result.toString();
         }
-        return result.toString();
+        return resultString;
       });
     },
     // 跟单开关
@@ -90,17 +92,40 @@ const MyFollowEditScreen: FC = () => {
       }
       addEvent.submit();
     },
-    submit: () => {
+    submit: (closeWith?: true) => {
+      ajax.post('/v1/track/edit_action', {
+        id: orderId,
+        is_track: closeWith ? '2' : '1',
+        is_documentary: withChecked ? '1' : '2',
+        contract_type: 2,
+        symbol: coinID.current,
+        num: orderMoney,
+        day_num: dayMoney
+      }).then(data => {
+        if (data.status === 200) {
+          addEvent.submitSuccess();
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      });
+    },
+    submitSuccess: (closeWith?: true) => {
       const close = showComAlert({
-        title: '修改成功',
-        desc: '修改成功，请前往跟单管理页面查看详情',
+        title: closeWith ? '取消成功' : '修改成功',
+        desc: closeWith ? '取消成功，订单删除' : '修改成功，请前往跟单管理页面查看详情',
         success: {
-          text: '查看详情',
+          text: '返回列表',
           onPress: () => {
+            navigation.goBack();
             close();
           },
         },
-        close: {
+        close: closeWith ? undefined : {
           text: '取消',
           onPress: () => {
             close();
@@ -111,13 +136,19 @@ const MyFollowEditScreen: FC = () => {
   };
 
   useEffect(() => {
-    setWithName('齐少金融学院');
-    setWithCoin('USDT');
-    addEvent.withCheckBoxBack(true);
-    setOrderMoney('2');
-    setDayMoney('200');
-    setMinValue(2);
-    setMaxValue(200);
+    ajax.get(`/v1/track/edit_view?id=${orderId}`).then(data => {
+      console.log(data);
+      if (data.status === 200) {
+        setWithCoin(data.data.info.symbol);
+        setOrderMoney(`${data.data.info.num}`);
+        setDayMoney(`${data.data.info.num_day}`);
+        if (data.data.info.is_documentary === '1') addEvent.withCheckBoxBack(true);
+        const coin = data.data.value.filter((item: any) => item.symbol === data.data.info.symbol)[0];
+        setMinValue(coin.num);
+        setMaxValue(coin.num * 1000);
+        coinID.current = coin.id;
+      }
+    }).catch(err => console.log(err));
   }, []);
   return (
     <ComLayoutHead
@@ -144,7 +175,7 @@ const MyFollowEditScreen: FC = () => {
           <ComFormCheckRadius
             defaultValue={withChecked}
             checkState={addEvent.withCheckBoxBack} />
-          <Text style={style.tabListDesc}>{descArr(minValue, maxValue)[1]}</Text>
+          <Text style={style.tabListDesc}>{descArr(minValue, maxValue, withCoin)[1]}</Text>
         </View>
         <View style={style.tabListView}>
           <Text style={style.tabListTitle}>单次跟单金额{withCoin}</Text>
@@ -171,7 +202,7 @@ const MyFollowEditScreen: FC = () => {
               </View>
             </TouchableNativeFeedback>
           </View>
-          <Text style={style.tabListDesc}>{descArr(minValue, maxValue)[1]}</Text>
+          <Text style={style.tabListDesc}>{descArr(minValue, maxValue, withCoin)[1]}</Text>
         </View>
         <View style={style.tabListView}>
           <Text style={style.tabListTitle}>单日跟随本金{withCoin}</Text>
@@ -198,7 +229,7 @@ const MyFollowEditScreen: FC = () => {
               </View>
             </TouchableNativeFeedback>
           </View>
-          <Text style={style.tabListDesc}>{descArr(minValue, maxValue)[2]}</Text>
+          <Text style={style.tabListDesc}>{descArr(minValue, maxValue, withCoin)[2]}</Text>
         </View>
       </View>
       <ComFormButton

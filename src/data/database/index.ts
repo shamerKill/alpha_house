@@ -5,6 +5,7 @@ const valueToString = (value: any): string => {
   if (typeof value === 'string') result = value;
   else if (typeof value === 'function') result = value.toString();
   else if (typeof value === 'object') result = JSON.stringify(value);
+  else if (typeof value === 'number') result = value.toString();
   else result = '';
   return result;
 };
@@ -17,12 +18,16 @@ const storage = {
   // 数据获取
   async get<T=any>(key: string): Promise<T> {
     const result = await asyncStorage.getItem(key);
-    if (result === null) throw Error('no Data');
-    try {
-      return JSON.parse(result);
-    } catch (err) {
-      return result as unknown as T;
-    }
+    return new Promise((resolve, reject) => {
+      if (result === null) reject(new Error('no Data'));
+      else {
+        try {
+          resolve(JSON.parse(result));
+        } catch (err) {
+          resolve(result as unknown as T);
+        }
+      }
+    });
   },
   // 清除
   clear() {

@@ -13,16 +13,22 @@ import {
 import MarketSelfView from './self';
 import { TypeMarketList, TypeMarketListLine } from './type';
 import MarketListView from './list';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { InState } from '../../../data/redux/state';
+import Socket, { marketSocket } from '../../../data/fetch/socket';
 
 
 const MarketScreen: FC = () => {
   const screenWidth = Math.round(Dimensions.get('screen').width);
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
 
   const goToWithLogin = useGoToWithLogin();
   const headScrollRef = useRef<ScrollView>(null);
   const headScrollListRef = useRef<(View|null)[]>([]);
   const headScrollListWidthArr = useRef<number[]>([]);
   const contentScrollRef = useRef<ScrollView>(null);
+  const socket = useRef<Socket|null>(null);
+  const subSocket = useRef(false);
 
   // 头部列表
   const [headList, setHeadList] = useState<TypeMarketList[]>([]);
@@ -100,10 +106,14 @@ const MarketScreen: FC = () => {
     (async function dataFunc() {
       const result = [];
       for (let listIndex = 0, len = headScrollListRef.current.length; listIndex < len; listIndex++) {
-        const item = headScrollListRef.current[listIndex];
-        // eslint-disable-next-line no-await-in-loop
-        const { width } = await addEvent.promiseMeasure(item);
-        result.push(width);
+        try {
+          const item = headScrollListRef.current[listIndex];
+          // eslint-disable-next-line no-await-in-loop
+          const { width } = await addEvent.promiseMeasure(item);
+          result.push(width);
+        } catch (err) {
+          console.log(err);
+        }
       }
       headScrollListWidthArr.current = result;
     }());
@@ -117,139 +127,58 @@ const MarketScreen: FC = () => {
       {
         title: 'USDT合约', id: '2', showStyle: 1, listArrLinkId: 1,
       },
-      {
-        title: '混合合约', id: '3', showStyle: 1, listArrLinkId: 2,
-      },
-      {
-        title: '币本位合约', id: '4', showStyle: 1, listArrLinkId: 3,
-      },
-      {
-        title: '季度合约', id: '5', showStyle: 1, listArrLinkId: 4,
-      },
-      {
-        title: 'USDT', id: '6', showStyle: 1, listArrLinkId: 5,
-      },
-      {
-        title: 'BTC', id: '7', showStyle: 1, listArrLinkId: 6,
-      },
-      {
-        title: 'ETH', id: '8', showStyle: 1, listArrLinkId: 7,
-      },
     ]);
     setDataView([
-      [
-        {
-          name: 'ETH/USD 永续', id: 'ETH/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '+2.65%', volume: '25,058', type: 0,
-        },
-        {
-          name: 'BTC/USD 永续', id: 'BTC/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '-2.65%', volume: '25,058', type: 1,
-        },
-        {
-          name: 'EOS/USD 永续', id: 'EOS/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '0.00%', volume: '25,058', type: 2,
-        },
-      ],
-      [
-        {
-          name: 'ETH/USD 永续', id: 'ETH/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '+2.65%', volume: '25,058',
-        },
-        {
-          name: 'BTC/USD 永续', id: 'BTC/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '-2.65%', volume: '25,058',
-        },
-        {
-          name: 'EOS/USD 永续', id: 'EOS/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '0.00%', volume: '25,058',
-        },
-      ],
-      [
-        {
-          name: 'ETH/USD 永续', id: 'ETH/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '+2.65%', volume: '25,058',
-        },
-        {
-          name: 'BTC/USD 永续', id: 'BTC/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '-2.65%', volume: '25,058',
-        },
-        {
-          name: 'EOS/USD 永续', id: 'EOS/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '0.00%', volume: '25,058',
-        },
-      ],
-      [
-        {
-          name: 'ETH/USD 永续', id: 'ETH/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '+2.65%', volume: '25,058',
-        },
-        {
-          name: 'BTC/USD 永续', id: 'BTC/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '-2.65%', volume: '25,058',
-        },
-        {
-          name: 'EOS/USD 永续', id: 'EOS/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '0.00%', volume: '25,058',
-        },
-      ],
-      [
-        {
-          name: 'ETH/USD 永续', id: 'ETH/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '+2.65%', volume: '25,058',
-        },
-        {
-          name: 'BTC/USD 永续', id: 'BTC/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '-2.65%', volume: '25,058',
-        },
-        {
-          name: 'EOS/USD 永续', id: 'EOS/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '0.00%', volume: '25,058',
-        },
-      ],
-      [
-        {
-          name: 'ETH/USD 永续', id: 'ETH/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '+2.65%', volume: '25,058',
-        },
-        {
-          name: 'BTC/USD 永续', id: 'BTC/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '-2.65%', volume: '25,058',
-        },
-        {
-          name: 'EOS/USD 永续', id: 'EOS/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '0.00%', volume: '25,058',
-        },
-      ],
-      [
-        {
-          name: 'ETH/USD 永续', id: 'ETH/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '+2.65%', volume: '25,058',
-        },
-        {
-          name: 'BTC/USD 永续', id: 'BTC/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '-2.65%', volume: '25,058',
-        },
-        {
-          name: 'EOS/USD 永续', id: 'EOS/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '0.00%', volume: '25,058',
-        },
-      ],
-      [
-        {
-          name: 'ETH/USD 永续', id: 'ETH/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '+2.65%', volume: '25,058',
-        },
-        {
-          name: 'BTC/USD 永续', id: 'BTC/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '-2.65%', volume: '25,058',
-        },
-        {
-          name: 'EOS/USD 永续', id: 'EOS/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '0.00%', volume: '25,058',
-        },
-      ],
-      [
-        {
-          name: 'ETH/USD 永续', id: 'ETH/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '+2.65%', volume: '25,058',
-        },
-        {
-          name: 'BTC/USD 永续', id: 'BTC/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '-2.65%', volume: '25,058',
-        },
-        {
-          name: 'EOS/USD 永续', id: 'EOS/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '0.00%', volume: '25,058',
-        },
-      ],
-      [
-        {
-          name: 'ETH/USD 永续', id: 'ETH/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '+2.65%', volume: '25,058',
-        },
-        {
-          name: 'BTC/USD 永续', id: 'BTC/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '-2.65%', volume: '25,058',
-        },
-        {
-          name: 'EOS/USD 永续', id: 'EOS/USD 永续', priceUSDT: '9873.55', priceRMB: '69419.58', ratio: '0.00%', volume: '25,058',
-        },
-      ],
+      [],
+      [],
     ]);
     setSelectHead('1');
   }, []);
+
+  useEffect(() => {
+    const tickerImg = 'gold.market.ALL.ticker';
+    const socketListener = (message: any) => {
+      const resultData: {
+        [key: string]: {
+          [key: string]: string;
+        };
+      } = message.Tick;
+      const result: TypeMarketListLine[] = Object.values(resultData).map(coin => {
+        const close = parseFloat(coin.close);
+        const open = parseFloat(coin.open);
+        const range = Math.floor(((close - open) / open) * 10000) / 100;
+        return {
+          name: `${coin.symbol.replace('USDT', '')}/USDT 永续`,
+          id: coin.symbol,
+          priceUSDT: coin.close,
+          priceRMB: coin.rmb_close,
+          ratio: `${range}%`,
+          volume: coin.quo,
+        };
+      });
+      setDataView(state => {
+        const res = [...state];
+        res[1] = result;
+        return res;
+      });
+    };
+    if (routePage === 'Market') {
+      marketSocket.getSocket().then(ws => {
+        socket.current = ws;
+        ws.addListener(socketListener, tickerImg);
+        ws.send(tickerImg, 'req');
+        ws.send(tickerImg, 'sub');
+        subSocket.current = false;
+      }).catch(err => {
+        console.log(err);
+      });
+    } else if (socket.current) {
+      if (subSocket.current) return;
+      subSocket.current = true;
+      socket.current.send(tickerImg, 'unsub');
+      socket.current.removeListener(tickerImg);
+    }
+  }, [routePage]);
 
   return (
     <ComLayoutHead

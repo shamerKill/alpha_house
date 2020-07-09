@@ -5,17 +5,22 @@ import { ScrollView } from 'react-native-gesture-handler';
 import ComFormButton from '../../../components/form/button';
 import { themeWhite, themeGray, defaultThemeBgColor } from '../../../config/theme';
 
+export type TypeList = {
+  title: string;
+  list: ({name: string; id: number;}|number)[];
+};
 type TypeComMyOrderInfoLeftOutProp = {
   close: React.MutableRefObject<{
     close: () => void;
   } | undefined>;
+  searchList: TypeList[];
+  selectType: (types: string[]) => void;
+  defaultSelect: string[];
 };
-const ComMyOrderInfoLeftOut: FC<TypeComMyOrderInfoLeftOutProp> = ({ close }) => {
-  type TypeList = {
-    title: string;
-    list: ({name: string; id: number;}|number)[];
-  };
-  const [list, setList] = useState<TypeList[]>([]);
+const ComMyOrderInfoLeftOut: FC<TypeComMyOrderInfoLeftOutProp> = ({
+  close, searchList, selectType, defaultSelect,
+}) => {
+  const [list] = useState<TypeList[]>(searchList || []);
   const [select, setSelect] = useState<string[]>([]);
   const [selectId, setSelectId] = useState<number[]>([]);
 
@@ -32,27 +37,30 @@ const ComMyOrderInfoLeftOut: FC<TypeComMyOrderInfoLeftOutProp> = ({ close }) => 
         result[index] = name;
         return result;
       });
-      console.log(select);
+    },
+    selectType: () => {
+      selectType(select);
+      close.current?.close();
     },
   };
 
   useEffect(() => {
-    setList([
-      { title: '时间', list: [{ name: '最近七天', id: 1 }, { name: '七天以前', id: 2 }, Math.random()] },
-      { title: '币种', list: [{ name: '全部', id: 3 }, { name: 'USDT', id: 4 }, Math.random()] },
-      {
-        title: '类型',
-        list: [
-          { name: '全部', id: 5 }, { name: '充值', id: 6 }, { name: '提现', id: 7 },
-          { name: '转入', id: 8 }, { name: '转出', id: 9 }, { name: '手续费', id: 2 },
-        ],
-      },
-    ]);
+    setSelect(list.map((item, index) => {
+      if (defaultSelect[index]) return defaultSelect[index];
+      if (typeof item.list[0] === 'number') return '';
+      return item.list[0].name;
+    }));
+    setSelectId(list.map((item, index) => {
+      let showId = 0;
+      item.list.forEach((li) => {
+        if (!showId && typeof li !== 'number') showId = li.id;
+        if (typeof li !== 'number' && li.name === defaultSelect[index]) {
+          showId = li.id;
+        }
+      });
+      return showId;
+    }));
   }, []);
-  useEffect(() => {
-    setSelect(() => list.filter(item => typeof item !== 'number').map((item) => (item.list[0] as {name: string; id: number;}).name));
-    setSelectId(() => list.filter(item => typeof item !== 'number').map((item) => (item.list[0] as {name: string; id: number;}).id));
-  }, [list]);
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={{
@@ -149,7 +157,7 @@ const ComMyOrderInfoLeftOut: FC<TypeComMyOrderInfoLeftOutProp> = ({ close }) => 
             width: '100%',
             borderRadius: 0,
           }}
-          onPress={close.current?.close}
+          onPress={addEvent.selectType}
           title="确认" />
       </View>
     </View>

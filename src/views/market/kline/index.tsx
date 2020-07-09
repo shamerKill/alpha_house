@@ -11,22 +11,74 @@ import {
 import ComLayoutHead from '../../../components/layout/head';
 import ComLine from '../../../components/line';
 import MarketKlineHtml from './echarts';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { InState } from '../../../data/redux/state';
+import Socket, { marketSocket } from '../../../data/fetch/socket';
+import { biNumberToSymbol } from '../../../tools/number';
+import formatTime from '../../../tools/time';
 
 const MarketKlineInfo: FC = () => {
+  const socket = useRef<Socket|null>(null);
+  const subSocket = useRef(false);
+  const route = useRoute<RouteProp<{markLine: { name: string }}, 'markLine'>>();
+  const routeCoinType = route.params.name.split(' ')[0].replace('/', '');
+
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   // USDT价格
-  const [price] = useState('9860.12');
+  const [price, setPrice] = useState('--');
   // 人民币价格
-  const [priceRMB] = useState('19860.12');
+  const [priceRMB, setPriceRMB] = useState('--');
   // 涨幅
-  const [changeRatio] = useState('+7.3%');
+  const [changeRatio, setChangeRatio] = useState('--');
   // 最高价
-  const [heightPrice] = useState('69323.4');
+  const [heightPrice, setHeightPrice] = useState('--');
   // 最低价
-  const [lowPrice] = useState('1234.6');
+  const [lowPrice, setLowPrice] = useState('--');
   // 24小时成交量
-  const [dayValue] = useState('2143M');
+  const [dayValue, setDayValue] = useState('--');
 
   const getColor = () => [themeRed, themeGreen][Number(parseFloat(changeRatio) > 0)];
+
+  useEffect(() => {
+    const tickerImg = 'gold.market.ALL.ticker';
+    const socketListener = (message: any) => {
+      const coinInfo = message.Tick[routeCoinType];
+      const close = parseFloat(coinInfo.close);
+      const open = parseFloat(coinInfo.open);
+      const range = Math.floor(((close - open) / open) * 10000) / 100;
+      if (coinInfo) {
+        setPrice(coinInfo.close);
+        setPriceRMB(coinInfo.rmb_close);
+        setChangeRatio(`${range}%`);
+        setHeightPrice(coinInfo.height);
+        setLowPrice(coinInfo.low);
+        setDayValue(biNumberToSymbol(coinInfo.quo));
+      }
+    };
+    if (routePage === 'MarketKline') {
+      marketSocket.getSocket().then(ws => {
+        socket.current = ws;
+        ws.addListener(socketListener, tickerImg);
+        ws.send(tickerImg, 'sub');
+        subSocket.current = false;
+      }).catch(err => {
+        console.log(err);
+      });
+    } else if (socket.current) {
+      if (!subSocket.current) {
+        subSocket.current = true;
+        socket.current.send(tickerImg, 'unsub');
+        socket.current.removeListener(socketListener);
+      }
+    }
+    return () => {
+      if (socket.current) {
+        subSocket.current = true;
+        socket.current.send(tickerImg, 'unsub');
+        socket.current.removeListener(tickerImg);
+      }
+    };
+  }, [routePage]);
 
   return (
     <View style={style.infoView}>
@@ -70,6 +122,11 @@ const MarketKlineDepthView: FC = () => {
     value: string;
     price: string;
   };
+  const socket = useRef<Socket|null>(null);
+  const subSocket = useRef(false);
+  const route = useRoute<RouteProp<{markLine: { name: string }}, 'markLine'>>();
+  const routeCoinType = route.params.name.split(' ')[0].replace('/', '');
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
 
   // 买盘
   const [buyList, setBuyList] = useState<TypeList[]>([]);
@@ -84,6 +141,7 @@ const MarketKlineDepthView: FC = () => {
   useEffect(() => {
     // 更改最大数
     const maxV = [0, 0];
+    if (buyList.length !== sellList.length) return;
     setShowList(buyList.map((item, index) => {
       // 在这里处理最大数更改
       const buyValue = parseFloat(item.value);
@@ -101,32 +159,45 @@ const MarketKlineDepthView: FC = () => {
     setMaxValue(maxV.map(item => item.toString()));
   }, [buyList, sellList]);
 
+
   useEffect(() => {
-    setBuyList([
-      { id: 1, value: '1187.56', price: '1951.2' },
-      { id: 2, value: '2187.56', price: '1951.2' },
-      { id: 3, value: '3187.56', price: '1951.2' },
-      { id: 4, value: '4187.56', price: '1951.2' },
-      { id: 5, value: '5187.56', price: '1951.2' },
-      { id: 6, value: '6187.56', price: '1951.2' },
-      { id: 7, value: '7187.56', price: '1951.2' },
-      { id: 8, value: '8187.56', price: '1951.2' },
-      { id: 9, value: '9187.56', price: '1951.2' },
-      { id: 10, value: '1187.56', price: '1951.2' },
-    ]);
-    setSellList([
-      { id: 1, value: '1187.56', price: '1951.2' },
-      { id: 2, value: '2187.56', price: '1951.2' },
-      { id: 3, value: '3187.56', price: '1951.2' },
-      { id: 4, value: '4187.56', price: '1951.2' },
-      { id: 5, value: '5187.56', price: '1951.2' },
-      { id: 6, value: '6187.56', price: '1951.2' },
-      { id: 7, value: '7187.56', price: '1951.2' },
-      { id: 8, value: '8187.56', price: '1951.2' },
-      { id: 9, value: '9187.56', price: '1951.2' },
-      { id: 10, value: '1187.56', price: '1951.2' },
-    ]);
-  }, []);
+    const tickerImg = `gold.market.${routeCoinType}.depth`;
+    const socketListener = (message: any) => {
+      setBuyList(message.buy.map((item: any, index: number) => ({
+        price: item[0],
+        value: item[1],
+        id: index + 1,
+      })));
+      setSellList(message.sell.map((item: any, index: number) => ({
+        price: item[0],
+        value: item[1],
+        id: index + 1,
+      })));
+    };
+    if (routePage === 'MarketKline') {
+      marketSocket.getSocket().then(ws => {
+        socket.current = ws;
+        ws.addListener(socketListener, tickerImg);
+        ws.send(tickerImg, 'sub');
+        subSocket.current = false;
+      }).catch(err => {
+        console.log(err);
+      });
+    } else if (socket.current) {
+      if (!subSocket.current) {
+        subSocket.current = true;
+        socket.current.send(tickerImg, 'unsub');
+        socket.current.removeListener(socketListener);
+      }
+    }
+    return () => {
+      if (socket.current) {
+        subSocket.current = true;
+        socket.current.send(tickerImg, 'unsub');
+        socket.current.removeListener(tickerImg);
+      }
+    };
+  }, [routePage]);
 
   return (
     <View style={style.logsView}>
@@ -193,7 +264,7 @@ const MarketKlineDepthView: FC = () => {
                   <View style={{
                     height: '100%',
                     backgroundColor: getThemeOpacity(themeGreen, 0.3),
-                    width: `${(parseFloat(buyList[index].value) / parseFloat(maxValue[0])) * 100}%`,
+                    width: `${(parseFloat(buyList?.[index]?.value) / parseFloat(maxValue[0])) * 100}%`,
                   }} />
                 </View>
               </View>
@@ -224,7 +295,7 @@ const MarketKlineDepthView: FC = () => {
                   <View style={{
                     height: '100%',
                     backgroundColor: getThemeOpacity(themeRed, 0.3),
-                    width: `${(parseFloat(sellList[index].value) / parseFloat(maxValue[1])) * 100}%`,
+                    width: `${(parseFloat(sellList?.[index]?.value) / parseFloat(maxValue[1])) * 100}%`,
                   }} />
                 </View>
               </View>
@@ -244,8 +315,66 @@ const MarketKlineLogsView: FC = () => {
     number: string; // 数量
     type: 0|1; // 买0，卖1
   };
+
+  const socket = useRef<Socket|null>(null);
+  const subSocket = useRef(false);
+  const route = useRoute<RouteProp<{markLine: { name: string }}, 'markLine'>>();
+  const routeCoinType = route.params.name.split(' ')[0].replace('/', '');
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+
   const [logsList, setLogsList] = useState<TypeLogsList[]>([]);
 
+  useEffect(() => {
+    const tickerImg = `gold.market.${routeCoinType}.deal`;
+    const socketListener = (message: any) => {
+      if (Array.isArray(message.Tick)) {
+        setLogsList(message.Tick.map((item: any) => {
+          return {
+            time: formatTime('hh:mm:ss', item.ts),
+            price: item.price,
+            number: item.number,
+            type: ({ buy: 0, sell: 1 } as any)[item.direction],
+          };
+        }));
+      } else {
+        setLogsList(state => {
+          const result = [...state];
+          result.shift();
+          result.push({
+            time: formatTime('hh:mm:ss', message.Tick.ts),
+            price: message.Tick.price,
+            number: message.Tick.number,
+            type: ({ buy: 0, sell: 1 } as any)[message.Tick.direction],
+          });
+          return result;
+        });
+      }
+    };
+    if (routePage === 'MarketKline') {
+      marketSocket.getSocket().then(ws => {
+        socket.current = ws;
+        ws.addListener(socketListener, tickerImg);
+        ws.send(tickerImg, 'sub');
+        ws.send(tickerImg, 'req');
+        subSocket.current = false;
+      }).catch(err => {
+        console.log(err);
+      });
+    } else if (socket.current) {
+      if (!subSocket.current) {
+        subSocket.current = true;
+        socket.current.send(tickerImg, 'unsub');
+        socket.current.removeListener(socketListener);
+      }
+    }
+    return () => {
+      if (socket.current) {
+        subSocket.current = true;
+        socket.current.send(tickerImg, 'unsub');
+        socket.current.removeListener(tickerImg);
+      }
+    };
+  }, [routePage]);
   useEffect(() => {
     setLogsList([
       {
@@ -456,7 +585,7 @@ const MarketKlineScreen: FC = () => {
           <MarketKlineInfo />
           <ComLine color={getThemeOpacity(themeGreen, 0.1)} />
           {/* 图表 */}
-          <MarketKlineHtml style={{ height: 400 }} />
+          <MarketKlineHtml style={{ height: 430 }} />
           <ComLine color={getThemeOpacity(themeGreen, 0.1)} />
           {/* 列表 */}
           <MarketKlineBottom />

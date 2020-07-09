@@ -15,6 +15,7 @@ import {
 import showSelector from '../../../components/modal/selector';
 import ComFormButton from '../../../components/form/button';
 import { isPhone, isEmail } from '../../../tools/verify';
+import ajax from '../../../data/fetch';
 
 const RegisterScreen: FC = () => {
   const navigation = useNavigation();
@@ -86,16 +87,32 @@ const RegisterScreen: FC = () => {
     // 提交
     send: () => {
       setLoading(true);
-      // TODO: 没有验证码
-      navigation.navigate('AccountVerfiyCode', {
-        type: 'register',
-        data: {
-          accountType,
-          account: accountType === 'email' ? email : `${phonePrefix} ${phone}`,
-          upUserCode,
-        },
+      // 发送验证码
+      ajax.post('/v1/power/send_sms', {
+        mobile: accountType === 'email' ? email : phone,
+        type: 1, // 注册短信
+        mobile_area: phonePrefix,
+      }).then(data => {
+        if (data.status === 200) {
+          navigation.navigate('AccountVerfiyCode', {
+            type: 'register',
+            data: {
+              accountType,
+              account: accountType === 'email' ? email : `${phonePrefix} ${phone}`,
+              upUserCode,
+            },
+          });
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        setLoading(false);
       });
-      setLoading(false);
     },
   };
 

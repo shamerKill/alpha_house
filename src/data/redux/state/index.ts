@@ -1,3 +1,4 @@
+import defualtPageRoute, { ActionsPageType } from './route';
 import { TypeImageData } from '../../@types/images';
 import { TypeUserIsLogin, TypeUserInfo } from '../../@types/userInfo';
 import { defaultUserInfoState, ActionsUserType, defaultUserIsLogin } from './user';
@@ -10,6 +11,7 @@ export const ActionsType = {
   ...ActionsImageType,
   ...ActionsUserType,
   ...ActionsListType,
+  ...ActionsPageType,
 };
 
 // state类型声明
@@ -22,6 +24,9 @@ export interface InState {
   listState: {
     newsList: TypeNewsList[],
   }
+  pageRouteState: {
+    pageRoute: string;
+  }
 }
 
 // 初始数据声明
@@ -33,5 +38,8 @@ export const InitState: InState = {
   },
   listState: {
     newsList: defaultNewsList,
+  },
+  pageRouteState: {
+    pageRoute: defualtPageRoute,
   },
 };

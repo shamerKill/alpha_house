@@ -3,18 +3,22 @@ import { Image } from 'react-native';
 import { ListItem } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 import ComLayoutHead from '../../components/layout/head';
+import ajax from '../../data/fetch';
 
 const HomeHelpList: FC = () => {
   const navigation = useNavigation();
   const [helpList, setHelpList] = useState<{title: string; id: string;}[]>([]);
   useEffect(() => {
-    setHelpList([
-      { title: '收不到短信怎么办？', id: '1' },
-      { title: '收不到注册确认邮件怎么办？', id: '2' },
-      { title: '忘记登录密码怎么办？', id: '3' },
-      { title: '实名认证后是否可以修改？', id: '4' },
-      { title: '多次输错密码导致账户锁定怎么办？', id: '5' },
-    ]);
+    ajax.get('/v1/help/help_list?page=sdf').then(data => {
+      if (data.status === 200) {
+        setHelpList(data.data.map((item: any) => ({
+          title: item.title,
+          id: item.id,
+        })));
+      }
+    }).catch(err => {
+      console.log(err);
+    });
   }, []);
   return (
     <ComLayoutHead border title="帮助中心">

@@ -8,6 +8,8 @@ import ComFormButton from '../../../components/form/button';
 import { themeWhite, defaultThemeColor, themeGray } from '../../../config/theme';
 import ComLine from '../../../components/line';
 import { useGoToWithLogin } from '../../../tools/routeTools';
+import ajax from '../../../data/fetch';
+import getHeadImage from '../../../tools/getHeagImg';
 
 interface InFollowLi {
   head: ImageSourcePropType, // 头像
@@ -29,48 +31,22 @@ const MyFollowListScreen: FC = () => {
   };
 
   useEffect(() => {
-    setListData([
-      {
-        head: require('../../../assets/images/memory/user_head.png'),
-        name: '你好',
-        totalProfit: '4909.46%',
-        lastThreeWeek: '52.36%',
-        totalPerson: 321,
-        id: '1',
-      },
-      {
-        head: require('../../../assets/images/memory/user_head.png'),
-        name: '你好',
-        totalProfit: '4909.46%',
-        lastThreeWeek: '52.36%',
-        totalPerson: 321,
-        id: '2',
-      },
-      {
-        head: require('../../../assets/images/memory/user_head.png'),
-        name: '你好',
-        totalProfit: '4909.46%',
-        lastThreeWeek: '52.36%',
-        totalPerson: 321,
-        id: '3',
-      },
-      {
-        head: require('../../../assets/images/memory/user_head.png'),
-        name: '你好',
-        totalProfit: '4909.46%',
-        lastThreeWeek: '52.36%',
-        totalPerson: 321,
-        id: '5',
-      },
-      {
-        head: require('../../../assets/images/memory/user_head.png'),
-        name: '你好',
-        totalProfit: '4909.46%',
-        lastThreeWeek: '52.36%',
-        totalPerson: 321,
-        id: '7',
-      },
-    ]);
+    ajax.get('/v1/track/list').then(data => {
+      console.log(data);
+      if (data.status === 200) {
+        const result: InFollowLi[] = data.data.map((item: any) => {
+          return {
+            head: getHeadImage()[item.headimg || 0],
+            name: item.nickname,
+            totalProfit: item.track_profit,
+            lastThreeWeek: Math.floor(item.track_success_per * 10000) / 100,
+            totalPerson: item.track_num,
+            id: item.id,
+          };
+        });
+        setListData(result);
+      }
+    }).catch(err => console.log(err));
   }, []);
   return (
     <ComLayoutHead
@@ -128,8 +104,8 @@ const FollowLi: FC<InFollowLi&{withPeopleFunc: (id: InFollowLi['id']) => void;}>
           <Text style={[style.valueTextDesc]}>累计收益率</Text>
         </View>
         <View style={style.valueTextView}>
-          <Text style={[style.valueText, style.valueTextCenter]}>{lastThreeWeek}</Text>
-          <Text style={[style.valueTextDesc, style.valueTextCenter]}>近3周交易胜率</Text>
+          <Text style={[style.valueText, style.valueTextCenter]}>{lastThreeWeek}%</Text>
+          <Text style={[style.valueTextDesc, style.valueTextCenter]}>交易胜率</Text>
         </View>
         <View style={style.valueTextView}>
           <Text style={[style.valueText, style.valueTextRight]}>{totalPerson}</Text>

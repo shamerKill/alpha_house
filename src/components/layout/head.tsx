@@ -25,6 +25,7 @@ interface InLayoutHeadProps {
   rightComponent?: HeaderSubComponent,
   leftComponent?: HeaderSubComponent,
   line?: true;
+  onMomentumScrollEnd?: ScrollViewProps['onMomentumScrollEnd'];
 }
 
 const ComLayoutHead: FC<InLayoutHeadProps> = ({
@@ -42,6 +43,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
   rightComponent,
   leftComponent,
   line,
+  onMomentumScrollEnd,
 }) => {
   const navigation = useNavigation();
   // 返回事件
@@ -132,6 +134,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
           )
           : (
             <ScrollView
+              onMomentumScrollEnd={onMomentumScrollEnd}
               scrollEventThrottle={16}
               onScroll={onScroll}
               style={({ flex: 1, backgroundColor: defaultThemeBgColor, ...scrollStyle })}>

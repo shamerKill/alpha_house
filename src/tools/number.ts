@@ -15,6 +15,13 @@ export const numberToFormatString = (value: number|string): string => {
   if (value > K) return `${parseFloat((data / K).toFixed(2)).toString()}K`;
   return data.toString();
 };
+export const biNumberToSymbol = (value: number|string): string => {
+  const val = typeof value === 'number' ? value : parseFloat(value);
+  let result = `${val}`;
+  if (val % 10000 > 10) result = `${(val / 10000).toFixed(2)}W`;
+  if (val % 1000000 > 10) result = `${(val / 1000000).toFixed(2)}M`;
+  return result;
+};
 
 export default {
   positive: positiveNumber,

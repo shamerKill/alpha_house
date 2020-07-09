@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerProps } from '@react-navigation/native';
 import TypeStackValue from './stackType';
 import HomeRoutes from './home';
 import MarketRoutes from './market';
@@ -9,6 +9,8 @@ import ContractRoutes from './contract';
 import TransactionRoutes from './transaction';
 import MyRoutes from './my';
 import { defaultThemeColor, themeGray, themeWhite } from '../config/theme';
+import useGetDispatch from '../data/redux/dispatch';
+import { InState, ActionsType } from '../data/redux/state';
 
 const StackValue: TypeStackValue = [
   // 首页
@@ -53,8 +55,25 @@ const TabScreen: FC = () => {
 };
 
 const RoutesBase: FC = () => {
+  const [, dispatchRoutePage] = useGetDispatch<InState['pageRouteState']>('pageRouteState');
+  const changeFunc: NavigationContainerProps['onStateChange'] = (state) => {
+    let routeKey = '';
+    if (state?.routes && state?.routes.length > 1) {
+      const { key } = state.routes[state.routes.length - 1];
+      routeKey = key;
+    } else if (state?.routes[0].state?.history) {
+      // eslint-disable-next-line prefer-destructuring
+      const history = state.routes[0].state.history as {key: string}[];
+      const lastPage: {key: string} = history[history.length - 1];
+      routeKey = lastPage.key;
+    }
+    dispatchRoutePage({
+      type: ActionsType.CHANGE_PAGE_ROUTE,
+      data: routeKey.split('-')[0],
+    });
+  };
   return (
-    <NavigationContainer>
+    <NavigationContainer onStateChange={changeFunc}>
       <Statc.Navigator>
         <Statc.Screen
           options={{

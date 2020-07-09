@@ -12,6 +12,8 @@ import {
 import ComLine from '../../../components/line';
 import ComFormButton from '../../../components/form/button';
 import { useGoToWithLogin } from '../../../tools/routeTools';
+import ajax from '../../../data/fetch';
+import getHeadImage from '../../../tools/getHeagImg';
 
 type TypeUserInfo = {
   head: ImageSourcePropType, // 头像
@@ -46,19 +48,17 @@ type TypeLogList = {
 const MyFollowUserDetails: FC = () => {
   const { params: { id: userId } } = useRoute<RouteProp<{followUserDetails: {id: string|number}}, 'followUserDetails'>>();
   const goToWithLogin = useGoToWithLogin();
-  // 获取用户ID
-  console.log(userId);
   // 用户信息
   const [userInfo, setUserInfo] = useState<TypeUserInfo>();
   // 用户收益信息
   const [userProfit, setUserProfit] = useState<TypeUserValue>();
   const userProfitList: {
     title: string;
-    key: keyof TypeUserValue
+    key: keyof TypeUserValue;
   }[] = [
-    { title: '累计收益率', key: 'totalProfit' },
-    { title: '近3周交易胜率', key: 'lastThreeProfit' },
-    { title: '近3周最大回撤', key: 'lastThreeBack' },
+    { title: '累计收益', key: 'totalProfit' },
+    { title: '交易胜率', key: 'lastThreeProfit' },
+    { title: '最大回撤', key: 'lastThreeBack' },
     { title: '交易天数', key: 'totalDays' },
     { title: '交易笔数', key: 'totalLength' },
     { title: '累计跟随人数', key: 'totalPerson' },
@@ -68,82 +68,53 @@ const MyFollowUserDetails: FC = () => {
 
   const addEvent = {
     withPerson: () => {
-      goToWithLogin('followMode', { id: userId });
+      if (!userInfo?.name) return;
+      goToWithLogin('followMode', { id: userId, name: userInfo?.name });
     },
   };
 
   // 获取数据
   useEffect(() => {
-    setUserInfo({
-      head: require('../../../assets/images/memory/user_head.png'),
-      name: '齐少金融学院',
-      time: '2020-03-20',
-      site: '中国',
-      desc: '人大金融学硕士，btc合约学院教育领军人芥末圈关注btc金融学院',
-    });
-    setUserProfit({
-      totalProfit: '402.56%',
-      lastThreeProfit: '65.83%',
-      lastThreeBack: '24.22%',
-      totalDays: 14,
-      totalLength: 254,
-      totalPerson: 661,
-      willWinProfit: '8.00%',
-    });
-    setLogList([
-      {
-        type: 0,
-        win: true,
-        coinType: 'BTC',
-        multiple: '100x',
-        openPrice: '6289.25',
-        closePrice: '6278.88',
-        profit: '1116.48%',
-        openTime: '03-21 10:44:44',
-        closeTime: '03-21 11:40:44',
-        orderId: '1',
-        orderType: '自主下单',
-      },
-      {
-        type: 1,
-        win: true,
-        coinType: 'BTC',
-        multiple: '100x',
-        openPrice: '6289.25',
-        closePrice: '6278.88',
-        profit: '16.48%',
-        openTime: '03-21 10:44:44',
-        closeTime: '03-21 11:40:44',
-        orderId: '2',
-        orderType: '自主下单',
-      },
-      {
-        type: 1,
-        win: false,
-        coinType: 'BTC',
-        multiple: '100x',
-        openPrice: '6289.25',
-        closePrice: '6278.88',
-        profit: '-16.48%',
-        openTime: '03-21 10:44:44',
-        closeTime: '03-21 11:40:44',
-        orderId: '3',
-        orderType: '自主下单',
-      },
-      {
-        type: 1,
-        win: false,
-        coinType: 'BTC',
-        multiple: '100x',
-        openPrice: '6289.25',
-        closePrice: '6278.88',
-        profit: '-16.48%',
-        openTime: '03-21 10:44:44',
-        closeTime: '03-21 11:40:44',
-        orderId: '4',
-        orderType: '自主下单',
-      },
-    ]);
+    ajax.get(`/v1/track/detail?trackID=${userId}`).then(data => {
+      if (data.status === 200) {
+        const userData = data.data.userInfo;
+        setUserInfo({
+          head: getHeadImage()[Number(userData.headimg) || 0],
+          name: userData.nickname,
+          time: userData.create_time.split(' ')[0],
+          site: userData.location,
+          desc: userData.description,
+        });
+        setUserProfit({
+          totalProfit: `${userData.track_profit}%`,
+          lastThreeProfit: `${Math.floor(userData.track_success_per * 10000) / 100}%`,
+          // FIXME: 不知道最大回撤啥意思
+          lastThreeBack: '0%',
+          totalDays: data.data.track_day,
+          totalLength: userData.order_num,
+          totalPerson: userData.track_num,
+          willWinProfit: data.data.config,
+        });
+        const result = data.data.orderList.map((item: any) => {
+          return {
+            type: Number(item.sell_buy === '1'),
+            win: item.profit_per >= 0,
+            coinType: item.symbol,
+            multiple: `${item.lever}x`,
+            openPrice: item.price,
+            // TODO: 没有平仓价
+            closePrice: '--',
+            profit: `${item.profit_per}%`,
+            openTime: item.create_time,
+            closeTime: '--',
+            orderId: item.id,
+            // TODO: 不知道订单类型的意义
+            orderType: '自动跟单',
+          };
+        });
+        setLogList(result);
+      }
+    }).catch(err => { console.log(err); });
   }, []);
   return (
     <ComLayoutHead

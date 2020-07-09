@@ -4,9 +4,11 @@ import {
 } from 'react-native';
 import { modalOutBg } from './outBg';
 import { themeWhite, defaultThemeBgColor, themeGray } from '../../config/theme';
+import { useNavigation, NavigationProp, NavigationState } from '@react-navigation/native';
 
 type TypeComPayPass = {
   submitPass: (pass: string) => void;
+  navigation?: NavigationProp<Record<string, object | undefined>, string, NavigationState, {}, {}>;
 };
 
 const closeComPayPass = () => {
@@ -14,12 +16,15 @@ const closeComPayPass = () => {
   modalOutBg.outBgsetChildren(null);
 };
 
-const ComPayPassModal: FC<TypeComPayPass> = ({ submitPass }) => {
+const ComPayPassModal: FC<TypeComPayPass> = ({ submitPass, navigation }) => {
   const [value, setValue] = useState('');
 
   const addEvent = {
     changeValue: (text: string) => {
       setValue(text.replace(/[^\d]/g, ''));
+    },
+    goToPage: () => {
+      navigation && navigation.navigate('changePass', { state: 'pay' });
     },
   };
 
@@ -52,7 +57,7 @@ const ComPayPassModal: FC<TypeComPayPass> = ({ submitPass }) => {
           keyboardType="number-pad"
           placeholder="请输入交易密码" />
       </View>
-      <TouchableNativeFeedback>
+      <TouchableNativeFeedback onPress={addEvent.goToPage}>
         <View style={style.moreView}>
           <Text style={style.moreText}>忘记密码？</Text>
         </View>

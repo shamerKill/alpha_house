@@ -15,6 +15,9 @@ import {
 import showSelector from '../../../components/modal/selector';
 import { numberToFormatString } from '../../../tools/number';
 import showComAlert from '../../../components/modal/alert';
+import ajax from '../../../data/fetch';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { InState } from '../../../data/redux/state';
 
 // 买卖列表类型
 type TypeSellBuyList = {
@@ -256,8 +259,9 @@ const ContractContentView: FC<{
   selectType,
   changeConTypeCallback,
 }) => {
-  console.log(coinType);
-  console.log(selectType);
+  console.log(coinType); // 币种类型
+  console.log(selectType); // 合约类型
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
 
   // 左边列表数据
   const [leftList, setLeftList] = useState<TypeLeftOutList[]>([]);
@@ -466,6 +470,23 @@ const ContractContentView: FC<{
   }, [doType]);
 
   useEffect(() => {
+    if (routePage === 'Contract') {
+      console.log(routePage);
+      ajax.get('/v1/bian/gold_accounts').then(data => {
+        if (data.status === 200) {
+          console.log(JSON.stringify(data, null, 2));
+          // 用户信息
+          setTopInfo({
+            asset: `${parseFloat(data.data.asset.availableBalance).toFixed(2)}/${parseFloat(data.data.asset.walletBalance).toFixed(2)}`,
+            risk: `${Math.floor((data.data.asset.maintMargin / (data.data.asset.walletBalance || 1)) * 10000) / 100}%`,
+            use: `${Math.floor((data.data.asset.maintMargin / (data.data.asset.walletBalance || 1)) * 10000) / 100}%`,
+            lever: data.data.positions.filter((item: any) => item.symbol === coinType.replace('/', ''))[0]?.leverage,
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      });
+    }
     setLeftList([
       {
         name: 'BTC/USDT 永续', id: 'BTC/USDT', priceUSDT: '9873.55', ratio: '+3.65%',
@@ -485,7 +506,7 @@ const ContractContentView: FC<{
     });
     setUSDTToRMB(10);
     setCanCloseValue('123');
-  }, []);
+  }, [routePage]);
 
   return (
     <View style={style.pageView}>

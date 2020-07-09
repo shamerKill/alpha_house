@@ -5,10 +5,14 @@ import {
 import { Text, Image, Button } from 'react-native-elements';
 import ComLayoutHead from '../../../components/layout/head';
 import {
-  themeWhite, defaultThemeColor, defaultThemeBgColor, themeGray,
+  themeWhite, defaultThemeColor, defaultThemeBgColor, themeGray, getThemeOpacity,
 } from '../../../config/theme';
 import ComLine from '../../../components/line';
 import { useGoToWithLogin } from '../../../tools/routeTools';
+import ajax from '../../../data/fetch';
+import getHeadImage from '../../../tools/getHeagImg';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { InState } from '../../../data/redux/state';
 
 interface InMyFollowManageLiView {
   head: ImageSourcePropType, // 头像
@@ -19,9 +23,10 @@ interface InMyFollowManageLiView {
   orderMoney: string; // 固定金额跟单
   dayMoney: string; // 单日跟随本金
   id: string|number; // id
+  coinType: string; // 跟随币种
 }
 const MyFollowManageLiView: FC<InMyFollowManageLiView & {onPress: () => void;}> = ({
-  head, name, withMoney, withProfit, isClose, orderMoney, dayMoney, onPress,
+  head, name, withMoney, withProfit, isClose, orderMoney, dayMoney, coinType, onPress,
 }) => {
   return (
     <>
@@ -42,11 +47,11 @@ const MyFollowManageLiView: FC<InMyFollowManageLiView & {onPress: () => void;}> 
         <View style={style.listMiddleBox}>
           <View style={style.listMiddleBoxIn}>
             <Text style={style.listMiddleBoxValue}>{withMoney}</Text>
-            <Text style={style.listMiddleBoxDesc}>累计跟随金额(USDT)</Text>
+            <Text style={style.listMiddleBoxDesc}>累计跟随金额({coinType})</Text>
           </View>
           <View style={style.listMiddleBoxIn}>
             <Text style={[style.listMiddleBoxValue, { color: defaultThemeColor }]}>{withProfit}</Text>
-            <Text style={style.listMiddleBoxDesc}>跟单收益(USDT)</Text>
+            <Text style={style.listMiddleBoxDesc}>跟单收益({coinType})</Text>
           </View>
         </View>
         <View style={style.listDesc}>
@@ -68,6 +73,7 @@ const MyFollowManageLiView: FC<InMyFollowManageLiView & {onPress: () => void;}> 
 };
 
 const MyFollowManageListScreen: FC = () => {
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   const goToWithLogin = useGoToWithLogin();
   // 累计跟随订单
   const [orderTotal, setOrderTotal] = useState('');
@@ -78,47 +84,32 @@ const MyFollowManageListScreen: FC = () => {
 
   const addEvent = {
     // 前往编辑页面
-    goToDetail: (id: string|number) => {
-      goToWithLogin('followEdit', { id });
+    goToDetail: (id: string|number, name: string) => {
+      goToWithLogin('followEdit', { id, name });
     },
   };
 
   useEffect(() => {
-    setOrderTotal('9999.99');
-    setOrderWin('402.45%');
-    setWithList([
-      {
-        head: require('../../../assets/images/memory/user_head.png'),
-        name: '其少金融学院',
-        withMoney: '10086.11',
-        withProfit: '4123.2%',
-        isClose: true,
-        orderMoney: '',
-        dayMoney: '',
-        id: '1',
-      },
-      {
-        head: require('../../../assets/images/memory/user_head.png'),
-        name: '金融学院',
-        withMoney: '10086.11',
-        withProfit: '4123.2%',
-        isClose: false,
-        orderMoney: '100.00USDT',
-        dayMoney: '1000.00USDT',
-        id: '2',
-      },
-      {
-        head: require('../../../assets/images/memory/user_head.png'),
-        name: '学院',
-        withMoney: '10086.11',
-        withProfit: '4123.2%',
-        isClose: false,
-        orderMoney: '100.00USDT',
-        dayMoney: '1000.00USDT',
-        id: '3',
-      },
-    ]);
-  }, []);
+    if (routePage !== 'followManageList') return;
+    ajax.get('/v1/track/own_list').then(data => {
+      if (data.status) {
+        setOrderTotal(data.data.orderNum);
+        setOrderWin(`${data.data.profitNum}%`);
+        const result = data.data?.list?.map((item: any) => ({
+          head: getHeadImage()[Number(item.headimg) || 0],
+          name: item.nickname,
+          withMoney: item.item.cumulative_num,
+          withProfit: `${item.item.cumulative_profit}%`,
+          isClose: item.item.is_documentary === '2',
+          orderMoney: item.item.num,
+          dayMoney: item.item.num_day,
+          id: item.item.id,
+          coinType: item.item.symbol,
+        })) || [];
+        setWithList(result);
+      }
+    }).catch(err => console.log(err));
+  }, [routePage]);
   return (
     <ComLayoutHead
       title=""
@@ -149,9 +140,21 @@ const MyFollowManageListScreen: FC = () => {
         withList.map(item => (
           <MyFollowManageLiView
             key={item.id}
-            onPress={() => addEvent.goToDetail(item.id)}
+            onPress={() => addEvent.goToDetail(item.id, item.name)}
             {...item} />
         ))
+      }
+      {
+        withList.length === 0 && (
+          <Text style={{
+            textAlign: 'center',
+            fontSize: 16,
+            color: getThemeOpacity(defaultThemeColor, 0.7),
+            paddingTop: 20,
+          }}>
+            无跟随数据
+          </Text>
+        )
       }
     </ComLayoutHead>
   );
