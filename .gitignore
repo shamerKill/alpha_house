@@ -28,7 +28,6 @@ build/
 .gradle
 local.properties
 *.iml
-android/java_pid70078.hprof
 
 # node.js
 #
@@ -39,7 +38,7 @@ yarn-error.log
 # BUCK
 buck-out/
 \.buckd/
-*.keystore
+# *.keystore
 !debug.keystore
 
 # fastlane
