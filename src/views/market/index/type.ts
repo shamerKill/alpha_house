@@ -6,7 +6,7 @@ export type TypeMarketListLine = {
   priceRMB: string; // RMB价格
   ratio: string; // 涨幅
   volume?: string; // 24h成交量
-  type?: 0|1|2|3; // 合约类型0USDT合约，1币本位合约，2混合合约，3季度合约
+  type?: 0|1|2|3; // 合约类型0现货，1金本位合约，2币本位合约，3混合合约
 };
 
 // 所有行情数据

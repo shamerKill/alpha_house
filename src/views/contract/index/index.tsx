@@ -15,10 +15,12 @@ import ComContractIndexBotton from './index_botton';
 const ContractScreen: FC = () => {
   const navigation = useNavigation();
   let { params: routeParams } = useRoute<RouteProp<{constract: { contractType: typeof selectType; coinType: string; }}, 'constract'>>();
-  if (!routeParams) routeParams = { contractType: 0, coinType: 'BTC/USDT' };
+  if (!routeParams) routeParams = { contractType: 0, coinType: '' };
 
   // 合约类型 usdt合约0，币本位合约1，混合合约2
   const [selectType, setSelectType] = useState<0|1|2>(0);
+  // 杠杆倍数
+  const [leverType, setLeverType] = useState('');
 
   const addEvent = {
     // 更改合约类型页面
@@ -89,8 +91,9 @@ const ContractScreen: FC = () => {
         <ContractContentView
           changeConTypeCallback={addEvent.changeSelectType}
           selectType={selectType}
-          coinType={routeParams.coinType} />
-        <ComContractIndexBotton selectType={selectType} coinType={routeParams.coinType} />
+          coinType={routeParams.coinType}
+          changePageLeverType={setLeverType} />
+        <ComContractIndexBotton selectType={selectType} coinType={routeParams.coinType} leverType={leverType} />
       </ScrollView>
     </ComLayoutHead>
   );

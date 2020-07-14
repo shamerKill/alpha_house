@@ -19,8 +19,8 @@ const ContractLogsAllScreen: FC = () => {
   ];
   const tabList = [
     { name: '普通委托', id: 0 },
-    { name: '计划委托', id: 1 },
-    { name: '止盈止损', id: 2 },
+    // { name: '计划委托', id: 1 },
+    // { name: '止盈止损', id: 2 },
   ];
 
   // 不同历史记录选择的类型
@@ -159,6 +159,7 @@ const ContractLogsAllScreen: FC = () => {
               key={item.id}
               title={item.name}
               containerStyle={style.topTabBtn}
+              fontStyle={{ fontSize: 16 }}
               onPress={() => setSelectStatus(item.id)}
               gray={selectStatus !== item.id} />
           ))

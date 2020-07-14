@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import {
   ScrollView, PanGestureHandler, PanGestureHandlerGestureEvent, TouchableNativeFeedback,
 } from 'react-native-gesture-handler';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../components/layout/head';
 import {
   themeWhite, themeGray, themeGreen, themeRed, themeMoreBlue, getThemeOpacity, defaultThemeBgColor, defaultThemeColor, themeBlack, themeTextGray,
@@ -17,6 +18,13 @@ import { modalOutBg } from '../../components/modal/outBg';
 import { numberToFormatString } from '../../tools/number';
 import ComLine from '../../components/line';
 import ComTranscationView from './logs';
+import ajax from '../../data/fetch';
+import showSelector from '../../components/modal/selector';
+import useGetDispatch from '../../data/redux/dispatch';
+import { InState } from '../../data/redux/state';
+import showPayPass from '../../components/modal/paypass';
+import showComAlert from '../../components/modal/alert';
+import Socket, { CoinToCoinSocket } from '../../data/fetch/socket';
 
 
 // 买卖列表类型
@@ -29,9 +37,11 @@ type TypeSellBuyList = {
 const ComSliderView: FC<{
   fixedValueRatio: number;
   setFixedValueRatio: React.Dispatch<React.SetStateAction<number>>;
+  hideFixedValue: boolean;
 }> = ({
   fixedValueRatio,
   setFixedValueRatio,
+  hideFixedValue,
 }) => {
   // 获取滑块线组件
   const sliderViewWidth = useRef(0);
@@ -59,11 +69,18 @@ const ComSliderView: FC<{
       }, 200));
     },
   };
+
+  useEffect(() => {
+    setRatioValue(fixedValueRatio);
+  }, [fixedValueRatio]);
+
   return (
     <View>
       {/* 所占百分比 */}
       <Text style={style.priceValueRatioText}>
-        {ratioValue}%
+        {
+          hideFixedValue ? ' ' : `${ratioValue}%`
+        }
       </Text>
       {/* 百分比操作区 */}
       <View style={style.ratioDoView}>
@@ -317,7 +334,14 @@ const TransactionLeftView: FC<{ leftList: TypeLeftOutList[]; changeCoin: (id: Ty
 };
 
 const TransactionScreen: FC = () => {
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const [prevRoutePage] = useGetDispatch<InState['pageRouteState']['prevPageRoute']>('pageRouteState', 'prevPageRoute');
   const navigation = useNavigation();
+  const socket = useRef<Socket|null>(null);
+  const subSocket = useRef(false);
+  // 委托类型0限价委托，1市价委托
+  const entrustTypeData = ['限价委托', '市价委托'];
+  const [entrustType, setEntrustType] = useState<0|1>(0);
 
   // 币种交易对
   const [coinType, setCoinType] = useState<TypeLeftOutList['id']>('BTC/USDT');
@@ -325,14 +349,64 @@ const TransactionScreen: FC = () => {
   const [showMore, setShowMore] = useState(false);
   // 左侧币种列表
   const [coinListArr, setCoinListArr] = useState<TypeLeftOutList[]>([]);
+  // 左侧币种symbol列表
+  const [coinListSymbolArr, setCoinListSymbolArr] = useState<string[]>([]);
   // 数量百分比
   const [fixedValueRatio, setFixedValueRatio] = useState(0);
+  // 隐藏百分比数量
+  const [hideFixedValue, setHideFixedValue] = useState(true);
   // usdt/rmb汇率
   const [USDTToRMB, setUSDTToRMB] = useState(7);
+  const [rmbValue, setRmbValue] = useState('');
   // 最新指数价格
   const newPrice = useRef('--');
+  // 买入0/卖出1
+  const [paySell, setPaySell] = useState<0|1>(0);
+  // 可用USDT
+  const [canUseMoney, setCanUseMoney] = useState('0');
+  // 可用币种
+  const [canUseCoin, setCanUseCoin] = useState('0');
+  // 交易额
+  const [changeUSDT, setChangeUSDT] = useState('0');
+  // 价格
+  const [price, setPrice] = useState('');
+  // 数量
+  const [vol, setVol] = useState('');
+  // 是否有密码
+  const [hasPass, setHasPass] = useState(false);
+  // 是否在请求执行中
+  const [submitLoading, setSubmitLoading] = useState(false);
 
   const addEvent = {
+    // 获取是否有交易密码
+    getHasPayPass: () => {
+      ajax.post('/v1/currency/changepass', {}).then(data => {
+        if (data.status === 200) {
+          setHasPass(data.data === 'true');
+        }
+      }).catch(err => {
+        console.log(err);
+      });
+    },
+    // 更改限价委托/市价委托
+    changePayType: () => {
+      const close = showSelector({
+        data: entrustTypeData,
+        selected: entrustTypeData[entrustType],
+        onPress: str => {
+          close();
+          if (typeof str === 'string') {
+            setEntrustType(entrustTypeData.indexOf(str) as typeof entrustType);
+            if (str === entrustTypeData[1]) {
+              setPrice('市价');
+            } else {
+              setPrice('');
+            }
+            setVol('');
+          }
+        },
+      });
+    },
     // 显示左侧内容
     showLeftChange: () => {
       modalOutBg.outBgsetChildren(<TransactionLeftView leftList={coinListArr} changeCoin={addEvent.goToLink} />);
@@ -344,25 +418,208 @@ const TransactionScreen: FC = () => {
       navigation.navigate('Transaction', { coin });
       setCoinType(coin);
     },
-    // 显示更多内容
+    // 更改数量
+    changeVol: (text: string) => {
+      if (entrustType === 0) {
+        if (parseFloat(canUseMoney) === 0) setVol(canUseMoney);
+        // eslint-disable-next-line no-useless-escape
+        else if (/^[\d|\.]*$/.test(text)) setVol(text);
+      } else if (entrustType === 1) {
+        if (parseFloat(text) > parseFloat(canUseMoney)) setVol(canUseMoney);
+        else if (parseFloat(text) < 0) setVol('0');
+        // eslint-disable-next-line no-useless-escape
+        else if (/^[\d|\.]*$/.test(text)) setVol(text);
+      }
+    },
+    // 买卖操作
+    changePass: () => {
+      if (submitLoading) {
+        showMessage({
+          message: '您有一笔订单正在提交，请稍后',
+          type: 'warning',
+        });
+        return;
+      }
+      if (hasPass) {
+        showPayPass({
+          submitPass: addEvent.getPassSubmit,
+          navigation,
+        });
+      } else {
+        const closeAlert = showComAlert({
+          title: '请设置交易密码',
+          desc: '您未设置交易密码，请前往设置',
+          success: {
+            text: '前往设置',
+            onPress: () => {
+              // 修改支付密码
+              navigation.navigate('changePass', { state: 'pay' });
+              closeAlert();
+            },
+          },
+          close: {
+            text: '取消',
+            onPress: () => {
+              closeAlert();
+            },
+          },
+        });
+      }
+    },
+    getPassSubmit: (pass: string) => {
+      if (parseFloat(vol) === 0) {
+        showMessage({
+          message: '数量不能为0',
+          type: 'warning',
+        });
+        return;
+      }
+      // 挂单操作
+      const fm: {[key: string]: string|number} = {};
+      // 设置数量
+      fm.entrust_num = vol;
+      // 买入卖出币种
+      if (paySell === 0) {
+        fm.type = 1;
+        if (vol.match('%')) fm.entrust_num = (parseFloat(vol) * parseFloat(canUseMoney)) / 100;
+      } else {
+        fm.type = 2;
+        if (vol.match('%')) fm.entrust_num = (parseFloat(vol) * parseFloat(canUseCoin)) / 100;
+      }
+      [fm.buy_currency] = coinType.split('/');
+      [, fm.sell_currency] = coinType.split('/');
+      fm.price = price;
+      fm.trust_type = entrustType + 1;
+      fm.pay_password = pass;
+      setSubmitLoading(true);
+      ajax.post('/v1/currency/purchase', fm).then(data => {
+        if (data.status === 200) {
+          setTimeout(() => {
+            showMessage({
+              message: '订单委托成功',
+              type: 'success',
+            });
+            ComTranscationView.prototype.getData();
+          }, 1000);
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        setSubmitLoading(false);
+      });
+    },
   };
 
   useEffect(() => {
-    setCoinListArr([
-      {
-        name: 'BTC/USDT 永续', id: 'BTC/USDT', priceUSDT: '9873.55', ratio: '+3.65%',
-      },
-      {
-        name: 'EOS/USDT 永续', id: 'EOS/USDT', priceUSDT: '9873.55', ratio: '-3.65%',
-      },
-      {
-        name: 'ETH/USDT 永续', id: 'ETH/USDT', priceUSDT: '9873.55', ratio: '-3.65%',
-      },
-      {
-        name: 'BCH/USDT 永续', id: 'BCH/USDT', priceUSDT: '9873.55', ratio: '+3.65%',
-      },
-    ]);
-    setUSDTToRMB(10);
+    // 获取左侧数据
+    const tickerImg = 'cash.market.ALL.ticker';
+    const socketListener = (message: any) => {
+      const resultData: {
+        [key: string]: {
+          close: string;
+          open: string;
+          symbol: string;
+        }
+      } = message.Tick;
+      const result: typeof coinListArr = Object.values(resultData).map(coin => {
+        const close = parseFloat(coin.close);
+        const open = parseFloat(coin.open);
+        const range = Math.floor(((close - open) / open) * 10000) / 100;
+        return {
+          name: `${coin.symbol.replace('USDT', '')}/USDT`,
+          priceUSDT: coin.close,
+          ratio: `${range}%`,
+          id: `${coin.symbol.replace('USDT', '')}/USDT`,
+        };
+      });
+      setCoinListArr(result);
+      if (coinListSymbolArr.length === 0) {
+        setCoinListSymbolArr(result.map(item => item.name));
+      }
+    };
+    if (routePage === 'Home') {
+      CoinToCoinSocket.getSocket().then(ws => {
+        socket.current = ws;
+        ws.addListener(socketListener, tickerImg);
+        ws.send(tickerImg, 'req');
+        ws.send(tickerImg, 'sub');
+        subSocket.current = false;
+      }).catch(err => {
+        console.log(err);
+      });
+    } else if (socket.current) {
+      if (subSocket.current) return;
+      subSocket.current = true;
+      socket.current.send(tickerImg, 'unsub');
+      socket.current.removeListener(tickerImg);
+    }
+  }, []);
+
+  useEffect(() => {
+  }, [coinListSymbolArr]);
+
+  useEffect(() => {
+    if (entrustType === 0) {
+      if (vol.match('%')) {
+        if (paySell === 0) {
+          setChangeUSDT(`${parseFloat(price || '0') * parseFloat(`${(parseFloat(vol) / 100) * parseFloat(canUseMoney)}` || '0')}`);
+        } else {
+          setChangeUSDT(`${parseFloat(price || '0') * parseFloat(`${(parseFloat(vol) / 100) * parseFloat(canUseCoin)}` || '0')}`);
+        }
+      } else {
+        setChangeUSDT(`${parseFloat(price || '0') * parseFloat(vol || '0')}`);
+      }
+    }
+  }, [price, vol]);
+
+  useEffect(() => {
+    // 更改数量
+    setVol(`${fixedValueRatio}%`);
+  }, [fixedValueRatio]);
+
+  useEffect(() => {
+    ajax.post('/v1/currency/coin', {
+      symbol: coinType.split('/')[1],
+    }).then(data => {
+      if (data.status === 200) {
+        setCanUseMoney(data.data[0]);
+        setUSDTToRMB(data.data[1]);
+      }
+    }).catch(err => {
+      console.log(err);
+    });
+    ajax.post('/v1/currency/coin', {
+      symbol: coinType.split('/')[0],
+    }).then(data => {
+      if (data.status === 200) {
+        setCanUseCoin(data.data[0]);
+      }
+    }).catch(err => {
+      console.log(err);
+    });
+  }, [coinType]);
+
+  useEffect(() => {
+    if (`${parseFloat(vol)}` !== vol && vol !== '') setHideFixedValue(false);
+    else setHideFixedValue(true);
+  }, [vol]);
+
+  useEffect(() => {
+    setRmbValue(`${(USDTToRMB * parseFloat(price) || 0).toFixed(2)}`);
+  }, [USDTToRMB, price]);
+
+  useEffect(() => {
+    if (routePage === 'Transaction' && prevRoutePage === 'changePass') {
+      addEvent.getHasPayPass();
+    }
+  }, [routePage]);
+  useEffect(() => {
+    addEvent.getHasPayPass();
   }, []);
 
   return (
@@ -386,7 +643,7 @@ const TransactionScreen: FC = () => {
             </View>
           </StaticTouchableNativeFeedback>
           <View style={style.headRightView}>
-            <StaticTouchableNativeFeedback>
+            <StaticTouchableNativeFeedback onPress={() => navigation.navigate('TranscationKline', { name: coinType })}>
               <View style={style.headRightIconView}>
                 <Image
                   style={style.headRgihtIcon}
@@ -438,14 +695,15 @@ const TransactionScreen: FC = () => {
                 <StaticTouchableNativeFeedback
                   key={index}
                   background={StaticTouchableNativeFeedback.Ripple('transparent')}
-                  onPress={() => {}}>
+                  onPress={() => setPaySell(index as typeof paySell)}>
                   <View
                     style={[
                       style.typeChangeBtn,
-                      style.typeChangeBtnSelect,
+                      index === paySell && style.typeChangeBtnSelect,
                     ]}>
                     <Text style={[
                       style.typeChangeBtnText,
+                      index === paySell && style.typeChangeBtnSelectText,
                     ]}>
                       {item}
                     </Text>
@@ -459,7 +717,7 @@ const TransactionScreen: FC = () => {
                         source={[
                           require('../../assets/images/pic/contract_btn_no_bg.png'),
                           require('../../assets/images/pic/contract_btn_bg.png'),
-                        ][1]} />
+                        ][Number(index === paySell)]} />
                     </View>
                   </View>
                 </StaticTouchableNativeFeedback>
@@ -468,10 +726,10 @@ const TransactionScreen: FC = () => {
           </View>
           {/* 限价/市价 */}
           <View style={style.moreTypeChange}>
-            <StaticTouchableNativeFeedback onPress={() => {}}>
+            <StaticTouchableNativeFeedback onPress={() => addEvent.changePayType()}>
               <View style={style.moreTypeChangePress}>
                 <Text style={style.moreTypeChangeText}>
-                  限价
+                  { entrustTypeData[entrustType] }
                 </Text>
                 <Image
                   resizeMode="contain"
@@ -489,39 +747,82 @@ const TransactionScreen: FC = () => {
                   <TextInput
                     keyboardType="number-pad"
                     style={style.priceSetInputInput}
-                    placeholder="价格" />
+                    placeholder="价格"
+                    value={price}
+                    onChangeText={text => setPrice(text)} />
+                  {
+                    // 市价委托
+                    entrustType === 1 && (
+                      <View style={{
+                        width: '100%',
+                        height: '100%',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                      }} />
+                    )
+                  }
                 </View>
               </View>
-              <Text>&asymp;&yen;0.00</Text>
+              <Text>&asymp;&yen;{rmbValue}</Text>
               {/* 数量 */}
               <View style={style.priceSetValue}>
                 <TextInput
-                  keyboardType="number-pad"
+                  keyboardType="numeric"
                   style={style.priceSetInputInput}
-                  placeholder="数量(BTC)" />
+                  placeholder={
+                    entrustType === 1
+                      ? '数量(USDT)' : `数量(${coinType.split('/')[0]})`
+                  }
+                  value={vol}
+                  onFocus={() => `${parseFloat(vol)}` !== vol && setVol('')}
+                  onChangeText={text => addEvent.changeVol(text)} />
               </View>
               {/* 滚动条 */}
               <ComSliderView
                 fixedValueRatio={fixedValueRatio}
-                setFixedValueRatio={setFixedValueRatio} />
+                setFixedValueRatio={setFixedValueRatio}
+                hideFixedValue={hideFixedValue} />
               {/* 更多信息 */}
               <View style={style.ratioThenTextView}>
-                <Text style={style.ratioThenText}>可用</Text>
-                <Text style={style.ratioThenText}>{1}</Text>
+                <Text style={style.ratioThenText}>
+                  可用({
+                    coinType.split('/')[Number(!paySell)]
+                  })
+                </Text>
+                <Text style={style.ratioThenText}>
+                  {
+                    [canUseMoney, canUseCoin][paySell]
+                  }
+                </Text>
               </View>
-              <View style={style.ratioThenTextView}>
-                <Text style={style.ratioThenText}>交易额</Text>
-                <Text style={style.ratioThenText}>{2}</Text>
-              </View>
+              {
+                entrustType === 0 ? (
+                  <View style={style.ratioThenTextView}>
+                    <Text style={style.ratioThenText}>
+                      交易额(USDT)
+                    </Text>
+                    <Text style={style.ratioThenText}>{changeUSDT}</Text>
+                  </View>
+                ) : (
+                  <View style={style.ratioThenTextView}>
+                    <Text style={style.ratioThenText}>{' '}</Text>
+                  </View>
+                )
+              }
             </View>
             {/* 操作按钮 */}
             <View style={style.doFuncBtnsView}>
-              <StaticTouchableNativeFeedback onPress={() => {}}>
+              <StaticTouchableNativeFeedback onPress={() => addEvent.changePass()}>
                 <View style={[
                   style.doFuncBtnView,
-                  { backgroundColor: [themeGreen, themeRed][0] },
+                  { backgroundColor: [themeGreen, themeRed][paySell] },
                 ]}>
-                  <Text style={style.doFuncBtnText}>买入</Text>
+                  <Text style={style.doFuncBtnText}>
+                    {
+                      ['买入', '卖出'][paySell]
+                    }
+                  </Text>
                 </View>
               </StaticTouchableNativeFeedback>
             </View>
@@ -541,7 +842,7 @@ const TransactionScreen: FC = () => {
         </View>
       </View>
       <ComLine />
-      <ComTranscationView />
+      <ComTranscationView coinType={coinType} />
     </ComLayoutHead>
   );
 };
@@ -759,6 +1060,7 @@ const style = StyleSheet.create({
     alignItems: 'center',
     paddingLeft: 5,
     height: 40,
+    position: 'relative',
   },
   priceSetInputInput: {
     height: 40,
@@ -777,6 +1079,7 @@ const style = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 5,
+    position: 'relative',
   },
   priceValueRatioText: {
     textAlign: 'right',

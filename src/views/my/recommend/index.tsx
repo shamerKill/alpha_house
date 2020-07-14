@@ -1,12 +1,14 @@
 import React, { FC, useState, useEffect } from 'react';
 import { View, Text } from 'react-native';
 import { TouchableNativeFeedback } from 'react-native-gesture-handler';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, defaultThemeBgColor, themeBlack, defaultThemeColor,
 } from '../../../config/theme';
 import MyRecommendLinkScreen, { TypeMyRecommendLink } from './link';
-import MyRecommendListScreen, { TypeMyRecommendList } from './list';
+import MyRecommendListScreen from './list';
+import ajax from '../../../data/fetch';
 
 const MyRecommendScreen: FC = () => {
   const topBtn = [
@@ -17,42 +19,25 @@ const MyRecommendScreen: FC = () => {
   const [select, setSelect] = useState(1);
   // 推广链接数据
   const [recommend, setRecommend] = useState<TypeMyRecommendLink>({ link: 'loading', pic: require('../../../assets/images/pic/share_bg.png') });
-  // 推荐列表数据
-  const [listValue, setListValue] = useState<TypeMyRecommendList>({ allNum: '-', listArr: [] });
 
-  const addEvent = {
-    getSearch: (search: string) => {
-      console.log(search);
-    },
-  };
 
   useEffect(() => {
-    setTimeout(() => {
-      setRecommend({
-        link: 'http://127.0.0.1:5500/memory/share.jpghttp://127.0.0.1:5500/memory/share.jpg',
-        pic: { uri: 'http://192.168.3.4:5500/memory/share.jpg' },
-      });
-      setListValue({
-        allNum: '1000',
-        listArr: [
-          {
-            upAccount: '22159951', time: '2019-10-11', status: false, selfChildren: true, id: '0',
-          },
-          {
-            upAccount: '22159951', time: '2019-10-11', status: true, selfChildren: false, id: '1',
-          },
-          {
-            upAccount: '22159951', time: '2019-10-11', status: true, selfChildren: true, id: '2',
-          },
-          {
-            upAccount: '22159951', time: '2019-10-11', status: false, selfChildren: false, id: '3',
-          },
-          {
-            upAccount: '22159951', time: '2019-10-11', status: false, selfChildren: true, id: '4',
-          },
-        ],
-      });
-    }, 1000);
+    ajax.get('/v1/user/invite').then(data => {
+      console.log(data);
+      if (data.status === 200) {
+        setRecommend({
+          link: data.data.qrcodeUrl,
+          pic: { uri: data.data.qrcodeFile },
+        });
+      } else {
+        showMessage({
+          message: data.message,
+          type: 'warning',
+        });
+      }
+    }).catch(err => {
+      console.log(err);
+    });
   }, []);
   return (
     <ComLayoutHead
@@ -96,7 +81,7 @@ const MyRecommendScreen: FC = () => {
       {
         select === 1
           ? <MyRecommendLinkScreen input={recommend} />
-          : <MyRecommendListScreen input={{ ...listValue, searchFunc: addEvent.getSearch }} />
+          : <MyRecommendListScreen />
       }
     </ComLayoutHead>
   );

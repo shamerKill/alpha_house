@@ -67,7 +67,7 @@ const MyChangePassScreen: FC = () => {
         }
       }
       const reqUri = {
-        pay: '/v1/power/edit_pass_in',
+        pay: '/v1/power/update_tran_pass',
         login: '/v1/power/edit_pass_in',
       }[route.params.state];
       ajax.post(reqUri, {

@@ -5,23 +5,35 @@ import {
 import ComLayoutHead from '../../../components/layout/head';
 import { themeGray } from '../../../config/theme';
 import ComLine from '../../../components/line';
+import ajax from '../../../data/fetch';
 
 const MytransferAccountsScreen: FC = () => {
-  // 币种
-  const coinType = 'USDT';
   // 账户列表
   const [accountsList, setAccountsList] = useState<{
     name: string;
     canUse: string;
+    symbol: string;
   }[]>([]);
 
   useEffect(() => {
-    setAccountsList([
-      { name: '充值提现账户', canUse: '109.1' },
-      { name: '币币账户', canUse: '119.1' },
-      { name: 'USDT合约账户', canUse: '129.1' },
-      { name: '混合合约账户', canUse: '139.1' },
-    ]);
+    ajax.get('/v1/bian/transfer_account_view').then(data => {
+      if (data.status === 200) {
+        setAccountsList([
+          {
+            name: '币币账户',
+            canUse: data.data.coinAsset.account,
+            symbol: data.data.coinAsset.symbol,
+          },
+          {
+            name: 'USDT合约账户',
+            canUse: data.data.usdtAsset.account,
+            symbol: data.data.usdtAsset.symbol,
+          },
+        ]);
+      }
+    }).catch(err => {
+      console.log(err);
+    });
   }, []);
   return (
     <ComLayoutHead
@@ -39,7 +51,7 @@ const MytransferAccountsScreen: FC = () => {
                 <Text style={style.listName}>{item.name}</Text>
                 <View style={style.listRight}>
                   <Text style={style.listPrice}>{item.canUse}</Text>
-                  <Text style={style.listDesc}>可用{coinType}</Text>
+                  <Text style={style.listDesc}>可用{item.symbol}</Text>
                 </View>
               </View>
             </TouchableNativeFeedback>

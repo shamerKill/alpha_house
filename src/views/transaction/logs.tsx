@@ -2,11 +2,15 @@ import React, { FC, useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableNativeFeedback,
 } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
 import {
   defaultThemeBgColor, themeGray, themeBlack, getThemeOpacity, themeGreen, themeRed,
 } from '../../config/theme';
 import ComFormButton from '../../components/form/button';
 import showComAlert from '../../components/modal/alert';
+import ajax from '../../data/fetch';
+import useGetDispatch from '../../data/redux/dispatch';
+import { InState } from '../../data/redux/state';
 
 type TypeLogsData = {
   type: 0|1; // 买入0，卖出1
@@ -35,19 +39,39 @@ const ComTranscationLogView: FC<TypeLogsData> = ({
 }) => {
   const addEvent = {
     backOrder: () => {
+      // 撤销订单
       const close = showComAlert({
         title: '撤销提示',
         desc: '是否撤销当前未成交委托?',
         success: {
           text: '仍要撤销',
           onPress: () => {
-            console.log(id);
+            addEvent.submit();
+            close();
           },
         },
         close: {
           text: '取消撤销',
           onPress: () => close(),
         },
+      });
+    },
+    submit: () => {
+      ajax.post('/v1/currency/revoke', { id }).then(data => {
+        if (data.status === 200) {
+          showMessage({
+            message: '撤销成功',
+            type: 'success',
+          });
+          ComTranscationView.prototype.getData();
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
       });
     },
   };
@@ -103,7 +127,10 @@ const ComTranscationLogView: FC<TypeLogsData> = ({
   );
 };
 
-const ComTranscationView: FC = () => {
+const ComTranscationView: FC<{coinType: string}> = ({
+  coinType,
+}) => {
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   // 显示数据类型未成交委托0，历史委托1
   const [listType, setListType] = useState<0|1>(0);
   // 未成交委托
@@ -116,74 +143,59 @@ const ComTranscationView: FC = () => {
     changeListType: (type: typeof listType) => {
       if (type !== listType) setListType(type);
     },
+    // 获取数据
+    getData: () => {
+      ajax.post('/v1/currency/currency_info', {
+        symbol: coinType.split('/')[0],
+        type: listType + 1,
+      }).then(data => {
+        if (data.status === 200) {
+          if (listType === 0) {
+            setNoDoList(data?.data?.map((item: any) => {
+              return {
+                type: item.type - 1,
+                time: item.create_time,
+                id: item.id,
+                willPrice: item.price,
+                willNumber: item.entrust_num,
+                doPrice: item.price,
+                doNumber: item.deal_num,
+                priceUnit: item.sell_currency,
+                numberUnit: item.buy_currency,
+                orderType: [0, 3, 2, 1][item.status - 1],
+              };
+            }) || []);
+          } else {
+            setLogsList(data?.data?.map((item: any) => {
+              return {
+                type: item.type - 1,
+                time: item.create_time,
+                id: item.id,
+                willPrice: item.price,
+                willNumber: item.entrust_num,
+                doPrice: item.price,
+                doNumber: item.deal_num,
+                priceUnit: item.sell_currency,
+                numberUnit: item.buy_currency,
+                orderType: [0, 3, 2, 1][item.status - 1],
+              };
+            }) || []);
+          }
+        }
+      }).catch(err => {
+        console.log(err);
+      });
+    },
   };
 
+  ComTranscationView.prototype.getData = addEvent.getData;
+
   useEffect(() => {
-    setNoDoList([
-      {
-        type: 0,
-        time: '2020-05-10 10:10:10',
-        id: '1',
-        willPrice: '0.0001',
-        willNumber: '2.0000',
-        doPrice: '0.0001',
-        doNumber: '2.0000',
-        priceUnit: 'USDT',
-        numberUnit: 'BTC',
-        orderType: 0,
-      },
-      {
-        type: 1,
-        time: '2020-05-10 10:10:10',
-        id: '2',
-        willPrice: '0.0001',
-        willNumber: '2.0000',
-        doPrice: '0.0001',
-        doNumber: '2.0000',
-        priceUnit: 'USDT',
-        numberUnit: 'BTC',
-        orderType: 0,
-      },
-    ]);
-    setLogsList([
-      {
-        type: 0,
-        time: '2020-05-10 10:10:10',
-        id: '1',
-        willPrice: '0.0001',
-        willNumber: '2.0000',
-        doPrice: '0.0001',
-        doNumber: '2.0000',
-        priceUnit: 'USDT',
-        numberUnit: 'BTC',
-        orderType: 1,
-      },
-      {
-        type: 1,
-        time: '2020-05-10 10:10:10',
-        id: '2',
-        willPrice: '0.0001',
-        willNumber: '2.0000',
-        doPrice: '0.0001',
-        doNumber: '2.0000',
-        priceUnit: 'USDT',
-        numberUnit: 'BTC',
-        orderType: 2,
-      },
-      {
-        type: 1,
-        time: '2020-05-10 10:10:10',
-        id: '3',
-        willPrice: '0.0001',
-        willNumber: '2.0000',
-        doPrice: '0.0001',
-        doNumber: '2.0000',
-        priceUnit: 'USDT',
-        numberUnit: 'BTC',
-        orderType: 3,
-      },
-    ]);
-  }, []);
+    addEvent.getData();
+  }, [listType, coinType]);
+  useEffect(() => {
+    if (routePage === 'Transaction') addEvent.getData();
+  }, [routePage]);
 
   return (
     <View>

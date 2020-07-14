@@ -9,6 +9,7 @@ import { modalOutBg } from '../../../components/modal/outBg';
 import {
   themeWhite, defaultThemeColor, defaultThemeBgColor, themeBlack, themeGray, themeGreen, themeRed, themeMoreBlue, getThemeOpacity,
 } from '../../../config/theme';
+import Socket, { marketSocket } from '../../../data/fetch/socket';
 
 export const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutList[]; changeCoin: (id: TypeLeftOutList['id']) => void;}> = ({
   coinType,
@@ -16,6 +17,8 @@ export const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutLi
   changeCoin,
 }) => {
   const animatedValue = useRef(new Animated.Value(-400));
+
+  const [list, setList] = useState(leftList);
 
   const addEvent = {
     changeCoinType: (id: TypeLeftOutList['id']) => {
@@ -33,6 +36,51 @@ export const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutLi
       },
     ).start();
   }, []);
+
+  const socket = useRef<Socket|null>(null);
+  const subSocket = useRef(false);
+  useEffect(() => {
+    const tickerImg = 'gold.market.ALL.ticker';
+    const socketListener = (message: any) => {
+      const resultData: {
+        [key: string]: {
+          [key: string]: string;
+        };
+      } = message.Tick;
+      const result: TypeLeftOutList[] = [];
+      Object.values(resultData).forEach(item => {
+        const close = parseFloat(item.close);
+        const open = parseFloat(item.open);
+        const range = Math.floor(((close - open) / open) * 10000) / 100;
+        result.push({
+          name: item.symbol.replace('USDT', '/USDT'),
+          id: item.symbol.replace('USDT', '/USDT'),
+          priceUSDT: item.close,
+          ratio: `${range}%`,
+        });
+      });
+      setList(result);
+    };
+    // 获取USDT合约
+    marketSocket.getSocket().then(ws => {
+      socket.current = ws;
+      ws.addListener(socketListener, tickerImg);
+      ws.send(tickerImg, 'req');
+      ws.send(tickerImg, 'sub');
+      subSocket.current = false;
+    }).catch(err => {
+      console.log(err);
+    });
+    return () => {
+      if (subSocket.current) return;
+      subSocket.current = true;
+      if (socket.current) {
+        socket.current.send(tickerImg, 'unsub');
+        socket.current.removeListener(tickerImg);
+      }
+    };
+  }, []);
+
   return (
     <Animated.View style={[
       style.leftListView,
@@ -46,32 +94,32 @@ export const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutLi
         <Text style={style.leftListTitle}>{coinType}</Text>
         <ScrollView style={{ flex: 1 }}>
           {
-          leftList?.map(item => {
-            const ratioNum = parseFloat(item.ratio);
-            let color = themeGray;
-            if (ratioNum > 0) color = themeGreen;
-            if (ratioNum < 0) color = themeRed;
-            return (
-              <TouchableNativeFeedback key={item.id} onPress={() => addEvent.changeCoinType(item.id)}>
-                <View style={style.leftListLine}>
-                  <Text style={style.leftListName}>{item.name}</Text>
-                  <Text style={[
-                    style.leftListPrice,
-                    { color },
-                  ]}>
-                    {item.priceUSDT}
-                  </Text>
-                  <Text style={[
-                    style.leftListRatio,
-                    { color },
-                  ]}>
-                    {item.ratio}
-                  </Text>
-                </View>
-              </TouchableNativeFeedback>
-            );
-          })
-        }
+            list?.map(item => {
+              const ratioNum = parseFloat(item.ratio);
+              let color = themeGray;
+              if (ratioNum > 0) color = themeGreen;
+              if (ratioNum < 0) color = themeRed;
+              return (
+                <TouchableNativeFeedback key={item.id} onPress={() => addEvent.changeCoinType(item.id)}>
+                  <View style={style.leftListLine}>
+                    <Text style={style.leftListName}>{item.name}</Text>
+                    <Text style={[
+                      style.leftListPrice,
+                      { color },
+                    ]}>
+                      {item.priceUSDT}
+                    </Text>
+                    <Text style={[
+                      style.leftListRatio,
+                      { color },
+                    ]}>
+                      {item.ratio}
+                    </Text>
+                  </View>
+                </TouchableNativeFeedback>
+              );
+            })
+          }
         </ScrollView>
       </SafeAreaView>
     </Animated.View>
@@ -102,7 +150,7 @@ const ContractHeadView: FC<{
     // 前往页面
     goToLink: (id: TypeLeftOutList['id']) => {
       if (typeof id === 'string') changeCallback({ coinType: id });
-      else changeCallback({ coinType: id.toString() });
+      else changeCallback({ coinType: id });
     },
     // 显示更多内容
   };

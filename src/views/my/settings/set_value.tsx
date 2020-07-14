@@ -12,10 +12,17 @@ import ComLayoutHead from '../../../components/layout/head';
 import { setListArr } from '.';
 import { defaultThemeColor, themeWhite } from '../../../config/theme';
 import showComAlert from '../../../components/modal/alert';
+import getHeadImage from '../../../tools/getHeagImg';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { InState, ActionsType } from '../../../data/redux/state';
+import ajax from '../../../data/fetch';
 
 const MySettingValueScreen: FC = () => {
+  // 0头像，1昵称，2简介，3所在地，4语言版本
   const { params: { type: settingState = 4 } } = useRoute<RouteProp<{settingValue: { type?: number }}, 'settingValue'>>();
   const navigation = useNavigation();
+
+  const [userInfo, dispatchUserInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
 
   // 默认值，判断是否进行了更改
   const defaultValue = useRef<string|number|null>(null);
@@ -34,7 +41,6 @@ const MySettingValueScreen: FC = () => {
 
   const addEvent = {
     save: () => {
-      console.log(defaultValue, [selectImage, value, value, selectSite, selectLanguage][settingState]);
       if (defaultValue.current === [selectImage, value, value, selectSite, selectLanguage][settingState]) {
         showMessage({
           message: '未更改',
@@ -49,8 +55,7 @@ const MySettingValueScreen: FC = () => {
         success: {
           text: '提交',
           onPress: () => {
-            close();
-            navigation.goBack();
+            addEvent.submit(close);
           },
         },
         close: {
@@ -61,29 +66,63 @@ const MySettingValueScreen: FC = () => {
         },
       });
     },
+    submit: (close: () => void) => {
+      const fm: {[key: string]: any} = {};
+      if (settingState === 0) fm.avatar = selectImage;
+      else if (settingState === 1) fm.nickname = value;
+      else if (settingState === 2) fm.description = value;
+      else if (settingState === 3) fm.location = siteArr[selectSite];
+      ajax.post('/v1/user/edit_profile', fm).then(data => {
+        close();
+        if (data.status === 200) {
+          showMessage({
+            message: '修改成功',
+            type: 'success',
+          });
+          if (settingState === 0) dispatchUserInfo({ type: ActionsType.CHANGE_USER_INFO, data: { avatar: imagesArr[selectImage] } });
+          else if (settingState === 1) dispatchUserInfo({ type: ActionsType.CHANGE_USER_INFO, data: { nickname: value } });
+          else if (settingState === 2) dispatchUserInfo({ type: ActionsType.CHANGE_USER_INFO, data: { introduce: value } });
+          else if (settingState === 3) dispatchUserInfo({ type: ActionsType.CHANGE_USER_INFO, data: { location: siteArr[selectSite] } });
+          navigation.goBack();
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      });
+    },
     closeText: () => setValue(''),
   };
 
   useEffect(() => {
-    const headImage = require('../../../assets/images/memory/user_head.png');
     switch (settingState) {
       case 0:
-        setImagesArr([headImage, headImage, headImage, headImage, headImage, headImage]);
-        setSelectImage(0);
+        setImagesArr(getHeadImage());
         defaultValue.current = 0;
         break;
       case 1:
-        setValue('这是昵称');
-        defaultValue.current = '这是昵称';
+        setValue(userInfo.nickname);
+        defaultValue.current = userInfo.nickname;
         break;
       case 2:
-        setValue('这是我的个人简介，你猜猜啊');
-        defaultValue.current = '这是我的个人简介，你猜猜啊';
+        setValue(userInfo.introduce);
+        defaultValue.current = userInfo.introduce;
         break;
       case 3:
-        setSiteArr(['中国', '意大利', '韩国', '美国', '泰国', '新加坡']);
-        setSelecSite(0);
-        defaultValue.current = 0;
+        ajax.get('/v1/power/region').then(data => {
+          if (data.status === 200) {
+            setSiteArr(data?.data?.map((item: any) => {
+              return item.name;
+            }) || []);
+          } else {
+            console.log(data);
+          }
+        }).catch(err => {
+          console.log(err);
+        });
         break;
       case 4:
         setLanguageArr(['简体中文']);
@@ -94,6 +133,22 @@ const MySettingValueScreen: FC = () => {
         break;
     }
   }, []);
+  useEffect(() => {
+    imagesArr.forEach((item, index) => {
+      if (userInfo.avatar === item) {
+        setSelectImage(index);
+        defaultValue.current = index;
+      }
+    });
+  }, [imagesArr]);
+  useEffect(() => {
+    siteArr.forEach((item, index) => {
+      if (userInfo.location === item) {
+        setSelecSite(index);
+        defaultValue.current = index;
+      }
+    });
+  }, [siteArr]);
 
   return (
     <ComLayoutHead

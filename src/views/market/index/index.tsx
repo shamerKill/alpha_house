@@ -16,6 +16,7 @@ import MarketListView from './list';
 import useGetDispatch from '../../../data/redux/dispatch';
 import { InState } from '../../../data/redux/state';
 import Socket, { marketSocket } from '../../../data/fetch/socket';
+import ajax from '../../../data/fetch';
 
 
 const MarketScreen: FC = () => {
@@ -29,6 +30,8 @@ const MarketScreen: FC = () => {
   const contentScrollRef = useRef<ScrollView>(null);
   const socket = useRef<Socket|null>(null);
   const subSocket = useRef(false);
+  // 自选行情类型
+  const selfLineType = useRef<{type: number, symbol: string}[]>([]);
 
   // 头部列表
   const [headList, setHeadList] = useState<TypeMarketList[]>([]);
@@ -100,6 +103,30 @@ const MarketScreen: FC = () => {
         }
       });
     },
+    // 处理返回数据
+    formatResMessage: (inputCoin?: any): TypeMarketListLine => {
+      if (inputCoin === undefined) {
+        return {
+          name: '',
+          id: '',
+          priceUSDT: '',
+          priceRMB: '',
+          ratio: '',
+          volume: '',
+        };
+      }
+      const close = parseFloat(inputCoin.close);
+      const open = parseFloat(inputCoin.open);
+      const range = Math.floor(((close - open) / open) * 10000) / 100;
+      return {
+        name: `${inputCoin.symbol.replace('USDT', '')}/USDT 永续`,
+        id: inputCoin.symbol,
+        priceUSDT: inputCoin.close,
+        priceRMB: inputCoin.rmb_close,
+        ratio: `${range}%`,
+        volume: inputCoin.quo,
+      };
+    },
   };
 
   useEffect(() => {
@@ -128,14 +155,11 @@ const MarketScreen: FC = () => {
         title: 'USDT合约', id: '2', showStyle: 1, listArrLinkId: 1,
       },
     ]);
-    setDataView([
-      [],
-      [],
-    ]);
     setSelectHead('1');
   }, []);
 
   useEffect(() => {
+    // 金本位
     const tickerImg = 'gold.market.ALL.ticker';
     const socketListener = (message: any) => {
       const resultData: {
@@ -143,32 +167,45 @@ const MarketScreen: FC = () => {
           [key: string]: string;
         };
       } = message.Tick;
-      const result: TypeMarketListLine[] = Object.values(resultData).map(coin => {
-        const close = parseFloat(coin.close);
-        const open = parseFloat(coin.open);
-        const range = Math.floor(((close - open) / open) * 10000) / 100;
-        return {
-          name: `${coin.symbol.replace('USDT', '')}/USDT 永续`,
-          id: coin.symbol,
-          priceUSDT: coin.close,
-          priceRMB: coin.rmb_close,
-          ratio: `${range}%`,
-          volume: coin.quo,
-        };
-      });
+      const result: TypeMarketListLine[] = Object.values(resultData).map(coin => addEvent.formatResMessage(coin));
+      let selfResult: TypeMarketListLine[] = [];
+      if (selfLineType.current.length) {
+        selfResult = selfLineType.current.map(item => {
+          if (item.type === 1) {
+            const fillterCoin = Object.values(resultData).filter(coin => coin.symbol === item.symbol)[0];
+            return addEvent.formatResMessage(fillterCoin);
+          }
+          return addEvent.formatResMessage();
+        });
+      }
       setDataView(state => {
         const res = [...state];
         res[1] = result;
+        res[0] = selfResult;
         return res;
       });
     };
     if (routePage === 'Market') {
+      // 获取USDT合约
       marketSocket.getSocket().then(ws => {
         socket.current = ws;
         ws.addListener(socketListener, tickerImg);
         ws.send(tickerImg, 'req');
         ws.send(tickerImg, 'sub');
         subSocket.current = false;
+      }).catch(err => {
+        console.log(err);
+      });
+      // 获取自选
+      ajax.get('/v1/market/follow').then(res => {
+        if (res.status === 200) {
+          selfLineType.current = res.data.map((item: any) => {
+            return {
+              type: Number(item.type) - 1,
+              symbol: item.symbol,
+            };
+          });
+        }
       }).catch(err => {
         console.log(err);
       });

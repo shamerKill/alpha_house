@@ -1,10 +1,15 @@
-import React, { FC, useState } from 'react';
-import { View, Text, StyleSheet, Keyboard } from 'react-native';
+import React, {
+  FC, useState, useEffect, useRef,
+} from 'react';
+import {
+  View, Text, StyleSheet, Keyboard, NativeSyntheticEvent, NativeScrollEvent,
+} from 'react-native';
 import { Input, Icon, Button } from 'react-native-elements';
 import { ScrollView } from 'react-native-gesture-handler';
 import {
   defaultThemeSmallColor, themeTextGray, defaultThemeColor, defaultThemeBgColor, themeGray,
 } from '../../../config/theme';
+import ajax from '../../../data/fetch';
 
 export type TypeMyRecommendList = {
   searchFunc?: (search: string) => void;
@@ -25,19 +30,77 @@ const listStyle = StyleSheet.create({
     fontSize: 13,
   },
 });
-const MyRecommendListScreen: FC<{ input: TypeMyRecommendList }> = ({ input }) => {
-  const [searchInput, setSearchInput] = useState('');
-  let prevInput = '';
+const MyRecommendListScreen: FC = () => {
+  const prevInput = useRef('');
+  const havePage = useRef(true);
+  const loading = useRef(false);
+  const [page, setPage] = useState(1); // 分页数量
+  const [searchInput, setSearchInput] = useState(''); // 推荐列表数据
+  const [listValue, setListValue] = useState<TypeMyRecommendList>({ allNum: '-', listArr: [] });
 
   const addEvent = {
     search: () => {
-      if (!searchInput) return;
-      if (searchInput === prevInput) return;
-      prevInput = searchInput;
-      input.searchFunc && input.searchFunc(searchInput);
+      if (searchInput === prevInput.current) return;
+      prevInput.current = searchInput;
+      loading.current = false;
+      havePage.current = true;
+      if (page === 1) {
+        addEvent.getData();
+      } else {
+        setPage(1);
+      }
       Keyboard.dismiss();
     },
+    // 滚动至底部
+    onMomentumScrollEnd: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const offsetY = event.nativeEvent.contentOffset.y; //滑动距离
+      const contentSizeHeight = event.nativeEvent.contentSize.height; //scrollView contentSize高度
+      const oriageScrollHeight = event.nativeEvent.layoutMeasurement.height; //scrollView高度
+      if (offsetY + oriageScrollHeight >= contentSizeHeight) {
+        if (havePage.current) setPage(state => state + 1);
+      } else if (offsetY + oriageScrollHeight <= 1) {
+        //这个是没有数据了然后给了false  得时候还在往上拉
+      } else if (offsetY === 0) {
+        //这个地方是下拉刷新，意思是到顶了还在指行，可以在这个地方进行处理需要刷新得数据
+      }
+    },
+    getData: () => {
+      if (loading.current) return;
+      loading.current = true;
+      ajax.get(`/v1/user/invite_list?search=${searchInput}&page=${page}`).then(data => {
+        if (page === 1) setListValue(state => ({ ...state, listArr: [] }));
+        if (data.status === 200) {
+          if (data.data.data && data.data.data.length) {
+            const result: TypeMyRecommendList['listArr'] = data.data.data.map((item: any) => {
+              return {
+                upAccount: item.data.mobile || item.data.email,
+                time: item.data.create_time.split(' ')[0],
+                status: item.data.realname_status === '4', // true已实名，false未实名
+                selfChildren: item.relation === '直推', // true直推，false间推
+                id: item.data.unique_id,
+              };
+            });
+            setListValue(state => {
+              return {
+                allNum: data.data.all_number,
+                listArr: state.listArr.concat(result),
+              };
+            });
+          } else {
+            havePage.current = false;
+          }
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        loading.current = false;
+      });
+    },
   };
+
+  useEffect(() => {
+    addEvent.getData();
+  }, [page]);
 
   return (
     <View style={{
@@ -64,7 +127,7 @@ const MyRecommendListScreen: FC<{ input: TypeMyRecommendList }> = ({ input }) =>
           lineHeight: 30,
           fontSize: 16,
         }}>
-          {input.allNum}人
+          {listValue.allNum}人
         </Text>
       </View>
       <View style={{
@@ -135,11 +198,13 @@ const MyRecommendListScreen: FC<{ input: TypeMyRecommendList }> = ({ input }) =>
             ))
           }
         </View>
-        <ScrollView style={{
-          flex: 1,
-        }}>
+        <ScrollView
+          style={{
+            flex: 1,
+          }}
+          onMomentumScrollEnd={addEvent.onMomentumScrollEnd}>
           {
-            input.listArr.map(item => {
+            listValue.listArr.map(item => {
               return (
                 <View
                   key={item.id}

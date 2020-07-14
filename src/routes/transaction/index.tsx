@@ -2,6 +2,7 @@ import React from 'react';
 import TypeStackValue from '../stackType';
 import TranscationScreen from '../../views/transaction';
 import ComIconBotton from '../../components/icon/bottom';
+import TranscationKlineScreen from '../../views/transaction/kline';
 
 const TransactionRoutes: TypeStackValue = [
   {
@@ -16,7 +17,12 @@ const TransactionRoutes: TypeStackValue = [
       } />
     ),
     component: TranscationScreen,
-    screens: [],
+    screens: [
+      {
+        name: 'TranscationKline',
+        component: TranscationKlineScreen,
+      },
+    ],
   },
 ];
 

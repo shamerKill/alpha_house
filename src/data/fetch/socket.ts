@@ -79,9 +79,10 @@ export class SocketClass {
   }
 
   // 开启失败
-  private onError = () => {
+  private onError = (err: Error) => {
     this.isOpen = false;
     this.isError = true;
+    console.log(err);
   }
 
   // 开启成功
@@ -241,6 +242,9 @@ export class SocketClass {
 
 export const marketSocket = new SocketClass({
   baseURI: 'ws://192.168.3.10:3003/ws/market',
+});
+export const CoinToCoinSocket = new SocketClass({
+  baseURI: 'ws://192.168.3.10:3004/ws/market',
 });
 
 type Socket = SocketClass;

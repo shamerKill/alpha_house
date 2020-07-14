@@ -15,6 +15,7 @@ import ajax from '../../../data/fetch';
 import useGetDispatch from '../../../data/redux/dispatch';
 import { InState, ActionsType } from '../../../data/redux/state';
 import { defaultUserInfoState } from '../../../data/redux/state/user';
+import getHeadImage from '../../../tools/getHeagImg';
 
 export const setListArr = [
   '头像', '昵称', '个人简介', '所在地', '语言版本',
@@ -25,8 +26,10 @@ const MySettingScreen: FC = () => {
   const goToWithLogin = useGoToWithLogin();
   const navigation = useNavigation();
 
+
   const [userInfoState, dispatchUserInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
   const [, dispatchUserIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
+  const [pageRoute] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
 
   const [head, setHead] = useState<ImageSourcePropType|null>(null);
   const [nickName, setNickName] = useState(userInfoState.nickname);
@@ -97,13 +100,37 @@ const MySettingScreen: FC = () => {
   };
 
   useEffect(() => {
-    setHead(require('../../../assets/images/memory/user_head.png'));
-    setNickName('这是我的昵称');
-    setDesc('这是我的个人简介你的简介是什么这是我的个人简介你的简介是什么');
-    setSite('中国');
-    setLanguage('中文简体');
-    if (userInfoState.avatar?.uri) setHead(userInfoState.avatar);
+    // 获取数据
+    ajax.get('/v1/user/profile').then(data => {
+      if (data.status === 200) {
+        setHead(getHeadImage()[Number(data.data.headimg)]);
+        setNickName(data.data.nickname);
+        setDesc(data.data.description);
+        setSite(data.data.location);
+        setLanguage('中文简体');
+        dispatchUserInfo({
+          type: ActionsType.CHANGE_USER_INFO,
+          data: {
+            avatar: getHeadImage()[Number(data.data.headimg)],
+            nickname: data.data.nickname,
+            introduce: data.data.description,
+            location: data.data.location,
+          },
+        });
+      }
+    }).catch(err => {
+      console.log(err);
+    });
   }, []);
+
+  useEffect(() => {
+    if (pageRoute === 'settings') {
+      setHead(userInfoState.avatar);
+      setNickName(userInfoState.nickname);
+      setDesc(userInfoState.introduce);
+      setSite(userInfoState.location);
+    }
+  }, [pageRoute]);
 
   return (
     <ComLayoutHead title="设置">
@@ -116,10 +143,12 @@ const MySettingScreen: FC = () => {
                 <View style={style.lineViewContext}>
                   {
                   item.pic ? (
-                    <Image
-                      resizeMode="stretch"
-                      style={style.linViewPic}
-                      source={item.pic} />
+                    <View style={{ borderRadius: 20, overflow: 'hidden' }}>
+                      <Image
+                        resizeMode="stretch"
+                        style={style.linViewPic}
+                        source={item.pic} />
+                    </View>
                   ) : null
                 }
                   {

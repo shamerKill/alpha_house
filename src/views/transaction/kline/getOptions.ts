@@ -86,10 +86,10 @@ export function getMACD(inData: TypeKlineValue[]) {
       l26EMAArr.push(addl26);
     }
     const diffItem = addl12 - addl26;
-    DIFFArr.push(`${parseFloat(diffItem.toFixed(4))}`);
+    DIFFArr.push(diffItem.toFixed(2));
     DEAarr.push(((2 / (9 + 1)) * diffItem + ((9 - 1) / (9 + 1)) * prevDIFF).toFixed(2));
     const macdItem = (diffItem - prevDIFF) * 0.2 + prevMACD;
-    MACDArr.push(`${parseFloat(prevMACD.toFixed(4))}`);
+    MACDArr.push(prevMACD.toFixed(2));
     prevMACD = macdItem;
     prevDIFF = diffItem;
   });
@@ -402,7 +402,7 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         gridIndex: 0,
         position: 'right',
         splitLine: { show: true, lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
-        splitNumber: 3,
+        // splitNumber: 3,
         axisLine: { lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
         axisTick: { show: false },
         axisLabel: {

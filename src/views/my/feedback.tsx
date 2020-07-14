@@ -3,9 +3,12 @@ import {
   View, Text, StyleSheet, TouchableNativeFeedback,
 } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../components/layout/head';
 import ComFormButton from '../../components/form/button';
 import { themeGray, themeWhite } from '../../config/theme';
+import { isRealName, isPhone, isEmail } from '../../tools/verify';
+import ajax from '../../data/fetch';
 
 const MyFeedBack: FC = () => {
   const areaInput = useRef<any>();
@@ -14,6 +17,51 @@ const MyFeedBack: FC = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const addEvent = {
+    submitVerfiy: () => {
+      if (loading) return;
+      let resultMessage = '';
+      if (!isRealName(name)) resultMessage = '姓名输入有误';
+      if (!isPhone(phone)) resultMessage = '手机号输入有误';
+      if (!isEmail(email)) resultMessage = '邮箱输入有误';
+      if (message.trim() === '') resultMessage = '请输入有效留言';
+      if (resultMessage === '') addEvent.submit();
+      else {
+        showMessage({
+          message: resultMessage,
+          type: 'warning',
+        });
+      }
+    },
+    submit: () => {
+      setLoading(true);
+      ajax.post('/v1/user/feedback', {
+        Mobile: phone,
+        Email: email,
+        Name: name,
+        Content: message,
+      }).then(data => {
+        if (data.status === 200) {
+          showMessage({
+            message: '建议反馈提交成功，工作人员会及时联系您',
+            type: 'success',
+          });
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        setLoading(false);
+      });
+    },
+  };
+
   return (
     <ComLayoutHead title="建议反馈">
       <Text style={style.titleDesc}>请填写以下内容以方便我们及时联系您</Text>
@@ -26,9 +74,9 @@ const MyFeedBack: FC = () => {
           onChange={e => setName(e.nativeEvent.text)} />
       </View>
       <View style={style.labelView}>
-        <Text style={style.labelViewText}>电话</Text>
+        <Text style={style.labelViewText}>手机号</Text>
         <TextInput
-          placeholder="请输入电话"
+          placeholder="请输入手机号"
           keyboardType="phone-pad"
           style={style.labelViewInput}
           value={phone}
@@ -58,7 +106,8 @@ const MyFeedBack: FC = () => {
         </View>
       </TouchableNativeFeedback>
       <ComFormButton
-        title="提交" />
+        onPress={addEvent.submitVerfiy}
+        title={loading ? '正在提交...' : '提交'} />
     </ComLayoutHead>
   );
 };

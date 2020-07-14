@@ -1,7 +1,7 @@
 // 充值
 import React, { FC, useState, useEffect } from 'react';
 import {
-  View, TouchableNativeFeedback, Text, ImageSourcePropType, Image as StaticImage,
+  View, TouchableNativeFeedback, Text, ImageSourcePropType, Image as StaticImage, ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'react-native-elements';
@@ -11,6 +11,7 @@ import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import { defaultThemeColor, themeWhite, themeGray } from '../../../config/theme';
 import showSelector from '../../../components/modal/selector';
+import ajax from '../../../data/fetch';
 
 const MyRechargeScreen: FC = () => {
   const navigation = useNavigation();
@@ -19,11 +20,12 @@ const MyRechargeScreen: FC = () => {
     '2、最小充值金额：0.001 BTC，小于该金额的充值将无法上账且无法退回。',
     '3、您充值至上述地址后，需要整个网络节点的确认，1次网络确认后到账，6次后方可提币，我们将以短信形式通知您到账情况',
   ];
+  const [loading, setLoading] = useState(false);
   const [coinName, setCoinName] = useState('');
-  const [coinIcon, setCoinIcon] = useState<ImageSourcePropType>(0);
+  // const [coinIcon, setCoinIcon] = useState<ImageSourcePropType>(0);
   const [qrcode, setQrcode] = useState<ImageSourcePropType>(0);
   const [address, setAddress] = useState('');
-  const [coinList] = useState<{name: string; icon: ImageSourcePropType}[]>([
+  const [coinList, setCoinList] = useState<{name: string; icon: ImageSourcePropType}[]>([
     { name: 'BTC', icon: require('../../../assets/images/coin/BTC.png') },
     { name: 'USDT', icon: require('../../../assets/images/coin/BTC.png') },
     { name: 'ETH', icon: require('../../../assets/images/coin/BTC.png') },
@@ -47,6 +49,13 @@ const MyRechargeScreen: FC = () => {
   };
   // 选择币种
   const changeCoin = () => {
+    if (loading) {
+      showMessage({
+        message: '数据获取中,请稍后重试',
+        type: 'info',
+      });
+      return;
+    }
     const close = showSelector({
       data: coinList.map(item => item.name),
       selected: coinName,
@@ -54,18 +63,54 @@ const MyRechargeScreen: FC = () => {
         if (typeof value !== 'string') return;
         coinList.filter(item => item.name === value).forEach(item => {
           setCoinName(item.name);
-          setCoinIcon(item.icon);
+          // setCoinIcon(item.icon);
         });
         close();
       },
     });
   };
   useEffect(() => {
-    setCoinName(coinList[0].name);
-    setCoinIcon(coinList[0].icon);
-    setQrcode(require('../../../assets/images/memory/qrcode.png'));
-    setAddress('12345678798vdfshvb5dfz21v51ddfsfsadfasldkfjasdf');
+    ajax.get('/v1/recharge/coin_list').then(data => {
+      if (data.status === 200) {
+        setCoinList(data?.data?.list?.map((item: any) => {
+          return {
+            name: item,
+            icon: { uri: '' },
+          };
+        }) || []);
+      } else {
+        showMessage({
+          message: data.message,
+          type: 'warning',
+        });
+      }
+    }).catch(err => {
+      console.log(err);
+    }).finally(() => {});
   }, []);
+  useEffect(() => {
+    setCoinName(coinList[0].name);
+  }, [coinList]);
+  useEffect(() => {
+    setLoading(true);
+    ajax.get(`/v1/recharge/get_coin?symbol=${coinName}`).then(data => {
+      if (data.status === 200) {
+        setAddress(data.data.address);
+        setQrcode({
+          uri: data.data.link,
+        });
+      } else {
+        showMessage({
+          message: data.message,
+          type: 'warning',
+        });
+      }
+    }).catch(err => {
+      console.log(err);
+    }).finally(() => {
+      setLoading(false);
+    });
+  }, [coinName]);
   return (
     <ComLayoutHead
       title="充值"
@@ -89,7 +134,7 @@ const MyRechargeScreen: FC = () => {
             alignItems: 'center',
           }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Image style={{ width: 40, height: 40 }} source={coinIcon} />
+            {/* <Image style={{ width: 40, height: 40 }} source={coinIcon} /> */}
             <Text style={{ color: themeWhite, fontSize: 18, paddingLeft: 10 }}>{coinName}</Text>
           </View>
           <StaticImage
@@ -109,13 +154,27 @@ const MyRechargeScreen: FC = () => {
         marginBottom: 10,
         backgroundColor: themeWhite,
       }}>
-        <Image
-          source={qrcode}
-          resizeMode="stretch"
-          style={{
-            width: '100%',
-            height: '100%',
-          }} />
+        {
+          loading
+            ? (
+              <View style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: 1,
+              }}>
+                <ActivityIndicator color={defaultThemeColor} />
+              </View>
+            )
+            : (
+              <Image
+                source={qrcode}
+                resizeMode="stretch"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                }} />
+            )
+        }
       </View>
 
       {/* 地址 */}

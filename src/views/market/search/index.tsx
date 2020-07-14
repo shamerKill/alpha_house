@@ -2,32 +2,46 @@ import React, {
   FC, useState, useRef, useEffect,
 } from 'react';
 import {
-  View, ActivityIndicator, Image, TouchableNativeFeedback, Text, StyleSheet, ScrollView, Animated,
+  View, Image, TouchableNativeFeedback, Text, StyleSheet, ScrollView,
 } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, defaultThemeColor, defaultThemeBgColor, themeTextGray, themeBlack, getThemeOpacity, themeRed,
 } from '../../../config/theme';
 import showComAlert from '../../../components/modal/alert';
+import ajax from '../../../data/fetch';
+import { EnumCoinType } from '../../../data/enum/coin';
+import { ComMarketLineTypeView } from '../index/com_line';
+import { TypeMarketListLine } from '../index/type';
+import storage from '../../../data/database';
 
 type TypeSearchList = {
   name: string; // 交易对
+  symbol: string; // 币种symbol
   id: string|number; // id
   isFollow: boolean; // 是否已经关注
 };
 
-const MarketSearchList: FC<TypeSearchList&{followFunc: (id: TypeSearchList['id']) => void;}> = ({
+const MarketSearchList: FC<TypeSearchList&{followFunc: (id: TypeSearchList['id'], symbol: TypeSearchList['symbol']) => void;}> = ({
   name,
   isFollow,
   followFunc,
   id,
+  symbol,
 }) => {
   return (
     <View style={style.listView}>
-      <Text style={style.listTitle}>{name}</Text>
-      <TouchableNativeFeedback onPress={() => followFunc(id)}>
+      <View style={style.inListView}>
+        <Text style={style.listTitle}>{name}</Text>
+        <ComMarketLineTypeView
+          type={Number(id) - 1 as TypeMarketListLine['type']}
+          inputStyle={{
+          }} />
+      </View>
+      <TouchableNativeFeedback onPress={() => followFunc(id, symbol)}>
         <View style={[
           style.listBtnView,
           isFollow ? style.listBtnViewFollow : style.listBtnViewNoFollow,
@@ -47,13 +61,16 @@ const MarketSearchList: FC<TypeSearchList&{followFunc: (id: TypeSearchList['id']
 const MarketSearchScreen: FC = () => {
   const navigation = useNavigation();
 
+  // 搜索数据库
+  const searchDataBase = useRef<TypeSearchList[]>([]);
+
   // 输入框
   const searchInput = useRef<TextInput>(null);
 
   // 搜索内容
   const [search, setSearch] = useState('');
   // 搜索历史列表
-  const [historyList, setHistoryList] = useState<TypeSearchList[]>([]);
+  const [historyList, setHistoryList] = useState<string[]>([]);
   // 搜索列表
   const [searchList, setSearchList] = useState<TypeSearchList[]>([]);
   // 搜索内容是否在请求中
@@ -90,66 +107,117 @@ const MarketSearchScreen: FC = () => {
         },
       });
     },
-    // 添加/取消关注
-    changeCoinFollow: (id: TypeSearchList['id']) => {
-      setHistoryList(state => {
-        return state.map(item => {
-          const result = { ...item };
-          if (item.id === id) result.isFollow = !item.isFollow;
-          return result;
+    // 搜索
+    submitSearch: (text: string) => {
+      if (searchLoading) {
+        showMessage({
+          message: '数据加载中,请等待',
+          type: 'info',
         });
+        return;
+      }
+      const reg = new RegExp(text.toUpperCase().trim(), 'g');
+      const filter = searchDataBase.current.filter(item => {
+        return reg.test(item.symbol);
+      });
+      setSearchList(filter);
+      setHistoryList(state => ([...state, text]));
+    },
+    // 添加/取消关注
+    changeCoinFollow: (id: TypeSearchList['id'], symbol: TypeSearchList['symbol']) => {
+      ajax.post('/v1/market/follow', {
+        symbol,
+        type: `${id}`,
+      }).then(data => {
+        console.log(data);
+        if (data.status === 200) {
+          setSearchList(state => {
+            return state.map(item => {
+              const result = { ...item };
+              if (result.id === id && item.symbol === symbol) {
+                result.isFollow = !result.isFollow;
+              }
+              return result;
+            });
+          });
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
       });
     },
   };
-
-  // 处理搜索
-  const searchLoadingTime = useRef(0);
-  const loadingMarginTop = -40;
-  const loadingAnimate = useRef(new Animated.Value(loadingMarginTop));
-  useEffect(() => {
-    if (search !== '') {
-      // 如果不在请求中，添加显示动画
-      if (!searchLoading) {
-        Animated.timing(
-          loadingAnimate.current, {
-            toValue: 0,
-            duration: 100,
-            useNativeDriver: false,
-          },
-        ).start();
-      }
-      setSearchLoading(true);
-      clearTimeout(searchLoadingTime.current);
-      // 获取数据
-      searchLoadingTime.current = Number(setTimeout(() => {
-        setSearchList([
-          { name: '搜索BTC/USDT 永续', id: 0, isFollow: false },
-          { name: '搜索BTC/ETH', id: 1, isFollow: true },
-          { name: '搜索ETH/USDT 永续', id: 2, isFollow: false },
-        ]);
-        // 关闭数据
-        setSearchLoading(false);
-        Animated.timing(
-          loadingAnimate.current, {
-            toValue: loadingMarginTop,
-            duration: 100,
-            useNativeDriver: false,
-          },
-        ).start();
-      }, 1000));
-    }
-  }, [search]);
 
   // 进入
   useEffect(() => {
     // 调起键盘
     setTimeout(() => (searchInput.current as TextInput&{focus:()=>void})?.focus(), 200);
-    setHistoryList([
-      { name: 'BTC/USDT 永续', id: 0, isFollow: false },
-      { name: 'BTC/ETH', id: 1, isFollow: true },
-      { name: 'ETH/USDT 永续', id: 2, isFollow: false },
-    ]);
+    // 获取数据
+    searchDataBase.current = [];
+    setSearchLoading(true);
+    Promise.all([ajax.get('/v1/market/follow'), ajax.get('/v1/market/trade_pair')]).then(([data1, data2]) => {
+      const followData = data1.data;
+      const allData = data2.data;
+      if (data1.status === 200 && data2.status === 200) {
+        Object.keys(allData).forEach((key: string) => {
+          allData[key].forEach((coin: string) => {
+            searchDataBase.current.push({
+              name: coin.replace(/^(.+)USDT$/, '$1/USDT'),
+              symbol: coin,
+              id: EnumCoinType[key as any],
+              isFollow: false,
+            });
+          });
+        });
+        searchDataBase.current = searchDataBase.current.map(item => {
+          const result = {
+            ...item,
+          };
+          const hasFollow = followData.filter((follow: any) => {
+            if (Number(follow.type) === item.id && item.symbol === follow.symbol) {
+              return true;
+            }
+            return false;
+          });
+          if (hasFollow.length) {
+            result.isFollow = true;
+          }
+          return result;
+        });
+      } else if (data1.status === 200) {
+        showMessage({
+          message: data2.data,
+          type: 'warning',
+        });
+      } else {
+        showMessage({
+          message: data1.data,
+          type: 'warning',
+        });
+      }
+    }).catch(err => {
+      console.log(err);
+    }).finally(() => {
+      setSearchLoading(false);
+    });
+    // 搜索历史
+    storage.get('searchData').then(data => {
+      if (data) {
+        setHistoryList(data);
+      }
+    }).catch(err => {
+      console.log(err);
+    });
   }, []);
+
+  // 储存币种搜索历史
+  useEffect(() => {
+    storage.save('searchData', historyList);
+  }, [historyList]);
   return (
     <ComLayoutHead
       close
@@ -166,7 +234,8 @@ const MarketSearchScreen: FC = () => {
             ref={searchInput}
             placeholder="请输入想要搜索的币种"
             style={style.headViewSearchInput}
-            onChange={e => setSearch(e.nativeEvent.text)} />
+            onChange={e => setSearch(e.nativeEvent.text)}
+            onSubmitEditing={e => addEvent.submitSearch(e.nativeEvent.text)} />
         </View>
         <TouchableNativeFeedback onPress={() => addEvent.rightClose()}>
           <View style={style.headViewBtnView}>
@@ -191,33 +260,31 @@ const MarketSearchScreen: FC = () => {
                 </TouchableNativeFeedback>
               </View>
               <ScrollView style={style.searchContentScrollView}>
-                {
-                  historyList.map(item => (
-                    <MarketSearchList
-                      {...item}
-                      key={item.id}
-                      followFunc={addEvent.changeCoinFollow} />
-                  ))
-                }
+                <View style={style.searchContentScrollViewLogs}>
+                  {
+                    historyList.map((item, index) => (
+                      <TouchableNativeFeedback
+                        key={index}
+                        onPress={() => setSearch(item)}>
+                        <View style={style.logsView}>
+                          <Text style={style.logsViewText}>
+                            {item}
+                          </Text>
+                        </View>
+                      </TouchableNativeFeedback>
+                    ))
+                  }
+                </View>
               </ScrollView>
             </View>
           ) : (
             // 当前搜索列表
             <ScrollView style={style.searchContentView}>
-              <Animated.View style={{
-                height: loadingMarginTop,
-                alignItems: 'center',
-                marginTop: loadingAnimate.current,
-              }}>
-                <ActivityIndicator
-                  size="large"
-                  color={defaultThemeColor} />
-              </Animated.View>
               {
-                searchList.map(item => (
+                searchList.map((item, index) => (
                   <MarketSearchList
                     {...item}
-                    key={item.id}
+                    key={index}
                     followFunc={addEvent.changeCoinFollow} />
                 ))
               }
@@ -316,11 +383,16 @@ const style = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  inListView: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   listTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: themeBlack,
     lineHeight: 40,
+    paddingRight: 10,
   },
   listBtnView: {
     padding: 5,
@@ -342,6 +414,24 @@ const style = StyleSheet.create({
   },
   listBtnTextNoFollow: {
     color: defaultThemeColor,
+  },
+  // 搜索历史
+  searchContentScrollViewLogs: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  logsView: {
+    backgroundColor: themeWhite,
+    paddingLeft: 20,
+    paddingRight: 20,
+    paddingTop: 5,
+    paddingBottom: 5,
+    borderRadius: 3,
+    margin: 5,
+  },
+  logsViewText: {
+    fontSize: 18,
+    color: themeTextGray,
   },
 });
 

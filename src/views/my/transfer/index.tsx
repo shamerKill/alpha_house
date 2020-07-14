@@ -11,26 +11,28 @@ import {
 } from '../../../config/theme';
 import ComFormButton from '../../../components/form/button';
 import showSelector from '../../../components/modal/selector';
-import showPayPass from '../../../components/modal/paypass';
+import ajax from '../../../data/fetch';
 
 const MyTransferScreen: FC = () => {
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
 
   // 转账币种
-  const [coinType, setCoinType] = useState('');
+  const [coinType, setCoinType] = useState('USDT');
   // 来自账户
-  const [fromAccount, setFromAccount] = useState('充值提现账户');
+  const [fromAccount, setFromAccount] = useState('币币账户');
   // 前往账户
   const [toAccount, setToAccunt] = useState('USDT合约账户');
   // 到账数量
   const [changeValue, setChangeValue] = useState('');
   // 最多可转数量
-  const [maxValue, setMaxValue] = useState('--');
+  const [maxValueObj, setMaxValueObj] = useState<{fromAccount: string; toAccount: string;}>({ fromAccount: '--', toAccount: '--' });
+  const [maxValue, setMaxValue] = useState<string>('--');
 
   const addEvent = {
     // 选择币种
     selectCoinType: () => {
-      const coinArr = ['USDT', 'BTC', 'ETH'];
+      const coinArr = ['USDT'];
       const close = showSelector({
         data: coinArr,
         selected: coinType,
@@ -57,6 +59,10 @@ const MyTransferScreen: FC = () => {
         description: '已切换',
         type: 'success',
       });
+      setMaxValueObj(state => ({
+        toAccount: state.fromAccount,
+        fromAccount: state.toAccount,
+      }));
     },
     // 更改转账数量
     valueIputChange: (text: string) => {
@@ -71,23 +77,60 @@ const MyTransferScreen: FC = () => {
         setChangeValue('0');
       }
     },
-    // 获取密码
-    getPass: () => {
-      showPayPass({
-        submitPass: addEvent.sendTrans,
-      });
-    },
     // 发送交易
-    sendTrans: (pass: string) => {
-      console.log(pass);
+    sendTrans: () => {
+      if (loading) {
+        showMessage({
+          message: '账户划转中...',
+          type: 'warning',
+        });
+        return;
+      }
+      setLoading(true);
+      // type划转方向 1: 币币账户向usdt永续合约账户划转 2: usdt永续合约账户向币币账户划转
+      ajax.post('/v1/bian/transfer_account', {
+        num: changeValue,
+        symbol: coinType,
+        type: fromAccount === '币币账户' ? '1' : '2',
+      }).then(data => {
+        if (data.status === 200) {
+          showMessage({
+            message: '划转成功',
+            type: 'success',
+          });
+          setChangeValue('');
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        setLoading(false);
+      });
     },
   };
 
   useEffect(() => {
-    setCoinType('USDT');
-    setMaxValue('10');
-    setFromAccount('充值提现账户');
-    setToAccunt('USDT合约账户');
+    setMaxValue(maxValueObj.fromAccount);
+    if (parseFloat(changeValue) > parseFloat(maxValueObj.fromAccount)) {
+      setChangeValue(maxValueObj.fromAccount);
+    }
+  }, [maxValueObj]);
+
+  useEffect(() => {
+    ajax.get('/v1/bian/transfer_account_view').then(data => {
+      if (data.status === 200) {
+        setMaxValueObj({
+          toAccount: `${data.data.usdtAsset.account}`,
+          fromAccount: `${data.data.coinAsset.account}`,
+        });
+      }
+    }).catch(err => {
+      console.log(err);
+    });
   }, []);
 
   return (
@@ -116,11 +159,11 @@ const MyTransferScreen: FC = () => {
           {/* 标题 */}
           <View style={style.titleView}>
             <Text style={style.titleTitle}>转账</Text>
-            <TouchableNativeFeedback onPress={() => navigation.navigate('transferLogs')}>
+            {/* <TouchableNativeFeedback onPress={() => navigation.navigate('transferLogs')}>
               <View style={style.titleLogsView}>
                 <Text style={style.titleLogsText}>转账记录</Text>
               </View>
-            </TouchableNativeFeedback>
+            </TouchableNativeFeedback> */}
           </View>
           {/* 转账币种 */}
           <TouchableNativeFeedback onPress={addEvent.selectCoinType}>
@@ -204,7 +247,7 @@ const MyTransferScreen: FC = () => {
           <ComFormButton
             containerStyle={style.submitBtn}
             title="转账"
-            onPress={addEvent.getPass} />
+            onPress={addEvent.sendTrans} />
         </ScrollView>
       </SafeAreaView>
     </View>

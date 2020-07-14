@@ -10,6 +10,7 @@ import {
   TypePositionData, TypePlanEntrustement, TypeGeneralEntrustemnt, TypeStopOrder,
 } from './type';
 import showComAlert from '../../../components/modal/alert';
+import ajax from '../../../data/fetch';
 
 
 // 持仓列表视图
@@ -394,16 +395,19 @@ export const ComContractIndexListOrder: FC<{data: TypeStopOrder}> = ({ data }) =
   );
 };
 
-const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2}> = ({
+const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2; leverType: string;}> = ({
   coinType,
-  selectType,
+  leverType,
+  // selectType,
 }) => {
   const navigation = useNavigation();
-  console.log(coinType);
-  console.log(selectType);
+  //  '计划委托', '止盈止损',
   const tabDataArr = [
-    '持仓', '普通委托', '计划委托', '止盈止损',
+    '持仓', '普通委托',
   ];
+  useEffect(() => {
+    console.log(leverType);
+  }, []);
 
   // 选项卡的第几个
   const [selectTab, setSelectTab] = useState(0);
@@ -415,6 +419,45 @@ const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2}> = ({
   const [planementData, setPlanementData] = useState<TypePlanEntrustement[]>([]);
   // 止盈止损数据类型
   const [orderData, setOrderData] = useState<TypeStopOrder[]>([]);
+
+  // 获取持仓单
+  useEffect(() => {
+    if (selectTab === 0) {
+      // ajax.get(`/v1/bian/dealorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
+      //   if (data.status === 200) {
+      //     if (data.data) {
+      //       const result = data.data.map((item: any) => {
+      //         return {
+      //           id: item.orderId,
+      //           type: item.side === 'SELL' ? 0 : 1,
+      //           coinType,
+      //           leverType,
+      //           price: item.avgPrice,
+      //           profitValue: '-0.78',
+      //           profitRatio: '-21.23%',
+      //           allValue: '1.39',
+      //           useBond: '2.12',
+      //           willBoomPrice: '12.31',
+      //           useBondRatio: '0.50%',
+      //           stopWinValue: '0',
+      //           stopLowValue: '0',
+      //         };
+      //       });
+      //     }
+      //     console.log(JSON.stringify(data.data, null, 2));
+      //   }
+      // }).catch(err => {
+      //   console.log(err);
+      // });
+      ajax.get('/v1/bian/gold_accounts').then(data => {
+        if (data.status === 200) {
+          console.log(JSON.stringify(data, null, 2));
+        }
+      }).catch(err => {
+        console.log(err);
+      });
+    }
+  }, [selectTab, coinType]);
 
   useEffect(() => {
     setPositionData([

@@ -122,7 +122,6 @@ export class Fetch {
       }
       return resultJson;
     } catch (err) {
-      console.log(err);
       return {
         status: -10086,
         message: err.meesage || 'no message',
@@ -142,6 +141,6 @@ export class Fetch {
 }
 
 const ajax = new Fetch({
-  baseURI: 'http://192.168.3.17:3001',
+  baseURI: 'http://192.168.3.17:3002',
 });
 export default ajax;

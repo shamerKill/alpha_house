@@ -1,4 +1,4 @@
-import defualtPageRoute, { ActionsPageType } from './route';
+import defualtPageRoute, { ActionsPageType, defaultPrevPageRoute } from './route';
 import { TypeImageData } from '../../@types/images';
 import { TypeUserIsLogin, TypeUserInfo } from '../../@types/userInfo';
 import { defaultUserInfoState, ActionsUserType, defaultUserIsLogin } from './user';
@@ -26,6 +26,7 @@ export interface InState {
   }
   pageRouteState: {
     pageRoute: string;
+    prevPageRoute: string;
   }
 }
 
@@ -41,5 +42,6 @@ export const InitState: InState = {
   },
   pageRouteState: {
     pageRoute: defualtPageRoute,
+    prevPageRoute: defaultPrevPageRoute,
   },
 };

@@ -22,7 +22,7 @@ const MyTransferLogsScreen: FC = () => {
   const addEvent = {
     // 更改币种
     changeCoinType: () => {
-      const coinArr = ['USDT', 'BTC', 'ETH'];
+      const coinArr = ['USDT'];
       const close = showSelector({
         data: coinArr,
         selected: coinType,

@@ -55,7 +55,8 @@ const TabScreen: FC = () => {
 };
 
 const RoutesBase: FC = () => {
-  const [, dispatchRoutePage] = useGetDispatch<InState['pageRouteState']>('pageRouteState');
+  const [routePage, dispatchRoutePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const [, dispatchPrevRoutePage] = useGetDispatch<InState['pageRouteState']['prevPageRoute']>('pageRouteState', 'prevPageRoute');
   const changeFunc: NavigationContainerProps['onStateChange'] = (state) => {
     let routeKey = '';
     if (state?.routes && state?.routes.length > 1) {
@@ -66,6 +67,12 @@ const RoutesBase: FC = () => {
       const history = state.routes[0].state.history as {key: string}[];
       const lastPage: {key: string} = history[history.length - 1];
       routeKey = lastPage.key;
+    }
+    if (typeof routePage === 'string') {
+      dispatchPrevRoutePage({
+        type: ActionsType.CHANGE_PREV_PAGE_ROUTE,
+        data: routePage,
+      });
     }
     dispatchRoutePage({
       type: ActionsType.CHANGE_PAGE_ROUTE,

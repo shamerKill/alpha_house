@@ -17,10 +17,10 @@ export const ComMarketLineTypeView: FC<{type: TypeMarketListLine['type'], inputS
     <View style={[style.lineAfter, inputStyle]}>
       <View style={style.lineAfterTextView}>
         <Text style={style.lineAfterText}>
-          { type === 0 && 'USDT合约'}
-          { type === 1 && '币本位合约'}
-          { type === 2 && '混合合约'}
-          { type === 3 && '季度合约'}
+          { type === 0 && '现货'}
+          { type === 1 && '金本位合约'}
+          { type === 2 && '币本位合约'}
+          { type === 3 && '混合合约'}
         </Text>
       </View>
       <View style={style.lineAfterBgView}>
@@ -104,7 +104,6 @@ const style = StyleSheet.create({
   },
   lineAfter: {
     position: 'relative',
-    marginTop: -10,
     marginLeft: -5,
   },
   lineAfterTextView: {

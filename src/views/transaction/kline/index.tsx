@@ -13,11 +13,11 @@ import ComLine from '../../../components/line';
 import MarketKlineHtml from './echarts';
 import useGetDispatch from '../../../data/redux/dispatch';
 import { InState } from '../../../data/redux/state';
-import Socket, { marketSocket } from '../../../data/fetch/socket';
+import Socket, { CoinToCoinSocket } from '../../../data/fetch/socket';
 import { biNumberToSymbol } from '../../../tools/number';
 import formatTime from '../../../tools/time';
 
-const MarketKlineInfo: FC = () => {
+const TranscationKline: FC = () => {
   const socket = useRef<Socket|null>(null);
   const subSocket = useRef(false);
   const route = useRoute<RouteProp<{markLine: { name: string }}, 'markLine'>>();
@@ -40,7 +40,7 @@ const MarketKlineInfo: FC = () => {
   const getColor = () => [themeRed, themeGreen][Number(parseFloat(changeRatio) > 0)];
 
   useEffect(() => {
-    const tickerImg = 'gold.market.ALL.ticker';
+    const tickerImg = 'cash.market.ALL.ticker';
     const socketListener = (message: any) => {
       const coinInfo = message.Tick[routeCoinType];
       const close = parseFloat(coinInfo.close);
@@ -55,8 +55,8 @@ const MarketKlineInfo: FC = () => {
         setDayValue(biNumberToSymbol(coinInfo.quo));
       }
     };
-    if (routePage === 'MarketKline') {
-      marketSocket.getSocket().then(ws => {
+    if (routePage === 'TranscationKline') {
+      CoinToCoinSocket.getSocket().then(ws => {
         socket.current = ws;
         ws.addListener(socketListener, tickerImg);
         ws.send(tickerImg, 'sub');
@@ -161,7 +161,7 @@ const MarketKlineDepthView: FC = () => {
 
 
   useEffect(() => {
-    const tickerImg = `gold.market.${routeCoinType}.depth`;
+    const tickerImg = `cash.market.${routeCoinType}.depth`;
     const socketListener = (message: any) => {
       setBuyList(message.buy.map((item: any, index: number) => ({
         price: item[0],
@@ -174,8 +174,8 @@ const MarketKlineDepthView: FC = () => {
         id: index + 1,
       })));
     };
-    if (routePage === 'MarketKline') {
-      marketSocket.getSocket().then(ws => {
+    if (routePage === 'TranscationKline') {
+      CoinToCoinSocket.getSocket().then(ws => {
         socket.current = ws;
         ws.addListener(socketListener, tickerImg);
         ws.send(tickerImg, 'sub');
@@ -325,7 +325,7 @@ const MarketKlineLogsView: FC = () => {
   const [logsList, setLogsList] = useState<TypeLogsList[]>([]);
 
   useEffect(() => {
-    const tickerImg = `gold.market.${routeCoinType}.deal`;
+    const tickerImg = `cash.market.${routeCoinType}.deal`;
     const socketListener = (message: any) => {
       if (Array.isArray(message.Tick)) {
         setLogsList(message.Tick.map((item: any) => {
@@ -350,8 +350,8 @@ const MarketKlineLogsView: FC = () => {
         });
       }
     };
-    if (routePage === 'MarketKline') {
-      marketSocket.getSocket().then(ws => {
+    if (routePage === 'TranscationKline') {
+      CoinToCoinSocket.getSocket().then(ws => {
         socket.current = ws;
         ws.addListener(socketListener, tickerImg);
         ws.send(tickerImg, 'sub');
@@ -375,40 +375,6 @@ const MarketKlineLogsView: FC = () => {
       }
     };
   }, [routePage]);
-  useEffect(() => {
-    setLogsList([
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 1,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 1,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-    ]);
-  }, []);
   return (
     <View>
       <View style={[
@@ -507,7 +473,7 @@ const MarketKlineBottom: FC = () => {
 };
 
 
-const MarketKlineScreen: FC = () => {
+const TranscationKlineScreen: FC = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<{marketLine: { name: string }}, 'marketLine'>>();
 
@@ -582,7 +548,7 @@ const MarketKlineScreen: FC = () => {
           onTouchMove={e => addEvent.scrollTouchMove(e.nativeEvent.pageX, e.nativeEvent.pageY)}
           onTouchEnd={() => addEvent.scrollTouchEnd()}>
           {/* 数据内容 */}
-          <MarketKlineInfo />
+          <TranscationKline />
           <ComLine color={getThemeOpacity(themeGreen, 0.1)} />
           {/* 图表 */}
           <MarketKlineHtml style={{ height: 430 }} />
@@ -773,4 +739,4 @@ const style = StyleSheet.create({
   },
 });
 
-export default MarketKlineScreen;
+export default TranscationKlineScreen;

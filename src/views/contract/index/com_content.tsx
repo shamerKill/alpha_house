@@ -7,6 +7,8 @@ import {
 import {
   TextInput, PanGestureHandlerGestureEvent, PanGestureHandler, TouchableNativeFeedback,
 } from 'react-native-gesture-handler';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import ContractHeadView from './com_head';
 import { TypeLeftOutList } from './type';
 import {
@@ -18,6 +20,8 @@ import showComAlert from '../../../components/modal/alert';
 import ajax from '../../../data/fetch';
 import useGetDispatch from '../../../data/redux/dispatch';
 import { InState } from '../../../data/redux/state';
+import Socket, { marketSocket } from '../../../data/fetch/socket';
+import storage from '../../../data/database';
 
 // 买卖列表类型
 type TypeSellBuyList = {
@@ -254,14 +258,34 @@ const ContractContentView: FC<{
   coinType: string;
   selectType: 0|1|2;
   changeConTypeCallback: (data: { coinType?: string; contractType?: 0|1|2 }) => void;
+  changePageLeverType: React.Dispatch<React.SetStateAction<string>>;
 }> = ({
   coinType,
   selectType,
   changeConTypeCallback,
+  changePageLeverType,
 }) => {
-  console.log(coinType); // 币种类型
-  console.log(selectType); // 合约类型
+  // console.log(coinType); // 币种类型
+  // console.log(selectType); // 合约类型
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const [prevRoutePage] = useGetDispatch<InState['pageRouteState']['prevPageRoute']>('pageRouteState', 'prevPageRoute');
+  const route = useRoute();
+  const navigation = useNavigation();
+
+  // 后台获得币种分类数据
+  const [serverCoinType, setServerCoinType] = useState<{
+    changeRatio: number; // 手数计算比例
+    leverList: {
+      lever: string; // 可开杠杆倍数，
+      selfRatio: number; // 杠杆保证金率
+    }[];
+  }>({
+    changeRatio: 1,
+    leverList: [],
+  });
+
+  // 是否在提交中
+  const isLoading = useRef(false);
 
   // 左边列表数据
   const [leftList, setLeftList] = useState<TypeLeftOutList[]>([]);
@@ -272,12 +296,9 @@ const ContractContentView: FC<{
   // 开仓0还是平仓1
   const [doType, setDoType] = useState<0|1>(0);
   // 委托类型0限价委托，1计划委托
-  const entrustTypeData = ['限价委托', '计划委托'];
+  // , '计划委托'
+  const entrustTypeData = ['限价委托'];
   const [entrustType, setEntrustType] = useState<0|1>(0);
-  // 杠杆倍数
-  const leverValuesArr = [
-    '2', '5', '10', '20', '30', '50', '100',
-  ];
   const [leverValue, setLaverValue] = useState<string>('10');
   // 限价委托价格
   const [fixedPrice, setFixedPrice] = useState('');
@@ -288,9 +309,9 @@ const ContractContentView: FC<{
   // 数量百分比
   const [fixedValueRatio, setFixedValueRatio] = useState(0);
   // 占用保证金
-  const [occupyBond] = useState('0.00');
+  const [occupyBond, setOccupyBond] = useState('0.00');
   // 可开手数
-  const [canOpenValue] = useState('0');
+  const [canOpenValue, setCanOpenValue] = useState('0');
   // 可平手数
   const [canCloseValue, setCanCloseValue] = useState('--');
   // 计划委托触发价格
@@ -353,20 +374,40 @@ const ContractContentView: FC<{
     // 杠杆倍数更改
     changeLeverType: () => {
       const close = showSelector({
-        data: leverValuesArr.map(item => ({
-          data: item,
+        data: serverCoinType.leverList.map(item => ({
+          data: item.lever,
           before: '杠杆 ',
           after: 'X',
         })),
         selected: leverValue,
         onPress: (value) => {
-          if (typeof value !== 'string') setLaverValue(value.data);
-          close();
+          if (typeof value !== 'string') {
+            addEvent.submitChangeLeverType(value.data, close);
+          }
         },
       });
     },
+    submitChangeLeverType: (lever: string, close: () => void) => {
+      ajax.post('/v1/bian/update_lever', {
+        symbol: coinType.split('/')[0],
+        lever: Number(lever),
+      }).then(data => {
+        if (data.status === 200) {
+          setLaverValue(lever);
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        close();
+      });
+    },
     // 点击市价按钮
-    onMarketPrice: () => {
+    onMarketPrice: async () => {
       let changeMarketType = false;
       setMarketPrice(state => {
         changeMarketType = !state;
@@ -374,6 +415,13 @@ const ContractContentView: FC<{
       });
       // 如果是市价转成限价，返回
       if (!changeMarketType) return;
+      let storageNotShow = false;
+      try {
+        storageNotShow = await storage.get('marketChangeNotShowTip');
+      } catch (err) {
+        console.log(err);
+      }
+      if (storageNotShow) return;
       const close = showComAlert({
         title: '温馨提示',
         desc: (
@@ -385,6 +433,7 @@ const ContractContentView: FC<{
         close: {
           text: '不再提示',
           onPress: () => {
+            storage.save('marketChangeNotShowTip', 'yes');
             close();
           },
         },
@@ -398,9 +447,32 @@ const ContractContentView: FC<{
     },
     // 开空0/开多1
     openOrder: (type: 0|1) => {
+      if (isLoading.current) {
+        showMessage({
+          message: '已有委托正在提交,请稍后',
+          type: 'info',
+        });
+        return;
+      }
       // 如果是平单
       if (doType === 1) {
         addEvent.closeOrder(type);
+        return;
+      }
+      // 判断手数
+      if (Number(fixedValue) <= 0) {
+        showMessage({
+          message: '开仓手数有误',
+          type: 'warning',
+        });
+        return;
+      }
+      // 判断价格
+      if (!isMarketPrice && parseFloat(fixedPrice) <= 0) {
+        showMessage({
+          message: '请输入正确价格',
+          type: 'warning',
+        });
         return;
       }
       // 限价委托还是计划委托
@@ -423,6 +495,7 @@ const ContractContentView: FC<{
           text: '确定',
           onPress: () => {
             close();
+            addEvent.submitOpenOrder(type);
           },
         },
         close: {
@@ -433,9 +506,39 @@ const ContractContentView: FC<{
         },
       });
     },
+    // 开空0/开多1
+    submitOpenOrder: (type: 0|1) => {
+      isLoading.current = true;
+      const fm: {[key: string]: any} = {};
+      fm.price = fixedPrice;
+      fm.num = Number(fixedValue);
+      fm.lever = Number(leverValue);
+      [fm.symbol] = coinType.split('/');
+      fm.side = ['SELL', 'BUY'][type];
+      fm.price_type = entrustType + 1;
+      fm.postition_side = 'SHORT';
+      ajax.post('/v1/bian/Order', fm).then(data => {
+        console.log(data);
+        if (data.status === 200) {
+          showMessage({
+            message: '委托提交成功',
+            type: 'success',
+          });
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        isLoading.current = false;
+      });
+    },
     // 平多1/平空0
     closeOrder: (type: 0|1) => {
-      console.log(type);
+      // console.log(type);
       const close = showComAlert({
         title: ['平空', '平多'][type],
         desc: [
@@ -468,13 +571,17 @@ const ContractContentView: FC<{
   useEffect(() => {
     if (doType === 1) setEntrustType(0);
   }, [doType]);
+  // 手数限制
+  useEffect(() => {
+    if (doType === 0 && !isMarketPrice && Number(fixedValue) > Number(canOpenValue)) {
+      setFixedValue(canOpenValue);
+    }
+  }, [fixedValue]);
 
   useEffect(() => {
-    if (routePage === 'Contract') {
-      console.log(routePage);
+    if (routePage === 'Contract' && coinType) {
       ajax.get('/v1/bian/gold_accounts').then(data => {
         if (data.status === 200) {
-          console.log(JSON.stringify(data, null, 2));
           // 用户信息
           setTopInfo({
             asset: `${parseFloat(data.data.asset.availableBalance).toFixed(2)}/${parseFloat(data.data.asset.walletBalance).toFixed(2)}`,
@@ -486,27 +593,145 @@ const ContractContentView: FC<{
       }).catch(err => {
         console.log(err);
       });
+      ajax.get(`/v1/bian/position_risk?symbol=${coinType.replace('/', '')}`).then(data => {
+        if (data.status === 200) {
+          if (coinType === 'BTC/USDT') {
+            setServerCoinType({
+              changeRatio: parseFloat(data.data.values),
+              leverList: [
+                { lever: '1', selfRatio: 1 },
+                { lever: '2', selfRatio: 0.5 },
+                { lever: '3', selfRatio: 0.333 },
+                { lever: '4', selfRatio: 0.25 },
+                { lever: '5', selfRatio: 0.2 },
+                { lever: '10', selfRatio: 0.1 },
+                { lever: '20', selfRatio: 0.05 },
+                { lever: '50', selfRatio: 0.02 },
+                { lever: '100', selfRatio: 0.01 },
+                // { lever: '125', selfRatio: 0.008 },
+              ],
+            });
+          } else {
+            setServerCoinType({
+              changeRatio: parseFloat(data.data.values),
+              leverList: [
+                { lever: '1', selfRatio: 1 },
+                { lever: '2', selfRatio: 0.5 },
+                { lever: '3', selfRatio: 0.333 },
+                { lever: '4', selfRatio: 0.25 },
+                { lever: '5', selfRatio: 0.2 },
+                { lever: '10', selfRatio: 0.1 },
+                { lever: '25', selfRatio: 0.04 },
+                { lever: '50', selfRatio: 0.02 },
+                { lever: '75', selfRatio: 0.013 },
+              ],
+            });
+          }
+        }
+      }).catch(err => {
+        console.log(err);
+      });
     }
-    setLeftList([
-      {
-        name: 'BTC/USDT 永续', id: 'BTC/USDT', priceUSDT: '9873.55', ratio: '+3.65%',
-      },
-      {
-        name: 'EOS/USDT 永续', id: 'EOS/USDT', priceUSDT: '9873.55', ratio: '-3.65%',
-      },
-      {
-        name: 'ETH/USDT 永续', id: 'ETH/USDT', priceUSDT: '9873.55', ratio: '-3.65%',
-      },
-      {
-        name: 'BCH/USDT 永续', id: 'BCH/USDT', priceUSDT: '9873.55', ratio: '+3.65%',
-      },
-    ]);
-    setTopInfo({
-      asset: '0.00/0.00', risk: '0', use: '0.00%', lever: '0',
-    });
     setUSDTToRMB(10);
     setCanCloseValue('123');
-  }, [routePage]);
+  }, [routePage, coinType]);
+
+  // 更改可开手数
+  useEffect(() => {
+    // 一个币几手
+    const handToCoin = 1 / serverCoinType.changeRatio;
+    // 可用资产(USDT)
+    const canUseMoney = parseFloat(topInfo.asset.split('/')[0]);
+    // 价格
+    let price = parseFloat(fixedPrice);
+    if (isMarketPrice) {
+      price = parseFloat(newPrice.current);
+    }
+    if (price === 0) return;
+    // 杠杆
+    const lever = leverValue;
+    // 计算可开手数
+    const canOpenVolumn = Math.floor(handToCoin * (canUseMoney / price) * Number(lever));
+    if (!Number.isNaN(canOpenVolumn)) {
+      // 可开手数赋值
+      setCanOpenValue(`${canOpenVolumn}`);
+    }
+  }, [serverCoinType, topInfo, fixedPrice, leverValue, newPrice.current]);
+  // 更改占用保证金
+  useEffect(() => {
+    if (serverCoinType.leverList.length === 0) return;
+    // 获取杠杆保证金率
+    const safeRatio = serverCoinType.leverList.filter(item => item.lever === leverValue)[0].selfRatio;
+    // 占用保证金数 杠杆*价格*手数*一手币数*资金占用率比例
+    const safeValue = parseFloat(fixedPrice) * parseFloat(fixedValue) * serverCoinType.changeRatio * safeRatio;
+    if (!Number.isNaN(safeValue)) {
+      // 可开手数赋值
+      setOccupyBond(`${safeValue.toFixed(2)}`);
+    }
+  }, [fixedPrice, leverValue, fixedValue, serverCoinType]);
+  // 更改页面杠杆
+  useEffect(() => {
+    if (changePageLeverType) {
+      changePageLeverType(leverValue);
+    }
+  }, [leverValue]);
+
+  useEffect(() => {
+    // ajax.get('/v1/bian/allorder_log?symbol=ETH').then(data => {
+    //   console.log(JSON.stringify(data, null, 2), '=====================');
+    // }).catch(err => {
+    //   console.log(err);
+    // });
+  }, []);
+
+  // 获取左侧列表数据
+  const socket = useRef<Socket|null>(null);
+  const subSocket = useRef(false);
+  useEffect(() => {
+    const tickerImg = 'gold.market.ALL.ticker';
+    const socketListener = (message: any) => {
+      const resultData: {
+        [key: string]: {
+          [key: string]: string;
+        };
+      } = message.Tick;
+      const result: TypeLeftOutList[] = [];
+      Object.values(resultData).forEach(item => {
+        const close = parseFloat(item.close);
+        const open = parseFloat(item.open);
+        const range = Math.floor(((close - open) / open) * 10000) / 100;
+        result.push({
+          name: item.symbol.replace('USDT', '/USDT'),
+          id: item.symbol.replace('USDT', '/USDT'),
+          priceUSDT: item.close,
+          ratio: `${range}%`,
+        });
+      });
+      if (leftList.length === 0) {
+        setLeftList(result);
+      }
+      if (route.params === undefined) {
+        navigation.navigate('Contract', { contractType: selectType, coinType: result[0].name });
+      }
+    };
+    if (routePage === 'Contract' && prevRoutePage !== 'Contract') {
+      // 获取USDT合约
+      marketSocket.getSocket().then(ws => {
+        socket.current = ws;
+        ws.addListener(socketListener, tickerImg);
+        ws.send(tickerImg, 'req');
+        ws.send(tickerImg, 'sub');
+        subSocket.current = false;
+      }).catch(err => {
+        console.log(err);
+      });
+    } else if (socket.current) {
+      if (subSocket.current) return;
+      subSocket.current = true;
+      socket.current.send(tickerImg, 'unsub');
+      socket.current.removeListener(tickerImg);
+    }
+  }, [routePage, route, prevRoutePage]);
 
   return (
     <View style={style.pageView}>
@@ -652,12 +877,24 @@ const ContractContentView: FC<{
                     setFixedValueRatio={setFixedValueRatio} />
                   {/* 更多信息 */}
                   <View style={style.ratioThenTextView}>
-                    <Text style={style.ratioThenText}>占用保证金</Text>
-                    <Text style={style.ratioThenText}>{occupyBond}</Text>
+                    {
+                      !isMarketPrice && (
+                        <>
+                          <Text style={style.ratioThenText}>占用保证金</Text>
+                          <Text style={style.ratioThenText}>{occupyBond}</Text>
+                        </>
+                      )
+                    }
                   </View>
                   <View style={style.ratioThenTextView}>
-                    <Text style={style.ratioThenText}>可{['开', '平'][doType]}手数</Text>
-                    <Text style={style.ratioThenText}>{[canOpenValue, canCloseValue][doType]}</Text>
+                    {
+                      !isMarketPrice && (
+                        <>
+                          <Text style={style.ratioThenText}>可{['开', '平'][doType]}手数</Text>
+                          <Text style={style.ratioThenText}>{[canOpenValue, canCloseValue][doType]}</Text>
+                        </>
+                      )
+                    }
                   </View>
                 </View>
               )
@@ -977,6 +1214,7 @@ const style = StyleSheet.create({
   ratioThenTextView: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    height: 16,
   },
   ratioThenText: {
     fontSize: 12,

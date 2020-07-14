@@ -207,7 +207,7 @@ const MyRealnameScreen: FC = () => {
               });
             } else if (user.status === '4') {
               showMessage({
-                message: '身份认证成功，请重新认证',
+                message: '身份认证成功',
                 type: 'success',
               });
             }
@@ -222,7 +222,7 @@ const MyRealnameScreen: FC = () => {
             });
           } else if (user.status === '4') {
             showMessage({
-              message: '身份认证成功，请重新认证',
+              message: '身份认证成功',
               type: 'success',
             });
           }

@@ -43,6 +43,7 @@ const MyScreen: FC = () => {
     onScroll: ScrollViewProps['onScroll']; // 页面滚动事件
     onCopy: (value: string) => void; // 复制内容事件
     goTo: (link: string) => void; // 前往页面
+    goToUserReal: () => void;
   } = {
     onScroll(e) {
       if (e.nativeEvent.contentOffset.y > 200) setStatusBar('#f6f6fd');
@@ -60,6 +61,10 @@ const MyScreen: FC = () => {
     goTo(link) {
       goToWithLogin(link);
     },
+    // 前往身份认证页面
+    goToUserReal() {
+      goToWithLogin('realname');
+    },
   };
   // 用户信息
   const [userHead, setUserHead] = useState<ImageSourcePropType>(0);
@@ -75,7 +80,7 @@ const MyScreen: FC = () => {
     setUserId(userInfo.id);
     setUserBTC(userInfo.assets);
     setUserRMB('--');
-    ajax.post('/v1/userinfo', {}).then(data => {
+    ajax.post('/userinfo', {}).then(data => {
       if (data.status === 200) {
         dispatchUserInfo({
           type: ActionsType.CHANGE_USER_INFO,
@@ -144,35 +149,41 @@ const MyScreen: FC = () => {
             fontSize: 28,
           }}>{userPhone}
           </Text>
-          <TouchableNativeFeedback onPress={() => addEvent.onCopy(userId)}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}>
-              <StaticImage
-                style={{
-                  width: 100,
-                  height: 40,
-                }}
-                resizeMode="contain"
-                source={require('../../assets/images/icons/user_center_auth.png')} />
-              <Text style={{
-                marginLeft: -5,
-                fontSize: 15,
-                paddingRight: 5,
-              }}>
-                ID: {userId}
-              </Text>
-              <StaticImage
-                style={{
-                  width: 14,
-                  height: 14,
-                }}
-                resizeMode="contain"
-                source={require('../../assets/images/icons/user_center_copy.png')} />
-            </View>
-          </TouchableNativeFeedback>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <TouchableNativeFeedback onPress={() => addEvent.goToUserReal()}>
+              <View>
+                <StaticImage
+                  style={{
+                    width: 100,
+                    height: 40,
+                  }}
+                  resizeMode="contain"
+                  source={require('../../assets/images/icons/user_center_auth.png')} />
+              </View>
+            </TouchableNativeFeedback>
+            <TouchableNativeFeedback onPress={() => addEvent.onCopy(userId)}>
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={{
+                  marginLeft: -5,
+                  fontSize: 15,
+                  paddingRight: 5,
+                }}>
+                  ID: {userId}
+                </Text>
+                <StaticImage
+                  style={{
+                    width: 14,
+                    height: 14,
+                  }}
+                  resizeMode="contain"
+                  source={require('../../assets/images/icons/user_center_copy.png')} />
+              </View>
+            </TouchableNativeFeedback>
+          </View>
         </View>
         {/* 设置 */}
         <TouchableNativeFeedback onPress={() => addEvent.goTo('settings')}>
