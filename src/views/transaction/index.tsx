@@ -542,7 +542,7 @@ const TransactionScreen: FC = () => {
         setCoinListSymbolArr(result.map(item => item.name));
       }
     };
-    if (routePage === 'Home') {
+    if (routePage === 'Transaction') {
       CoinToCoinSocket.getSocket().then(ws => {
         socket.current = ws;
         ws.addListener(socketListener, tickerImg);
@@ -558,7 +558,7 @@ const TransactionScreen: FC = () => {
       socket.current.send(tickerImg, 'unsub');
       socket.current.removeListener(tickerImg);
     }
-  }, []);
+  }, [routePage]);
 
   useEffect(() => {
   }, [coinListSymbolArr]);

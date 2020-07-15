@@ -115,12 +115,10 @@ const ComContractIndexListPosition: FC<{data: TypePositionData}> = ({ data }) =>
         <Text style={style.listInfoText}>占用保证金&nbsp;{data.useBond}</Text>
         <Text style={style.listInfoText}>预估强评价&nbsp;{data.willBoomPrice}</Text>
         <Text style={style.listInfoText}>维持保证金率&nbsp;{data.useBondRatio}</Text>
-        <Text style={style.listInfoText}>止盈手数&nbsp;{data.stopWinValue}</Text>
-        <Text style={style.listInfoText}>止损手数&nbsp;{data.stopLowValue}</Text>
       </View>
       {/* 按钮 */}
       <View style={style.listBtns}>
-        <TouchableNativeFeedback onPress={() => addEvent.stopWin()}>
+        {/* <TouchableNativeFeedback onPress={() => addEvent.stopWin()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>止盈</Text>
           </View>
@@ -130,7 +128,7 @@ const ComContractIndexListPosition: FC<{data: TypePositionData}> = ({ data }) =>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>止损</Text>
           </View>
-        </TouchableNativeFeedback>
+        </TouchableNativeFeedback> */}
         <View style={style.listBtnsLine} />
         <TouchableNativeFeedback onPress={() => addEvent.closeOrder()}>
           <View style={style.listBtn}>
@@ -196,7 +194,9 @@ export const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = (
             color: [themeRed, themeGreen][data.type],
           },
         ]}>
-          {data.type === 0 ? '开空' : '开多'}
+          {
+            ['开空', '开多', '平空', '平多'][data.type]
+          }
           &nbsp;&nbsp;
           {data.coinType}
           &nbsp;&nbsp;
@@ -236,18 +236,18 @@ export const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = (
       <View style={style.listInfo}>
         <Text style={style.listInfoText}>可撤&nbsp;{data.backValue}</Text>
         <Text style={style.listInfoText}>状态&nbsp;{['未成交', '部分成交'][data.state]}</Text>
-        <Text style={style.listInfoText}>止盈触发价&nbsp;{data.winStartPrice}</Text>
+        {/* <Text style={style.listInfoText}>止盈触发价&nbsp;{data.winStartPrice}</Text>
         <Text style={style.listInfoText}>止盈执行价&nbsp;{data.winDoPrice}</Text>
         <Text style={style.listInfoText}>止损触发价&nbsp;{data.lowStartPrice}</Text>
-        <Text style={style.listInfoText}>止损执行价&nbsp;{data.lowDoPrice}</Text>
+        <Text style={style.listInfoText}>止损执行价&nbsp;{data.lowDoPrice}</Text> */}
       </View>
       {/* 按钮 */}
       <View style={style.listBtns}>
-        <TouchableNativeFeedback onPress={() => addEvent.backOrder()}>
+        {/* <TouchableNativeFeedback onPress={() => addEvent.backOrder()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>撤销</Text>
           </View>
-        </TouchableNativeFeedback>
+        </TouchableNativeFeedback> */}
         <View style={style.listBtnsLine} />
         <TouchableNativeFeedback onPress={() => addEvent.willStopOrder()}>
           <View style={style.listBtn}>
@@ -423,35 +423,45 @@ const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2; leverType
   // 获取持仓单
   useEffect(() => {
     if (selectTab === 0) {
-      // ajax.get(`/v1/bian/dealorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
-      //   if (data.status === 200) {
-      //     if (data.data) {
-      //       const result = data.data.map((item: any) => {
-      //         return {
-      //           id: item.orderId,
-      //           type: item.side === 'SELL' ? 0 : 1,
-      //           coinType,
-      //           leverType,
-      //           price: item.avgPrice,
-      //           profitValue: '-0.78',
-      //           profitRatio: '-21.23%',
-      //           allValue: '1.39',
-      //           useBond: '2.12',
-      //           willBoomPrice: '12.31',
-      //           useBondRatio: '0.50%',
-      //           stopWinValue: '0',
-      //           stopLowValue: '0',
-      //         };
-      //       });
-      //     }
-      //     console.log(JSON.stringify(data.data, null, 2));
-      //   }
-      // }).catch(err => {
-      //   console.log(err);
-      // });
-      ajax.get('/v1/bian/gold_accounts').then(data => {
+      ajax.get(`/v1/bian/holdhourse_log?symbol=${coinType.split('/')[0]}`).then(data => {
         if (data.status === 200) {
-          console.log(JSON.stringify(data, null, 2));
+          setPositionData(data?.data?.map((item: any, index: number) => ({
+            id: index,
+            type: Number(item.type === '2') as TypePositionData['type'],
+            coinType,
+            leverType: item.lever,
+            price: item.price,
+            // TODO:没有未实现盈亏
+            profitValue: '-0.78',
+            // TODO:没有收益率
+            profitRatio: '-21.23%',
+            allValue: item.num,
+            useBond: item.ensure_num,
+            // TODO:没有强平价
+            willBoomPrice: '12.31',
+            // TODO:没有保证金率
+            useBondRatio: '0.50%',
+          })) || []);
+        }
+      }).catch(err => {
+        console.log(err);
+      });
+    } else if (selectTab === 1) {
+      ajax.get(`/v1/bian/entrust_log?symbol=${coinType.split('/')[0]}`).then(data => {
+        if (data.status === 200) {
+          setGeneralEntrustementData(data?.data?.map((item: any) => ({
+            id: item.binance_id,
+            // eslint-disable-next-line no-nested-ternary
+            type: item.type === '1' ? (item.sell_buy === '1' ? 1 : 4) : (item.sell_buy === '1' ? 3 : 2),
+            coinType,
+            leverType: item.lever,
+            willNumber: item.num,
+            willPrice: item.price,
+            haveNumber: item.deal_num,
+            backValue: item.surplus_num,
+            state: Number(item.status === '8'),
+            time: item.create_time,
+          })) || []);
         }
       }).catch(err => {
         console.log(err);
@@ -460,72 +470,6 @@ const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2; leverType
   }, [selectTab, coinType]);
 
   useEffect(() => {
-    setPositionData([
-      {
-        id: 1,
-        type: 0 as TypePositionData['type'],
-        coinType: 'BTC/USDT',
-        leverType: '20',
-        price: '9512.32',
-        profitValue: '-0.78',
-        profitRatio: '-21.23%',
-        allValue: '1.39',
-        useBond: '2.12',
-        willBoomPrice: '12.31',
-        useBondRatio: '0.50%',
-        stopWinValue: '0',
-        stopLowValue: '0',
-      },
-      {
-        id: 2,
-        type: 1 as TypePositionData['type'],
-        coinType: 'ETH/USDT',
-        leverType: '20',
-        price: '9512.32',
-        profitValue: '0.78',
-        profitRatio: '21.23%',
-        allValue: '1.39',
-        useBond: '2.12',
-        willBoomPrice: '12.31',
-        useBondRatio: '0.50%',
-        stopWinValue: '0',
-        stopLowValue: '0',
-      },
-    ]);
-    setGeneralEntrustementData([
-      {
-        id: 1,
-        type: 0 as TypeGeneralEntrustemnt['type'],
-        coinType: 'BTC/USDT',
-        leverType: '20',
-        willNumber: 12,
-        willPrice: '9512.32',
-        haveNumber: 1,
-        backValue: 11,
-        state: 0 as TypeGeneralEntrustemnt['state'],
-        winStartPrice: '9123.12',
-        winDoPrice: '9123.22',
-        lowStartPrice: '9612.21',
-        lowDoPrice: '9622.21',
-        time: '2019/12/14 08:12:12',
-      },
-      {
-        id: 2,
-        type: 1 as TypeGeneralEntrustemnt['type'],
-        coinType: 'BTC/USDT',
-        leverType: '20',
-        willNumber: 12,
-        willPrice: '9512.32',
-        haveNumber: 1,
-        backValue: 11,
-        state: 1 as TypeGeneralEntrustemnt['state'],
-        winStartPrice: '9123.12',
-        winDoPrice: '9123.22',
-        lowStartPrice: '9612.21',
-        lowDoPrice: '9622.21',
-        time: '2019/12/14 08:12:12',
-      },
-    ]);
     setPlanementData([
       {
         id: 1,
@@ -606,7 +550,7 @@ const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2; leverType
             ))
           }
         </View>
-        <TouchableNativeFeedback onPress={() => navigation.navigate('ContractLogs')}>
+        <TouchableNativeFeedback onPress={() => navigation.navigate('ContractLogs', { coin: coinType })}>
           <View style={style.tabViewRight}>
             <StaticImage
               resizeMode="contain"

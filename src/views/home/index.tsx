@@ -21,7 +21,7 @@ import { InState, ActionsType } from '../../data/redux/state';
 import ajax from '../../data/fetch';
 import { TypeNotice } from '../../data/@types/baseList';
 import { useGoToWithLogin } from '../../tools/routeTools';
-import Socket, { marketSocket } from '../../data/fetch/socket';
+import Socket, { marketSocket, CoinToCoinSocket } from '../../data/fetch/socket';
 
 // 头部
 const HomeScreenHead: FC = () => {
@@ -364,14 +364,11 @@ const HomeScreenMarketLine: FC<TypeHomeScreenMarketLine> = ({
     </View>
   );
 };
-const HomeScreenMarket: FC<{
-  coinMarketU: TypeHomeScreenMarketLine[],
-  coinMarketB: TypeHomeScreenMarketLine[],
-  coinMarketE: TypeHomeScreenMarketLine[],
-  coinMarketRange: TypeHomeScreenMarketLine[],
-}> = ({
-  coinMarketU, coinMarketB, coinMarketE, coinMarketRange,
-}) => {
+const HomeScreenMarket: FC = () => {
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const socket = useRef<Socket|null>(null);
+  const subSocket = useRef(false);
+
   const [marketType, setMarketType] = useState(0);
   const [coinType, setCoinType] = useState(0);
   const marketView = useRef<ScrollView>(null);
@@ -393,6 +390,67 @@ const HomeScreenMarket: FC<{
       } catch (err) { console.log(err); }
     }
   };
+  // 币币行情USET/BTC/ETH
+  const [coinMarketU, setCoinMarketU] = useState<TypeHomeScreenMarketLine[]>([]);
+  // 涨幅榜
+  const [coinMarketRange, setCoinMarketRange] = useState<TypeHomeScreenMarketLine[]>([]);
+  // 处理数据
+  useEffect(() => {
+    setCoinMarketU([
+      {
+        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '1',
+      },
+      {
+        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '2',
+      },
+    ]);
+    setCoinMarketRange([
+      {
+        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '5',
+      },
+    ]);
+  }, []);
+  useEffect(() => {
+    // 获取左侧数据
+    const tickerImg = 'cash.market.ALL.ticker';
+    const socketListener = (message: any) => {
+      const resultData: {
+        [key: string]: any;
+      } = message.Tick;
+      const result: TypeHomeScreenMarketLine[] = Object.values(resultData).map(coin => {
+        const close = parseFloat(coin.close);
+        const open = parseFloat(coin.open);
+        const range = Math.floor(((close - open) / open) * 10000) / 100 || 0;
+        return {
+          coin: `${coin.symbol.replace('USDT', '')}`,
+          unit: 'USDT',
+          count: coin.quo,
+          price: coin.close,
+          rmbPrice: coin.rmb_close,
+          range: `${range}%`,
+          id: `${coin.symbol.replace('USDT', '')}/USDT`,
+        };
+      });
+      setCoinMarketU(result);
+      setCoinMarketRange(result.sort((prev, after) => (parseFloat(prev.range) - parseFloat(after.range))));
+    };
+    if (routePage === 'Home') {
+      CoinToCoinSocket.getSocket().then(ws => {
+        socket.current = ws;
+        ws.addListener(socketListener, tickerImg);
+        ws.send(tickerImg, 'req');
+        ws.send(tickerImg, 'sub');
+        subSocket.current = false;
+      }).catch(err => {
+        console.log(err);
+      });
+    } else if (socket.current) {
+      if (subSocket.current) return;
+      subSocket.current = true;
+      socket.current.send(tickerImg, 'unsub');
+      socket.current.removeListener(tickerImg);
+    }
+  }, []);
   return (
     <View>
       {/* 头部 */}
@@ -427,7 +485,7 @@ const HomeScreenMarket: FC<{
                   USDT
                 </Text>
               </TouchableNativeFeedback>
-              <TouchableNativeFeedback onPress={() => coinMarketViewChange(1)}>
+              {/* <TouchableNativeFeedback onPress={() => coinMarketViewChange(1)}>
                 <Text
                   style={
                   coinType === 1 ? homeStyle.marketViewHeadRightTextSelect : homeStyle.marketViewHeadRightText
@@ -442,7 +500,7 @@ const HomeScreenMarket: FC<{
                 }>
                   ETH
                 </Text>
-              </TouchableNativeFeedback>
+              </TouchableNativeFeedback> */}
             </View>
           )
         }
@@ -472,7 +530,7 @@ const HomeScreenMarket: FC<{
                     <HomeScreenMarketLine key={item.id} {...item} />
                   )) }
                 </View>
-                <View style={{ width: screenWidth }}>
+                {/* <View style={{ width: screenWidth }}>
                   { coinMarketB.map(item => (
                     <HomeScreenMarketLine key={item.id} {...item} />
                   )) }
@@ -481,7 +539,7 @@ const HomeScreenMarket: FC<{
                   { coinMarketE.map(item => (
                     <HomeScreenMarketLine key={item.id} {...item} />
                   )) }
-                </View>
+                </View> */}
               </ScrollView>
             )
           }
@@ -504,41 +562,12 @@ const HomeScreenMarket: FC<{
 const HomeScreen: FC = () => {
   // nav的广告图片和链接
   const [navAd, setNavAd] = useState<TypeHomeNavProp>(null);
-  // 币币行情USET/BTC/ETH
-  const [coinMarketU, setCoinMarketU] = useState<TypeHomeScreenMarketLine[]>([]);
-  const [coinMarketB, setCoinMarketB] = useState<TypeHomeScreenMarketLine[]>([]);
-  const [coinMarketE, setCoinMarketE] = useState<TypeHomeScreenMarketLine[]>([]);
-  // 涨幅榜
-  const [coinMarketRange, setCoinMarketRange] = useState<TypeHomeScreenMarketLine[]>([]);
   // 处理数据
   useEffect(() => {
     setNavAd({
       pic: require('../../assets/images/memory/nav_1.png'),
       link: '',
     });
-    setCoinMarketU([
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '1',
-      },
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '2',
-      },
-    ]);
-    setCoinMarketB([
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '3',
-      },
-    ]);
-    setCoinMarketE([
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '4',
-      },
-    ]);
-    setCoinMarketRange([
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '5',
-      },
-    ]);
   }, []);
   return (
     <ComLayoutHead close>
@@ -560,7 +589,11 @@ const HomeScreen: FC = () => {
         </View>
         <ComLine />
         {/* 行情 */}
-        <HomeScreenMarket coinMarketU={coinMarketU} coinMarketB={coinMarketB} coinMarketE={coinMarketE} coinMarketRange={coinMarketRange} />
+        <HomeScreenMarket />
+        {/* coinMarketU={coinMarketU}
+          coinMarketB={coinMarketB}
+          coinMarketE={coinMarketE}
+          coinMarketRange={coinMarketRange} */}
       </ScrollView>
     </ComLayoutHead>
   );

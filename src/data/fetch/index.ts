@@ -141,6 +141,6 @@ export class Fetch {
 }
 
 const ajax = new Fetch({
-  baseURI: 'http://192.168.3.17:3002',
+  baseURI: 'http://192.168.3.17:3001',
 });
 export default ajax;
