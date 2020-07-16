@@ -193,15 +193,24 @@ const ComContractIndexListPosition: FC<{data: TypePositionData, leverType: strin
 
 // 普通委托
 export const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = ({ data }) => {
+  const loading = useRef(false);
   const navigation = useNavigation();
   const addEvent = {
     // 撤销订单
     backOrder: () => {
+      if (loading.current) {
+        showMessage({
+          message: '您有委托正在撤销中，请等待',
+          type: 'warning',
+        });
+        return;
+      }
       const close = showComAlert({
         desc: '确定撤销此委托单么？',
         success: {
           text: '确定',
           onPress: () => {
+            addEvent.submitBackOrder();
             close();
           },
         },
@@ -211,6 +220,26 @@ export const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = (
             close();
           },
         },
+      });
+    },
+    submitBackOrder: () => {
+      loading.current = true;
+      ajax.get(`/v1/bian/revoke_order?orderId=${data.id}&symbol=${data.coinType.split('/')[0]}`).then(res => {
+        if (res.status === 200) {
+          showMessage({
+            message: '撤销成功',
+            type: 'success',
+          });
+        } else {
+          showMessage({
+            message: res.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).catch(() => {
+        loading.current = false;
       });
     },
     // 预设止盈止损
@@ -551,6 +580,7 @@ const ComContractIndexBottom: FC<{
       // 获取USDT合约
       marketSocket.getSocket().then(ws => {
         socket.current = ws;
+        console.log(tickerImg);
         ws.addListener(socketListener, tickerImg);
         ws.send(tickerImg, 'sub');
         subSocket.current = false;
