@@ -526,7 +526,7 @@ const TransactionScreen: FC = () => {
           symbol: string;
         }
       } = message.Tick;
-      const result: typeof coinListArr = Object.values(resultData).map(coin => {
+      const result: typeof coinListArr = Object.values(resultData || {}).map(coin => {
         const close = parseFloat(coin.close);
         const open = parseFloat(coin.open);
         const range = Math.floor(((close - open) / open) * 10000) / 100;

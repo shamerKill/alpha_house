@@ -73,18 +73,30 @@ export type TypeStopOrder = {
 // 历史记录普通委托数据类型
 export type TypeGeneralEntrustemntLog = {
   id: string|number; // 订单ID
-  type: 0|1|2|3, // 开空0，开多1,平空3,平多4
+  type: 0|1|2|3, // 开空0，开多1,平多2,平空3
   coinType: string; // 交易对
   leverType: string; // 杠杆倍数
   willPrice: string; // 委托价格
   needNumber: number; // 委托量
   successNumber: number; // 已成交量
-  isSuccess: boolean; // 成交true/撤销false
+  status: 0|1|2|3|4|5|6|7|8|9; // 订单状态 0=委托中(平仓中),1=已完成,2=失败,3=已撤销,4=停止，5=拒绝，6=失效,7=部分成交，8=风险保障基金（强平），9=自动减仓序列（强平)
   startTime: string; // 开始时间
   stopTime: string; // 停止时间
   changeValue: string; // 盈亏
   // serviceFee: string; // 手续费
-  orderType: 0|1; // 限价0/市价1
+  orderType: 0|1|2|3; // 限价0/市价1|计划2｜系统强平3
+};
+// 历史成交记录数据类型
+export type TypeHistoryLog = {
+  id: string|number; // 订单id
+  type: 0|1, // 买入0｜卖出1
+  coinType: string; // 交易对
+  successPrice: string; // 成交价格
+  successNumber: string; // 成交数量
+  successTime: string; // 成交时间
+  serviceFee: string; // 手续费
+  changeValue: string; // 盈亏
+  // orderType: 0|1|2|3; // 限价0/市价1|计划2｜系统强平3
 };
 // 历史记录计划委托数据类型
 export type TypePlanEntrustementLog = {

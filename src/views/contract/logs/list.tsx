@@ -6,12 +6,12 @@ import {
   themeBlack, getThemeOpacity, themeGray, defaultThemeBgColor, themeGreen, themeRed, defaultThemeColor, themeWhite,
 } from '../../../config/theme';
 import {
-  TypePlanEntrustementLog, TypeGeneralEntrustemntLog, TypeStopOrderLog,
+  TypePlanEntrustementLog, TypeGeneralEntrustemntLog, TypeStopOrderLog, TypeHistoryLog,
 } from '../index/type';
 
 // 普通委托
 export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog}> = ({ data }) => {
-  const typeNumber = Number(data.isSuccess);
+  const typeNumber = Number(data.status === 1);
   return (
     <View style={style.listView}>
       {/* 头部 */}
@@ -19,10 +19,10 @@ export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog
         <Text style={[
           style.listTitle,
           {
-            color: [themeRed, themeGreen][data.type],
+            color: [themeRed, themeGreen, themeRed, themeGreen][data.type],
           },
         ]}>
-          {data.type === 0 ? '开空' : '开多'}
+          {['开空', '开多', '平多', '平空'][data.type]}
           &nbsp;&nbsp;
           {data.coinType}
           &nbsp;&nbsp;
@@ -30,9 +30,9 @@ export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog
         </Text>
         <Text style={[
           style.listTopTime,
-          data.isSuccess && { color: themeGreen },
+          typeNumber === 1 && { color: themeGreen },
         ]}>
-          {['已撤销', '已成交'][typeNumber]}
+          {['委托中', '已成交', '失败', '已撤销', '停止', '拒绝', '失效', '部分成交', '爆仓强平', '爆仓强平'][typeNumber]}
         </Text>
       </View>
       {/* 中部 */}
@@ -42,7 +42,7 @@ export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog
           style.listCenterInnerLeft,
         ]}>
           <Text style={style.listCenterValue}>{data.willPrice}</Text>
-          <Text style={style.listCenterDesc}>{['委托', '成交'][typeNumber]}价格</Text>
+          <Text style={style.listCenterDesc}>委托价格</Text>
         </View>
         <View style={[
           style.listCenterInner,
@@ -51,9 +51,9 @@ export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog
           <Text style={[style.listCenterValue]}>
             {[data.needNumber, data.successNumber][typeNumber]}
           </Text>
-          <Text style={style.listCenterDesc}>{['委托', '成交数'][typeNumber]}量</Text>
+          <Text style={style.listCenterDesc}>委托量</Text>
         </View>
-        <View style={[
+        {/* <View style={[
           style.listCenterInner,
           style.listCenterInnerRight,
         ]}>
@@ -64,15 +64,78 @@ export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog
             {[data.successNumber, data.changeValue][typeNumber]}
           </Text>
           <Text style={style.listCenterDesc}>{['成交量', '盈亏'][typeNumber]}</Text>
+        </View> */}
+      </View>
+      {/* 详情 */}
+      <View style={style.listInfo}>
+        {/* { data.isSuccess && <Text style={[style.listInfoText, { width: '100%' }]}>手续费&nbsp;{data.serviceFee}</Text> } */}
+        <Text style={[style.listInfoText, { width: '100%' }]}>方式&nbsp;{['限价委托', '市价委托', '计划委托', '爆仓强平'][data.orderType]}</Text>
+        { typeNumber === 1 && <Text style={[style.listInfoText, { width: '100%' }]}>成交时间&nbsp;{data.stopTime}</Text> }
+        { !(typeNumber === 1) && <Text style={[style.listInfoText, { width: '100%' }]}>委托时间&nbsp;{data.startTime}</Text> }
+        { !(typeNumber === 1) && <Text style={[style.listInfoText, { width: '100%' }]}>撤销时间&nbsp;{data.stopTime}</Text> }
+      </View>
+    </View>
+  );
+};
+
+// 历史记录
+export const ComContractIndexListHistory: FC<{data: TypeHistoryLog}> = ({ data }) => {
+  return (
+    <View style={style.listView}>
+      {/* 头部 */}
+      <View style={style.listTop}>
+        <Text style={[
+          style.listTitle,
+          {
+            color: [themeGreen, themeRed][data.type],
+          },
+        ]}>
+          {['买入', '卖出'][data.type]}
+          &nbsp;&nbsp;
+          {data.coinType}
+        </Text>
+        <Text style={[
+          style.listTopTime,
+          { color: themeGreen },
+        ]}>
+          已成交
+        </Text>
+      </View>
+      {/* 中部 */}
+      <View style={style.listCenter}>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerLeft,
+        ]}>
+          <Text style={style.listCenterValue}>{data.successPrice}</Text>
+          <Text style={style.listCenterDesc}>成交价格</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerCenter,
+        ]}>
+          <Text style={[style.listCenterValue]}>
+            {data.successNumber}
+          </Text>
+          <Text style={style.listCenterDesc}>成交量</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerRight,
+        ]}>
+          <Text style={[
+            style.listCenterValue,
+            { color: parseFloat(data.changeValue) >= 0 ? themeGreen : themeRed },
+          ]}>
+            {data.changeValue}
+          </Text>
+          <Text style={style.listCenterDesc}>盈亏</Text>
         </View>
       </View>
       {/* 详情 */}
       <View style={style.listInfo}>
-        { data.isSuccess && <Text style={[style.listInfoText, { width: '100%' }]}>手续费&nbsp;{data.serviceFee}</Text> }
-        <Text style={[style.listInfoText, { width: '100%' }]}>方式&nbsp;{['限价', '市价'][data.orderType]}</Text>
-        { data.isSuccess && <Text style={[style.listInfoText, { width: '100%' }]}>成交时间&nbsp;{data.stopTime}</Text> }
-        { !data.isSuccess && <Text style={[style.listInfoText, { width: '100%' }]}>委托时间&nbsp;{data.startTime}</Text> }
-        { !data.isSuccess && <Text style={[style.listInfoText, { width: '100%' }]}>撤销时间&nbsp;{data.stopTime}</Text> }
+        <Text style={[style.listInfoText, { width: '100%' }]}>手续费&nbsp;{data.serviceFee}</Text>
+        <Text style={[style.listInfoText, { width: '100%' }]}>成交时间&nbsp;{data.successTime}</Text>
       </View>
     </View>
   );

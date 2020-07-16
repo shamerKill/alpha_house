@@ -6,7 +6,7 @@ import TypeStackValue from './stackType';
 import HomeRoutes from './home';
 import MarketRoutes from './market';
 import ContractRoutes from './contract';
-import TransactionRoutes from './transaction';
+// import TransactionRoutes from './transaction';
 import MyRoutes from './my';
 import { defaultThemeColor, themeGray, themeWhite } from '../config/theme';
 import useGetDispatch from '../data/redux/dispatch';
@@ -17,7 +17,8 @@ const StackValue: TypeStackValue = [
   ...HomeRoutes,
   ...MarketRoutes,
   ...ContractRoutes,
-  ...TransactionRoutes,
+  // 隐藏币币行情
+  // ...TransactionRoutes,
   ...MyRoutes,
 ];
 

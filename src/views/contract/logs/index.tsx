@@ -7,8 +7,8 @@ import ComLayoutHead from '../../../components/layout/head';
 import { themeWhite } from '../../../config/theme';
 import ComFormButton from '../../../components/form/button';
 import ComLine from '../../../components/line';
-import { ComContractIndexListGeneralLog } from './list';
-import { TypeGeneralEntrustemntLog } from '../index/type';
+import { ComContractIndexListGeneralLog, ComContractIndexListHistory } from './list';
+import { TypeGeneralEntrustemntLog, TypeHistoryLog } from '../index/type';
 import ajax from '../../../data/fetch';
 
 const ContractLogsAllScreen: FC = () => {
@@ -20,6 +20,8 @@ const ContractLogsAllScreen: FC = () => {
   // ];
   const tabList = [
     { name: '普通委托', id: 0 },
+    { name: '历史成交', id: 1 },
+    // { name: '', id: 2 },
     // { name: '计划委托', id: 1 },
     // { name: '止盈止损', id: 2 },
   ];
@@ -32,6 +34,8 @@ const ContractLogsAllScreen: FC = () => {
   const [selectStatus, setSelectStatus] = useState(tabList[0].id);
   // 普通委托列表
   const [generalEntrustementData, setGeneralEntrustementData] = useState<TypeGeneralEntrustemntLog[]>([]);
+  // 历史成交记录
+  const [historyLogsData, setHistoryLogsData] = useState<TypeHistoryLog[]>([]);
   // 计划委托列表
   // const [planementData, setPlanementData] = useState<TypePlanEntrustementLog[]>([]);
   // 止盈止损列表
@@ -55,18 +59,35 @@ const ContractLogsAllScreen: FC = () => {
   // };
 
   useEffect(() => {
+    ajax.get(`/v1/bian/dealorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
+      if (data.status === 200) {
+        setHistoryLogsData(data?.data?.map((item: any) => ({
+          id: item.binance_id,
+          // eslint-disable-next-line no-nested-ternary
+          type: item.direction - 1,
+          coinType,
+          successPrice: item.price,
+          successNumber: item.hands,
+          successTime: item.update_time,
+          serviceFee: item.fee,
+          changeValue: item.profit,
+        })) || []);
+      }
+    }).catch(err => {
+      console.log(err);
+    });
     ajax.get(`/v1/bian/allorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
       if (data.status === 200) {
         setGeneralEntrustementData(data?.data?.map((item: any) => ({
           id: item.binance_id,
           // eslint-disable-next-line no-nested-ternary
-          type: item.type === '1' ? (item.sell_buy === '1' ? 1 : 4) : (item.sell_buy === '1' ? 3 : 2),
+          type: item.type === '1' ? (item.sell_buy === '1' ? 0 : 3) : (item.sell_buy === '1' ? 2 : 1),
           coinType,
           leverType: item.lever,
-          willPrice: item.price,
-          needNumber: item.num,
+          willPrice: item.price || '市价',
+          needNumber: item.hands,
           successNumber: item.deal_num,
-          isSuccess: item.status === '2',
+          status: item.status - 1,
           startTime: item.create_time,
           stopTime: item.back_time || item.update_time,
           changeValue: item.profit_per,
@@ -118,11 +139,11 @@ const ContractLogsAllScreen: FC = () => {
         selectStatus === 1 && (
           <ScrollView style={style.scrollViewContent}>
             {
-              // planementData.map(item => (
-              //   <ComContractIndexListPlanLog
-              //     key={item.id}
-              //     data={item} />
-              // ))
+              historyLogsData.map(item => (
+                <ComContractIndexListHistory
+                  key={item.id}
+                  data={item} />
+              ))
             }
           </ScrollView>
         )
@@ -151,10 +172,11 @@ const style = StyleSheet.create({
     paddingLeft: 10,
     paddingRight: 10,
     paddingBottom: 10,
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
   },
   topTabBtn: {
     width: '30%',
+    marginRight: 10,
   },
   scrollViewContent: {
     flex: 1,

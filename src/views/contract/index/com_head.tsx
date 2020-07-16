@@ -4,6 +4,7 @@ import React, {
 import {
   View, Image, StyleSheet, Text, TouchableNativeFeedback, SafeAreaView, ScrollView, Animated,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { TypeLeftOutList } from './type';
 import { modalOutBg } from '../../../components/modal/outBg';
 import {
@@ -48,7 +49,7 @@ export const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutLi
         };
       } = message.Tick;
       const result: TypeLeftOutList[] = [];
-      Object.values(resultData).forEach(item => {
+      Object.values(resultData || {}).forEach(item => {
         const close = parseFloat(item.close);
         const open = parseFloat(item.open);
         const range = Math.floor(((close - open) / open) * 10000) / 100;
@@ -135,6 +136,7 @@ const ContractHeadView: FC<{
   leftList,
   changeCallback,
 }) => {
+  const navigation = useNavigation();
   const [showMore, setShowMore] = useState(false);
 
   const addEvent = {
@@ -169,7 +171,7 @@ const ContractHeadView: FC<{
         </View>
       </TouchableNativeFeedback>
       <View style={style.headRightView}>
-        <TouchableNativeFeedback>
+        <TouchableNativeFeedback onPress={() => navigation.navigate('MarketKline', { name: coinType })}>
           <View style={style.headRightIconView}>
             <Image
               style={style.headRgihtIcon}

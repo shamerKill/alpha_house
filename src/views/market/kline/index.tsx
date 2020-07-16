@@ -335,7 +335,7 @@ const MarketKlineLogsView: FC = () => {
             number: item.number,
             type: ({ buy: 0, sell: 1 } as any)[item.direction],
           };
-        }));
+        }).reverse());
       } else {
         setLogsList(state => {
           const result = [...state];
@@ -375,40 +375,6 @@ const MarketKlineLogsView: FC = () => {
       }
     };
   }, [routePage]);
-  useEffect(() => {
-    setLogsList([
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 1,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 1,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-      {
-        time: '13:38:44', price: '0.546', number: '1187.00', type: 0,
-      },
-    ]);
-  }, []);
   return (
     <View>
       <View style={[

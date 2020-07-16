@@ -1,8 +1,11 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, {
+  FC, useState, useEffect, useRef,
+} from 'react';
 import {
   View, Text, Image as StaticImage, StyleSheet, TouchableNativeFeedback,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import {
   themeBlack, getThemeOpacity, themeGray, defaultThemeBgColor, themeGreen, themeRed, defaultThemeColor, themeWhite,
 } from '../../../config/theme';
@@ -11,14 +14,19 @@ import {
 } from './type';
 import showComAlert from '../../../components/modal/alert';
 import ajax from '../../../data/fetch';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { InState } from '../../../data/redux/state';
+import Socket, { marketSocket } from '../../../data/fetch/socket';
 
 
 // 持仓列表视图
-const ComContractIndexListPosition: FC<{data: TypePositionData}> = ({ data }) => {
+const ComContractIndexListPosition: FC<{data: TypePositionData, leverType: string;}> = ({ data, leverType }) => {
   const navigation = useNavigation();
 
   // 盈亏颜色
   const color = parseFloat(data.profitRatio) < 0 ? themeRed : themeGreen;
+
+  const isLoading = useRef(false);
 
   const addEvent = {
     // 止盈止损弹窗
@@ -56,6 +64,49 @@ const ComContractIndexListPosition: FC<{data: TypePositionData}> = ({ data }) =>
     },
     // 平仓
     closeOrder: () => {
+      const close = showComAlert({
+        desc: `是否进行委托${['平空', '平多'][data.type]}${data.allValue}手?`,
+        success: {
+          text: '平仓',
+          onPress: () => {
+            close();
+            addEvent.submitCloseOrder();
+          },
+        },
+        close: {
+          text: '取消',
+          onPress: () => close(),
+        },
+      });
+    },
+    // 执行平仓
+    submitCloseOrder: () => {
+      isLoading.current = true;
+      const fm: {[key: string]: any} = {};
+      fm.price = 10;
+      fm.num = data.allValue;
+      fm.lever = Number(leverType);
+      [fm.symbol] = data.coinType.split('/');
+      fm.side = ['BUY', 'SELL'][data.type];
+      fm.price_type = 2;
+      fm.postition_side = ['SHORT', 'LONG'][data.type];
+      ajax.post('/v1/bian/Order', fm).then(res => {
+        if (res.status === 200) {
+          showMessage({
+            message: '委托提交成功',
+            type: 'success',
+          });
+        } else {
+          showMessage({
+            message: res.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        isLoading.current = false;
+      });
     },
   };
   return (
@@ -114,7 +165,7 @@ const ComContractIndexListPosition: FC<{data: TypePositionData}> = ({ data }) =>
         <Text style={style.listInfoText}>总仓&nbsp;{data.allValue}</Text>
         <Text style={style.listInfoText}>占用保证金&nbsp;{data.useBond}</Text>
         <Text style={style.listInfoText}>预估强评价&nbsp;{data.willBoomPrice}</Text>
-        <Text style={style.listInfoText}>维持保证金率&nbsp;{data.useBondRatio}</Text>
+        {/* <Text style={style.listInfoText}>维持保证金率&nbsp;{data.useBondRatio}</Text> */}
       </View>
       {/* 按钮 */}
       <View style={style.listBtns}>
@@ -191,12 +242,10 @@ export const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = (
         <Text style={[
           style.listTitle,
           {
-            color: [themeRed, themeGreen][data.type],
+            color: [themeRed, themeGreen, themeRed, themeGreen][data.type],
           },
         ]}>
-          {
-            ['开空', '开多', '平空', '平多'][data.type]
-          }
+          {['开空', '开多', '平多', '平空'][data.type]}
           &nbsp;&nbsp;
           {data.coinType}
           &nbsp;&nbsp;
@@ -243,17 +292,17 @@ export const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = (
       </View>
       {/* 按钮 */}
       <View style={style.listBtns}>
-        {/* <TouchableNativeFeedback onPress={() => addEvent.backOrder()}>
+        <TouchableNativeFeedback onPress={() => addEvent.backOrder()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>撤销</Text>
           </View>
-        </TouchableNativeFeedback> */}
+        </TouchableNativeFeedback>
         <View style={style.listBtnsLine} />
-        <TouchableNativeFeedback onPress={() => addEvent.willStopOrder()}>
+        {/* <TouchableNativeFeedback onPress={() => addEvent.willStopOrder()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>预设止盈止损</Text>
           </View>
-        </TouchableNativeFeedback>
+        </TouchableNativeFeedback> */}
       </View>
     </View>
   );
@@ -395,19 +444,26 @@ export const ComContractIndexListOrder: FC<{data: TypeStopOrder}> = ({ data }) =
   );
 };
 
-const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2; leverType: string;}> = ({
+const ComContractIndexBottom: FC<{
+  coinType: string;
+  selectType: 0|1|2;
+  leverType: string;
+  setCanCloseOrderValue: React.Dispatch<React.SetStateAction<{
+    lang: string;
+    sort: string;
+  }>>}> = ({
   coinType,
   leverType,
   // selectType,
+  setCanCloseOrderValue,
 }) => {
   const navigation = useNavigation();
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const [userInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
   //  '计划委托', '止盈止损',
   const tabDataArr = [
     '持仓', '普通委托',
   ];
-  useEffect(() => {
-    console.log(leverType);
-  }, []);
 
   // 选项卡的第几个
   const [selectTab, setSelectTab] = useState(0);
@@ -425,23 +481,31 @@ const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2; leverType
     if (selectTab === 0) {
       ajax.get(`/v1/bian/holdhourse_log?symbol=${coinType.split('/')[0]}`).then(data => {
         if (data.status === 200) {
-          setPositionData(data?.data?.map((item: any, index: number) => ({
-            id: index,
-            type: Number(item.type === '2') as TypePositionData['type'],
-            coinType,
-            leverType: item.lever,
-            price: item.price,
-            // TODO:没有未实现盈亏
-            profitValue: '-0.78',
-            // TODO:没有收益率
-            profitRatio: '-21.23%',
-            allValue: item.num,
-            useBond: item.ensure_num,
-            // TODO:没有强平价
-            willBoomPrice: '12.31',
-            // TODO:没有保证金率
-            useBondRatio: '0.50%',
-          })) || []);
+          setPositionData(data?.data?.list?.map((item: any, index: number) => {
+            if (item.type === '1') {
+              setCanCloseOrderValue(state => ({
+                ...state,
+                lang: item.num,
+              }));
+            } else {
+              setCanCloseOrderValue(state => ({
+                ...state,
+                sort: item.num,
+              }));
+            }
+            return {
+              id: index,
+              type: Number(item.type === '1') as TypePositionData['type'],
+              coinType,
+              leverType: item.lever,
+              price: item.price,
+              profitValue: parseFloat(data.data.risk[Number(item.type === '2')].unrealizedProfit),
+              profitRatio: `${((data.data.risk[Number(item.type === '2')].unrealizedProfit / (item.price * item.num)) * 100).toFixed(2)}%`,
+              allValue: item.num,
+              useBond: parseFloat(data.data.risk[Number(item.type === '2')].initialMargin),
+              willBoomPrice: item.flat_price,
+            };
+          }) || []);
         }
       }).catch(err => {
         console.log(err);
@@ -449,25 +513,58 @@ const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2; leverType
     } else if (selectTab === 1) {
       ajax.get(`/v1/bian/entrust_log?symbol=${coinType.split('/')[0]}`).then(data => {
         if (data.status === 200) {
-          setGeneralEntrustementData(data?.data?.map((item: any) => ({
-            id: item.binance_id,
-            // eslint-disable-next-line no-nested-ternary
-            type: item.type === '1' ? (item.sell_buy === '1' ? 1 : 4) : (item.sell_buy === '1' ? 3 : 2),
-            coinType,
-            leverType: item.lever,
-            willNumber: item.num,
-            willPrice: item.price,
-            haveNumber: item.deal_num,
-            backValue: item.surplus_num,
-            state: Number(item.status === '8'),
-            time: item.create_time,
-          })) || []);
+          setGeneralEntrustementData(data?.data?.map((item: any) => {
+            return {
+              id: item.binance_id,
+              // eslint-disable-next-line no-nested-ternary
+              type: item.type === '1' ? (item.sell_buy === '1' ? 0 : 3) : (item.sell_buy === '1' ? 2 : 1),
+              coinType,
+              leverType: item.lever,
+              willNumber: item.num,
+              willPrice: item.price,
+              haveNumber: item.deal_num,
+              backValue: item.surplus_num,
+              state: Number(item.status === '8'),
+              time: item.create_time,
+            };
+          }) || []);
         }
       }).catch(err => {
         console.log(err);
       });
     }
   }, [selectTab, coinType]);
+
+  const socket = useRef<Socket|null>(null);
+  const subSocket = useRef(false);
+  useEffect(() => {
+    const tickerImg = `gold.market.ALL.account.${userInfo.token}`;
+    const socketListener = (message: any) => {
+      const resultData: {
+        [key: string]: {
+          [key: string]: string;
+        };
+      } = message.Tick;
+      console.log(resultData);
+    };
+    if (routePage === 'Contract') {
+      // 获取USDT合约
+      marketSocket.getSocket().then(ws => {
+        socket.current = ws;
+        ws.addListener(socketListener, tickerImg);
+        ws.send(tickerImg, 'sub');
+        subSocket.current = false;
+      }).catch(err => {
+        console.log(err);
+      });
+    } else if (socket.current) {
+      if (subSocket.current) {
+        subSocket.current = true;
+        socket.current.send(tickerImg, 'unsub');
+        socket.current.removeListener(tickerImg);
+      }
+    }
+  }, [routePage]);
 
   useEffect(() => {
     setPlanementData([
@@ -568,6 +665,7 @@ const ComContractIndexBottom: FC<{coinType: string; selectType: 0|1|2; leverType
           positionData.map(item => (
             <ComContractIndexListPosition
               key={item.id}
+              leverType={leverType}
               data={item} />
           ))
         )

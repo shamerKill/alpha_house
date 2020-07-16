@@ -63,6 +63,12 @@ const ComSliderView: FC<{
       }, 200));
     },
   };
+
+  useEffect(() => {
+    if (ratioValue !== fixedValueRatio) {
+      setRatioValue(fixedValueRatio);
+    }
+  }, [fixedValueRatio]);
   return (
     <View>
       {/* 所占百分比 */}
@@ -136,13 +142,17 @@ const ComSliderView: FC<{
 };
 
 // 右侧数据显示
-const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefObject<string>}> = ({ USDTToRMB, getPrice }) => {
+const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefObject<string>; coinType: string;}> = ({ getPrice, coinType }) => {
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const socket = useRef<Socket|null>(null);
+  const subSocket = useRef(false);
   // 买列表
   const [buyData, setBuyData] = useState<(TypeSellBuyList&{ratio?:string})[]>([]);
   // 卖
   const [sellData, setSellData] = useState<(TypeSellBuyList&{ratio?:string})[]>([]);
   // 最新指数价格
   const [newPrice, setNewPrice] = useState('--');
+  const [prevNewPrice, setPrevNewPrice] = useState('--');
   // 涨1还是跌0
   const [direction, setDirection] = useState<0|1>(0);
 
@@ -164,32 +174,74 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
     const result = getPrice;
     result.current = newPrice;
   }, [newPrice]);
+
   useEffect(() => {
-    // 跟新数据
-    const timer = setInterval(() => {
-      setDirection(Math.round(Math.random()) as typeof direction);
-      setBuyData(addEvent.setData([
-        { price: '9647.96', value: Math.round(Math.random() * 10000) + 1 },
-        { price: '9646.96', value: Math.round(Math.random() * 10000) + 1 },
-        { price: '9645.96', value: Math.round(Math.random() * 10000) + 1 },
-        { price: '9644.96', value: Math.round(Math.random() * 10000) + 1 },
-        { price: '9643.96', value: Math.round(Math.random() * 10000) + 1 },
-        { price: '9642.96', value: Math.round(Math.random() * 10000) + 1 },
-      ]));
-      setSellData(addEvent.setData([
-        { price: '9647.96', value: Math.round(Math.random() * 10000) + 1 },
-        { price: '9646.96', value: Math.round(Math.random() * 10000) + 1 },
-        { price: '9645.96', value: Math.round(Math.random() * 10000) + 1 },
-        { price: '9644.96', value: Math.round(Math.random() * 10000) + 1 },
-        { price: '9643.96', value: Math.round(Math.random() * 10000) + 1 },
-        { price: '9642.96', value: Math.round(Math.random() * 10000) + 1 },
-      ]));
-      setNewPrice((9642 + Math.random() * 10).toFixed(2));
-    }, 1000);
-    return () => {
-      clearInterval(timer);
+    if (!coinType) return;
+    const tickerImg = `gold.market.${coinType.replace('/', '')}.depth`;
+    const socketListener = (message: any) => {
+      if (message?.buy && message?.sell) {
+        if (message.buy.length < 6 || message.sell.length < 6) return;
+        const buyDataMem = message.buy.splice(0, 6).map((item: any) => ({
+          price: item[0],
+          value: item[1],
+        }));
+        const sellDataMem = message.sell.splice(0, 6).map((item: any) => ({
+          price: item[0],
+          value: item[1],
+        }));
+        const allData = addEvent.setData([...buyDataMem, ...sellDataMem]);
+        setBuyData(allData.splice(0, 6));
+        setSellData(allData);
+      }
     };
-  }, []);
+    // 获取成交价
+    const tickerImgPrice = `gold.market.${coinType.replace('/', '')}.deal`;
+    const socketListenerPrice = (message: any) => {
+      if (Array.isArray(message.Tick)) {
+        const socketPrice: string = message.Tick[message.Tick.length - 1].price;
+        setPrevNewPrice(newPrice);
+        setNewPrice(socketPrice);
+        setDirection(parseFloat(socketPrice) - parseFloat(prevNewPrice) < 0 ? 0 : 1);
+      } else {
+        const socketPrice: string = message.Tick.price;
+        setPrevNewPrice(newPrice);
+        setNewPrice(socketPrice);
+        setDirection(parseFloat(socketPrice) - parseFloat(prevNewPrice) < 0 ? 0 : 1);
+      }
+    };
+    if (routePage === 'Contract') {
+      marketSocket.getSocket().then(ws => {
+        socket.current = ws;
+        ws.addListener(socketListener, tickerImg);
+        ws.send(tickerImg, 'sub');
+        ws.send(tickerImg, 'req');
+        ws.addListener(socketListenerPrice, tickerImgPrice);
+        ws.send(tickerImgPrice, 'sub');
+        ws.send(tickerImgPrice, 'req');
+        subSocket.current = false;
+      }).catch(err => {
+        console.log(err);
+      });
+    } else if (socket.current) {
+      if (!subSocket.current) {
+        subSocket.current = true;
+        socket.current.send(tickerImg, 'unsub');
+        socket.current.removeListener(socketListener);
+        socket.current.send(tickerImgPrice, 'unsub');
+        socket.current.removeListener(socketListenerPrice);
+      }
+    }
+    // eslint-disable-next-line consistent-return
+    return () => {
+      if (!subSocket.current && socket.current) {
+        subSocket.current = true;
+        socket.current.send(tickerImg, 'unsub');
+        socket.current.removeListener(socketListener);
+        socket.current.send(tickerImgPrice, 'unsub');
+        socket.current.removeListener(socketListenerPrice);
+      }
+    };
+  }, [routePage, coinType]);
   return (
     <View>
       <View style={style.contentListView}>
@@ -222,7 +274,7 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
           ]}>
             {newPrice}
           </Text>
-          &#8776;&yen;{((parseFloat(newPrice) || 0) * USDTToRMB).toFixed(2)}
+          {/* &#8776;&yen;{((parseFloat(newPrice) || 0) * USDTToRMB).toFixed(2)} */}
         </Text>
         <Text style={style.contentIndexDesc}>最新指数&nbsp;{newPrice}</Text>
       </View>
@@ -259,11 +311,13 @@ const ContractContentView: FC<{
   selectType: 0|1|2;
   changeConTypeCallback: (data: { coinType?: string; contractType?: 0|1|2 }) => void;
   changePageLeverType: React.Dispatch<React.SetStateAction<string>>;
+  canCloseOrderValue: {lang: string; sort: string;};
 }> = ({
   coinType,
   selectType,
   changeConTypeCallback,
   changePageLeverType,
+  canCloseOrderValue,
 }) => {
   // console.log(coinType); // 币种类型
   // console.log(selectType); // 合约类型
@@ -310,10 +364,15 @@ const ContractContentView: FC<{
   const [fixedValueRatio, setFixedValueRatio] = useState(0);
   // 占用保证金
   const [occupyBond, setOccupyBond] = useState('0.00');
+  // 平仓数据占用保证金
+  const [haveOcupyBond, setHaveOcupyBond] = useState('0.00');
   // 可开手数
   const [canOpenValue, setCanOpenValue] = useState('0');
-  // 可平手数
-  const [canCloseValue, setCanCloseValue] = useState('--');
+  // 可平手数(开多)
+  // setCanCloseValueLang
+  const [canCloseValueLang, setCanCloseValueLang] = useState('--');
+  // 可平手数(开空)
+  const [canCloseValueSort, setCanCloseValueSort] = useState('--');
   // 计划委托触发价格
   const [willDoPrice, setWillDoPrice] = useState('');
   // 计划委托执行价格
@@ -325,7 +384,7 @@ const ContractContentView: FC<{
   // 最新指数价格
   const newPrice = useRef('--');
   // usdt/rmb汇率
-  const [USDTToRMB, setUSDTToRMB] = useState(7);
+  const [USDTToRMB] = useState(7);
 
 
   // 方法
@@ -394,6 +453,10 @@ const ContractContentView: FC<{
       }).then(data => {
         if (data.status === 200) {
           setLaverValue(lever);
+          showMessage({
+            message: '杠杆更改成功',
+            type: 'success',
+          });
         } else {
           showMessage({
             message: data.message,
@@ -510,20 +573,20 @@ const ContractContentView: FC<{
     submitOpenOrder: (type: 0|1) => {
       isLoading.current = true;
       const fm: {[key: string]: any} = {};
-      fm.price = fixedPrice;
+      fm.price = parseFloat(fixedPrice) || 123;
       fm.num = Number(fixedValue);
       fm.lever = Number(leverValue);
       [fm.symbol] = coinType.split('/');
       fm.side = ['SELL', 'BUY'][type];
-      fm.price_type = entrustType + 1;
-      fm.postition_side = 'SHORT';
+      fm.price_type = Number(isMarketPrice) + 1;
+      fm.postition_side = ['SHORT', 'LONG'][type];
       ajax.post('/v1/bian/Order', fm).then(data => {
-        console.log(data);
         if (data.status === 200) {
           showMessage({
             message: '委托提交成功',
             type: 'success',
           });
+          addEvent.getServerUserInfo();
         } else {
           showMessage({
             message: data.message,
@@ -538,7 +601,13 @@ const ContractContentView: FC<{
     },
     // 平多1/平空0
     closeOrder: (type: 0|1) => {
-      // console.log(type);
+      if (isLoading.current) {
+        showMessage({
+          message: '已有委托正在提交,请稍后',
+          type: 'info',
+        });
+        return;
+      }
       const close = showComAlert({
         title: ['平空', '平多'][type],
         desc: [
@@ -549,6 +618,7 @@ const ContractContentView: FC<{
           text: '确定',
           onPress: () => {
             close();
+            addEvent.submitCloseOrder(type);
           },
         },
         close: {
@@ -559,27 +629,61 @@ const ContractContentView: FC<{
         },
       });
     },
-  };
-
-  // 根据百分比和可开手数更改当前手数
-  useEffect(() => {
-    const value = Math.round((parseFloat(canOpenValue) * fixedValueRatio) / 100);
-    if (Number.isNaN(value)) return;
-    setFixedValue(value.toString());
-  }, [canOpenValue, fixedValueRatio]);
-  // 点击平仓之后，换成计划委托
-  useEffect(() => {
-    if (doType === 1) setEntrustType(0);
-  }, [doType]);
-  // 手数限制
-  useEffect(() => {
-    if (doType === 0 && !isMarketPrice && Number(fixedValue) > Number(canOpenValue)) {
-      setFixedValue(canOpenValue);
-    }
-  }, [fixedValue]);
-
-  useEffect(() => {
-    if (routePage === 'Contract' && coinType) {
+    // 平空0/平多1
+    submitCloseOrder: (type: 0|1) => {
+      let changeNum = fixedValue;
+      if (/%/.test(fixedValue)) {
+        changeNum = `${Math.floor((parseFloat(fixedValue) * parseFloat([canCloseValueSort, canCloseValueLang][type])) / 100)}`;
+      }
+      if (Number(changeNum) > Number([canCloseValueSort, canCloseValueLang][type]) || Number(changeNum) === 0) {
+        showMessage({
+          message: '所设平仓手数有误',
+          type: 'warning',
+        });
+        return;
+      }
+      if (!isMarketPrice) {
+        const titlePrice = parseFloat(newPrice.current);
+        const willPrice = parseFloat(fixedPrice);
+        const ratio = Math.abs((titlePrice - willPrice) / (titlePrice || 1));
+        if (ratio > 0.3) {
+          showMessage({
+            message: '所设市价不能与指数价相差30%',
+            type: 'warning',
+          });
+          return;
+        }
+      }
+      isLoading.current = true;
+      const fm: {[key: string]: any} = {};
+      fm.price = parseFloat(fixedPrice) || 10;
+      fm.num = Number(changeNum);
+      fm.lever = Number(leverValue);
+      [fm.symbol] = coinType.split('/');
+      fm.side = ['BUY', 'SELL'][type];
+      fm.price_type = Number(isMarketPrice) + 1;
+      fm.postition_side = ['SHORT', 'LONG'][type];
+      ajax.post('/v1/bian/Order', fm).then(data => {
+        if (data.status === 200) {
+          showMessage({
+            message: '委托提交成功',
+            type: 'success',
+          });
+          addEvent.getServerUserInfo();
+        } else {
+          showMessage({
+            message: data.message,
+            type: 'warning',
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        isLoading.current = false;
+      });
+    },
+    // 获取用户信息
+    getServerUserInfo: () => {
       ajax.get('/v1/bian/gold_accounts').then(data => {
         if (data.status === 200) {
           // 用户信息
@@ -589,12 +693,12 @@ const ContractContentView: FC<{
             use: `${Math.floor((data.data.asset.maintMargin / (data.data.asset.walletBalance || 1)) * 10000) / 100}%`,
             lever: data.data.positions.filter((item: any) => item.symbol === coinType.replace('/', ''))[0]?.leverage,
           });
-        }
-      }).catch(err => {
-        console.log(err);
-      });
-      ajax.get(`/v1/bian/position_risk?symbol=${coinType.replace('/', '')}`).then(data => {
-        if (data.status === 200) {
+          // 更改杠杆
+          setLaverValue(data.data.positions.filter((item: any) => item.symbol === coinType.replace('/', ''))[0].leverage);
+          // 获取当前币保证金
+          const newCoinSelf: number[] = data.data.positions.filter((item: any) => item.symbol === coinType.replace('/', '')).map((item: any) => parseFloat(item.maintMargin));
+          setHaveOcupyBond(newCoinSelf.reduce((a, b) => (a + b)).toFixed(4));
+          // 更改杠杆倍率
           if (coinType === 'BTC/USDT') {
             setServerCoinType({
               changeRatio: parseFloat(data.data.values),
@@ -631,9 +735,38 @@ const ContractContentView: FC<{
       }).catch(err => {
         console.log(err);
       });
+    },
+  };
+
+  // 根据百分比和可开手数更改当前手数
+  useEffect(() => {
+    if (doType === 0) {
+      const value = Math.round((parseFloat(canOpenValue) * fixedValueRatio) / 100);
+      if (Number.isNaN(value)) return;
+      setFixedValue(value.toString());
     }
-    setUSDTToRMB(10);
-    setCanCloseValue('123');
+  }, [canOpenValue, fixedValueRatio]);
+  // 如果是平仓，手数可以百分比
+  useEffect(() => {
+    if (doType === 1) setFixedValue(`${fixedValueRatio}%`);
+  }, [fixedValueRatio]);
+  // 点击平仓之后，换成计划委托
+  useEffect(() => {
+    if (doType === 1) setEntrustType(0);
+    setFixedValue('');
+    setFixedValueRatio(0);
+  }, [doType]);
+  // 手数限制
+  useEffect(() => {
+    if (doType === 0 && !isMarketPrice && Number(fixedValue) > Number(canOpenValue)) {
+      setFixedValue(canOpenValue);
+    }
+  }, [fixedValue]);
+
+  useEffect(() => {
+    if (routePage === 'Contract' && coinType) {
+      addEvent.getServerUserInfo();
+    }
   }, [routePage, coinType]);
 
   // 更改可开手数
@@ -661,7 +794,7 @@ const ContractContentView: FC<{
   useEffect(() => {
     if (serverCoinType.leverList.length === 0) return;
     // 获取杠杆保证金率
-    const safeRatio = serverCoinType.leverList.filter(item => item.lever === leverValue)[0].selfRatio;
+    const safeRatio = serverCoinType?.leverList?.filter(item => item.lever === leverValue)?.[0]?.selfRatio;
     // 占用保证金数 杠杆*价格*手数*一手币数*资金占用率比例
     const safeValue = parseFloat(fixedPrice) * parseFloat(fixedValue) * serverCoinType.changeRatio * safeRatio;
     if (!Number.isNaN(safeValue)) {
@@ -675,14 +808,11 @@ const ContractContentView: FC<{
       changePageLeverType(leverValue);
     }
   }, [leverValue]);
-
+  // 更改可平手数
   useEffect(() => {
-    // ajax.get('/v1/bian/allorder_log?symbol=ETH').then(data => {
-    //   console.log(JSON.stringify(data, null, 2), '=====================');
-    // }).catch(err => {
-    //   console.log(err);
-    // });
-  }, []);
+    setCanCloseValueLang(canCloseOrderValue.lang);
+    setCanCloseValueSort(canCloseOrderValue.sort);
+  }, [canCloseOrderValue]);
 
   // 获取左侧列表数据
   const socket = useRef<Socket|null>(null);
@@ -696,7 +826,7 @@ const ContractContentView: FC<{
         };
       } = message.Tick;
       const result: TypeLeftOutList[] = [];
-      Object.values(resultData).forEach(item => {
+      Object.values(resultData || {}).forEach(item => {
         const close = parseFloat(item.close);
         const open = parseFloat(item.open);
         const range = Math.floor(((close - open) / open) * 10000) / 100;
@@ -726,11 +856,18 @@ const ContractContentView: FC<{
         console.log(err);
       });
     } else if (socket.current) {
+      if (subSocket.current) {
+        subSocket.current = true;
+        socket.current.send(tickerImg, 'unsub');
+        socket.current.removeListener(tickerImg);
+      }
+    }
+    return () => {
       if (subSocket.current) return;
       subSocket.current = true;
-      socket.current.send(tickerImg, 'unsub');
-      socket.current.removeListener(tickerImg);
-    }
+      socket.current?.send(tickerImg, 'unsub');
+      socket.current?.removeListener(tickerImg);
+    };
   }, [routePage, route, prevRoutePage]);
 
   return (
@@ -811,15 +948,19 @@ const ContractContentView: FC<{
                   source={require('../../../assets/images/icons/down.png')} />
               </View>
             </StaticTouchableNativeFeedback>
-            <StaticTouchableNativeFeedback onPress={() => addEvent.changeLeverType()}>
-              <View style={style.moreTypeChangePress}>
-                <Text style={style.moreTypeChangeText}>杠杆&nbsp;{leverValue}X</Text>
-                <Image
-                  resizeMode="contain"
-                  style={style.moreTypeChangeIcon}
-                  source={require('../../../assets/images/icons/down.png')} />
-              </View>
-            </StaticTouchableNativeFeedback>
+            {
+              doType === 0 && (
+                <StaticTouchableNativeFeedback onPress={() => addEvent.changeLeverType()}>
+                  <View style={style.moreTypeChangePress}>
+                    <Text style={style.moreTypeChangeText}>杠杆&nbsp;{leverValue}X</Text>
+                    <Image
+                      resizeMode="contain"
+                      style={style.moreTypeChangeIcon}
+                      source={require('../../../assets/images/icons/down.png')} />
+                  </View>
+                </StaticTouchableNativeFeedback>
+              )
+            }
           </View>
           {/* 价格操作区 */}
           <View>
@@ -837,7 +978,7 @@ const ContractContentView: FC<{
                           )
                           : (
                             <TextInput
-                              keyboardType="number-pad"
+                              keyboardType="numeric"
                               style={style.priceSetInputInput}
                               value={fixedPrice}
                               onChange={e => setFixedPrice(e.nativeEvent.text)}
@@ -881,17 +1022,25 @@ const ContractContentView: FC<{
                       !isMarketPrice && (
                         <>
                           <Text style={style.ratioThenText}>占用保证金</Text>
-                          <Text style={style.ratioThenText}>{occupyBond}</Text>
+                          <Text style={style.ratioThenText}>{[occupyBond, haveOcupyBond][doType]}</Text>
                         </>
                       )
                     }
                   </View>
                   <View style={style.ratioThenTextView}>
                     {
-                      !isMarketPrice && (
+                      doType === 0 && !isMarketPrice && (
                         <>
-                          <Text style={style.ratioThenText}>可{['开', '平'][doType]}手数</Text>
-                          <Text style={style.ratioThenText}>{[canOpenValue, canCloseValue][doType]}</Text>
+                          <Text style={style.ratioThenText}>可开手数</Text>
+                          <Text style={style.ratioThenText}>{canOpenValue}</Text>
+                        </>
+                      )
+                    }
+                    {
+                      doType === 1 && (
+                        <>
+                          <Text style={style.ratioThenText}>可平手数</Text>
+                          <Text style={style.ratioThenText}>多单:{canCloseValueLang}&nbsp;&nbsp;空单:{canCloseValueSort}</Text>
                         </>
                       )
                     }
@@ -994,7 +1143,8 @@ const ContractContentView: FC<{
           {/* 数据 */}
           <ContractRightValueView
             USDTToRMB={USDTToRMB}
-            getPrice={newPrice} />
+            getPrice={newPrice}
+            coinType={coinType} />
         </View>
       </View>
       <View style={style.comLineStyle} />

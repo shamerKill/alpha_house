@@ -225,7 +225,7 @@ const HomeScreenRowMarket: FC = () => {
           symbol: string;
         }
       } = message.Tick;
-      const result = Object.values(resultData).map(coin => {
+      const result = Object.values(resultData || {}).map(coin => {
         const close = parseFloat(coin.close);
         const open = parseFloat(coin.open);
         const range = Math.floor(((close - open) / open) * 10000) / 100;
@@ -396,28 +396,12 @@ const HomeScreenMarket: FC = () => {
   const [coinMarketRange, setCoinMarketRange] = useState<TypeHomeScreenMarketLine[]>([]);
   // 处理数据
   useEffect(() => {
-    setCoinMarketU([
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '1',
-      },
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '2',
-      },
-    ]);
-    setCoinMarketRange([
-      {
-        coin: 'BTC', unit: 'USDT', count: '25,504', price: '9832.12', rmbPrice: '69419.58', range: '+3.65%', id: '5',
-      },
-    ]);
-  }, []);
-  useEffect(() => {
-    // 获取左侧数据
     const tickerImg = 'cash.market.ALL.ticker';
     const socketListener = (message: any) => {
       const resultData: {
         [key: string]: any;
       } = message.Tick;
-      const result: TypeHomeScreenMarketLine[] = Object.values(resultData).map(coin => {
+      const result: TypeHomeScreenMarketLine[] = Object.values(resultData || {}).map(coin => {
         const close = parseFloat(coin.close);
         const open = parseFloat(coin.open);
         const range = Math.floor(((close - open) / open) * 10000) / 100 || 0;

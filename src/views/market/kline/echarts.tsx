@@ -162,40 +162,22 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
         series: getOptionSerise(useData),
       };
       newOptions.title = getOptionTitle(newOptions.series);
-      if (viewShowRef.current) {
-        webRef.current?.postMessage(toString(newOptions));
-      } else {
-        viewShowTimer.current = setInterval(() => {
-          if (viewShowRef.current) {
-            webRef.current?.postMessage(toString(newOptions));
-            clearInterval(viewShowTimer.current);
-          }
-        }, 50);
-      }
+      webRef.current?.postMessage(toString(newOptions));
     };
-    if (routePage === 'MarketKline') {
-      marketSocket.getSocket().then(ws => {
-        socket.current = ws;
-        ws.addListener(socketListener, tickerImg);
-        ws.send(tickerReq);
-        ws.send(tickerImg, 'sub');
-        subSocket.current = false;
-      }).catch(err => {
-        console.log(err);
-      });
-    } else if (socket.current) {
-      if (!subSocket.current) {
-        console.log('close');
-        subSocket.current = true;
-        socket.current.send(tickerImg, 'unsub');
-        socket.current.removeListener(socketListener);
-      }
-    }
+    marketSocket.getSocket().then(ws => {
+      socket.current = ws;
+      ws.addListener(socketListener, tickerImg);
+      ws.send(tickerReq);
+      ws.send(tickerImg, 'sub');
+      subSocket.current = false;
+    }).catch(err => {
+      console.log(err);
+    });
     return () => {
       if (socket.current) {
         subSocket.current = true;
         socket.current.send(tickerImg, 'unsub');
-        socket.current.removeListener(tickerImg);
+        socket.current.removeListener(socketListener);
       }
       clearInterval(viewShowTimer.current);
     };

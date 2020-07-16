@@ -79,10 +79,9 @@ export class SocketClass {
   }
 
   // 开启失败
-  private onError = (err: Error) => {
+  private onError: WebSocket['onerror'] = () => {
     this.isOpen = false;
     this.isError = true;
-    console.log(err);
   }
 
   // 开启成功
@@ -95,7 +94,9 @@ export class SocketClass {
   }
 
   // 关闭
-  private onClose = () => {
+  private onClose: WebSocket['onclose'] = (ev: Event) => {
+    console.log('close');
+    this.isOpen = false;
     // 清除定时器
     if (this.pingPongTime !== null) clearInterval(this.pingPongTime);
   }  
@@ -111,7 +112,7 @@ export class SocketClass {
       data = event.data;
     }
     this.onMessageList.forEach(item => {
-      if (data.ch === item.id) {
+      if (data.ch === item.id && item.func) {
         item.func(data);
       }
     });
@@ -241,7 +242,7 @@ export class SocketClass {
 }
 
 export const marketSocket = new SocketClass({
-  baseURI: 'ws://192.168.3.10:3003/ws/market',
+  baseURI: 'ws://192.168.3.17:3001/ws/market',
 });
 export const CoinToCoinSocket = new SocketClass({
   baseURI: 'ws://192.168.3.10:3004/ws/market',

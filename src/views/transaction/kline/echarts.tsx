@@ -162,16 +162,7 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
         series: getOptionSerise(useData),
       };
       newOptions.title = getOptionTitle(newOptions.series);
-      if (viewShowRef.current) {
-        webRef.current?.postMessage(toString(newOptions));
-      } else {
-        viewShowTimer.current = setInterval(() => {
-          if (viewShowRef.current) {
-            webRef.current?.postMessage(toString(newOptions));
-            clearInterval(viewShowTimer.current);
-          }
-        }, 50);
-      }
+      webRef.current?.postMessage(toString(newOptions));
     };
     if (routePage === 'TranscationKline') {
       CoinToCoinSocket.getSocket().then(ws => {

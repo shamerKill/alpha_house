@@ -27,7 +27,9 @@ export function calculateMA(dayCount: number, inData: TypeKlineValue[], type: ke
       for (let j = 0; j < dayCount; j++) {
         sum += parseFloat(inData[i - j][type] || '');
       }
-      result.push(parseFloat((sum / dayCount).toFixed(4)));
+      let fixedLength = 4;
+      if ((sum / dayCount) < 0) fixedLength = 6;
+      result.push(parseFloat((sum / dayCount).toFixed(fixedLength)));
     }
   }
   return result;

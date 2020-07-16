@@ -101,7 +101,7 @@ const HomeNewsList: FC = () => {
   };
   useEffect(() => {
     ajax.get('/v1/article/article_list?types=1').then(data => {
-      if (data.status === 200) {
+      if (data.status === 200 && data.data) {
         const result: InState['listState']['newsList'] = Object.values(data.data).map((item: any) => ({
           readed: item.isRead,
           title: item.list.title,

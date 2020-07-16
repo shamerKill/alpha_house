@@ -21,6 +21,8 @@ const ContractScreen: FC = () => {
   const [selectType, setSelectType] = useState<0|1|2>(0);
   // 杠杆倍数
   const [leverType, setLeverType] = useState('');
+  // 可平手数
+  const [canCloseOrderValue, setCanCloseOrderValue] = useState<{lang: string; sort: string;}>({ lang: '0', sort: '0' });
 
   const addEvent = {
     // 更改合约类型页面
@@ -92,8 +94,13 @@ const ContractScreen: FC = () => {
           changeConTypeCallback={addEvent.changeSelectType}
           selectType={selectType}
           coinType={routeParams.coinType}
-          changePageLeverType={setLeverType} />
-        <ComContractIndexBotton selectType={selectType} coinType={routeParams.coinType} leverType={leverType} />
+          changePageLeverType={setLeverType}
+          canCloseOrderValue={canCloseOrderValue} />
+        <ComContractIndexBotton
+          selectType={selectType}
+          coinType={routeParams.coinType}
+          leverType={leverType}
+          setCanCloseOrderValue={setCanCloseOrderValue} />
       </ScrollView>
     </ComLayoutHead>
   );
