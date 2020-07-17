@@ -30,6 +30,7 @@ const MyFeedBack: FC = () => {
       if (resultMessage === '') addEvent.submit();
       else {
         showMessage({
+          position: 'bottom',
           message: resultMessage,
           type: 'warning',
         });
@@ -45,11 +46,13 @@ const MyFeedBack: FC = () => {
       }).then(data => {
         if (data.status === 200) {
           showMessage({
+            position: 'bottom',
             message: '建议反馈提交成功，工作人员会及时联系您',
             type: 'success',
           });
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });

@@ -61,3 +61,5 @@ buck-out/
 
 # 计算js
 /run_pic.js
+
+.update

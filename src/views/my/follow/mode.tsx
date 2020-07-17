@@ -79,6 +79,7 @@ const MyFollowModeScreen: FC = () => {
       if (parseFloat(dayMoney) > maxValue) valueMessage = '单日跟随本金大于最大跟随本本金';
       if (valueMessage) {
         return showMessage({
+          position: 'bottom',
           message: '跟随失败',
           description: valueMessage,
           type: 'warning',
@@ -120,6 +121,7 @@ const MyFollowModeScreen: FC = () => {
       }).then(data => {
         if (data.status === 200) addEvent.submitSuccess();
         else showMessage({
+          position: 'bottom',
           message: data.message,
           type: 'warning',
         });

@@ -482,10 +482,10 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         }
         let value = '';
         value += '<div style="color: #ccc; font-size: 12px;">';
-        value += '开盘价: ' + kLineData[1] + '<br />';
-        value += '关盘价: ' + kLineData[2] + '<br />';
-        value += '最高价: ' + kLineData[3] + '<br />';
-        value += '最低价: ' + kLineData[4];
+        value += 'openPrice: ' + kLineData[1] + '<br />';
+        value += 'closePrice: ' + kLineData[2] + '<br />';
+        value += 'heightPrice: ' + kLineData[3] + '<br />';
+        value += 'lowPrice: ' + kLineData[4];
         value += '</div>';
         return value;
       },

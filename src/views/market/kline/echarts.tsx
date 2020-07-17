@@ -2,7 +2,7 @@ import React, {
   FC, useRef, useEffect, useState,
 } from 'react';
 import {
-  StyleProp, ViewStyle, View, StyleSheet, Platform, Text,
+  StyleProp, ViewStyle, View, StyleSheet, Platform, Text, ActivityIndicator,
 } from 'react-native';
 import WebView, { WebViewMessageEvent } from 'react-native-webview';
 import { EChartOption } from 'echarts';
@@ -14,8 +14,6 @@ import {
 import toString from '../../../tools/toStrting';
 import getOption, { TypeKlineValue, getOptionSerise, getOptionTitle } from './getOptions';
 // import mockData from './mock';
-import useGetDispatch from '../../../data/redux/dispatch';
-import { InState } from '../../../data/redux/state';
 import Socket, { marketSocket } from '../../../data/fetch/socket';
 import formatTime from '../../../tools/time';
 
@@ -38,6 +36,14 @@ const ecahrtJs = `
     } catch (err) {
       window.ReactNativeWebView.postMessage(err.message);
     }
+    window.document.addEventListener('message', function(e) {
+      try {
+        var option = JSON.parse(e.data);
+        myChart.setOption(option);
+      } catch (err) {
+        window.ReactNativeWebView.postMessage(err.message);
+      }
+    });
     window.addEventListener('message', function(e) {
       try {
         var option = JSON.parse(e.data);
@@ -46,9 +52,7 @@ const ecahrtJs = `
         window.ReactNativeWebView.postMessage(err.message);
       }
     });
-    window.onload = function () {
-      window.ReactNativeWebView.postMessage('renderClose');
-    }
+    window.ReactNativeWebView.postMessage('renderClose');
   }
 `;
 
@@ -56,7 +60,6 @@ const ecahrtJs = `
 const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
   style: propStyle,
 }) => {
-  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   const route = useRoute<RouteProp<{markLine: { name: string }}, 'markLine'>>();
   const routeCoinType = route.params.name.split(' ')[0].replace('/', '');
   const webRef = useRef<WebView&{postMessage:(str: string) => void}>(null);
@@ -65,14 +68,13 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
   const viewShowTimer = useRef(setTimeout(() => {}, 0));
   const viewShowRef = useRef(false);
 
+
   const [viewShow, setViewShow] = useState(false);
   const [gotData, setGotData] = useState(false);
   const [showType, setShowType] = useState<'1m'|'5m'|'15m'|'1h'|'4h'|'1d'>('1m');
-
   const addEvent = {
     // 获取信息
     onMessage: (event: WebViewMessageEvent) => {
-      console.log(event.nativeEvent.data);
       // 如果是渲染完毕
       if (event.nativeEvent.data === 'renderClose') {
         setTimeout(() => setViewShow(true), 10);
@@ -87,11 +89,12 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
 
   // 开发刷新
   useEffect(() => {
-    if (webRef.current) {
+    if (__DEV__ && webRef.current) {
       webRef.current.reload();
     }
   }, []);
   useEffect(() => {
+    setGotData(false);
     const getTimeValue = 500;
     const timeType: typeof showType = showType;
     const coinType = routeCoinType;
@@ -127,7 +130,7 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
         [key: string]: string;
       }[] = message.Tick;
       if (Array.isArray(resultData)) {
-        setGotData(true);
+        setTimeout(() => setGotData(true), 200);
         resultData.forEach((item: any) => {
           useData.push({
             time: formatTime(fmTimeStr, Number(item.create_unix)),
@@ -164,24 +167,30 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
       newOptions.title = getOptionTitle(newOptions.series);
       webRef.current?.postMessage(toString(newOptions));
     };
-    marketSocket.getSocket().then(ws => {
-      socket.current = ws;
-      ws.addListener(socketListener, tickerImg);
-      ws.send(tickerReq);
-      ws.send(tickerImg, 'sub');
-      subSocket.current = false;
-    }).catch(err => {
-      console.log(err);
-    });
+    const inter = setInterval(() => {
+      if (viewShowRef.current) {
+        clearInterval(inter);
+        marketSocket.getSocket().then(ws => {
+          socket.current = ws;
+          ws.addListener(socketListener, tickerImg);
+          ws.send(tickerReq);
+          ws.send(tickerImg, 'sub');
+          subSocket.current = false;
+        }).catch(err => {
+          console.log(err);
+        });
+      }
+    }, 100);
     return () => {
       if (socket.current) {
         subSocket.current = true;
         socket.current.send(tickerImg, 'unsub');
         socket.current.removeListener(socketListener);
       }
+      clearInterval(inter);
       clearInterval(viewShowTimer.current);
     };
-  }, [routePage, showType]);
+  }, [showType]);
   return (
     <View
       style={[
@@ -263,7 +272,12 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
         javaScriptEnabled
         source={Platform.OS === 'ios' ? require('../../../assets/html/echarts.html') : { uri: 'file:///android_asset/html/echarts.html' }} />
       {
-        (!viewShow || !gotData) && <View style={style.webViewOver}><Text style={{ color: '#fff', textAlign: 'center' }}>加载中</Text></View>
+        (!viewShow || !gotData) && (
+          <View style={style.webViewOver}>
+            <Text style={{ color: '#fff', textAlign: 'center' }}>加载中&nbsp;&nbsp;</Text>
+            <ActivityIndicator color={themeWhite} />
+          </View>
+        )
       }
     </View>
   );
@@ -281,6 +295,9 @@ const style = StyleSheet.create({
     width: '100%',
     height: '100%',
     backgroundColor: themeMoreBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
   tebsView: {
     height: 30,

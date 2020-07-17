@@ -16,7 +16,7 @@ const MytransferAccountsScreen: FC = () => {
   }[]>([]);
 
   useEffect(() => {
-    ajax.get('/v1/bian/transfer_account_view').then(data => {
+    ajax.get('/contract/api/v1/bian/transfer_account_view').then(data => {
       if (data.status === 200) {
         setAccountsList([
           {

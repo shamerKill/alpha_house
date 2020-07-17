@@ -2,7 +2,7 @@ import React, {
   FC, useState, useRef, useEffect,
 } from 'react';
 import {
-  View, Image as StaticImage, StyleProp, ImageStyle, Dimensions, ImageSourcePropType, ViewStyle, Text, ImageURISource, Platform,
+  View, Image as StaticImage, StyleProp, ImageStyle, Dimensions, ImageSourcePropType, ViewStyle, Text,
 } from 'react-native';
 import { Image, Input } from 'react-native-elements';
 import { TouchableNativeFeedback } from 'react-native-gesture-handler';
@@ -27,7 +27,9 @@ const MyRealnameScreen: FC = () => {
   const navigation = useNavigation();
   const loading = useRef(false);
   const [imgBefore, setImageBefore] = useState<ImageSourcePropType>(require('../../assets/images/pic/real_name_before.png'));
+  const [baseBefore, setBaseBefore] = useState('');
   const [imgAfter, setImageAfter] = useState<ImageSourcePropType>(require('../../assets/images/pic/real_name_after.png'));
+  const [baseAfter, setBaseAfter] = useState('');
   const [realName, setRealName] = useState('');
   const [cardNum, setCardNum] = useState('');
   // 认证步骤，1可认证，2认证中，3驳回，4通过
@@ -56,10 +58,18 @@ const MyRealnameScreen: FC = () => {
           height: 400,
           mediaType: 'photo',
           useFrontCamera: true,
+          compressImageQuality: 0.2,
+          includeBase64: true,
         }).then((image) => {
           if (Array.isArray(image)) return;
-          if (imageType === 0) setImageBefore({ uri: image.path });
-          else setImageAfter({ uri: image.path });
+          if (!image.data) return;
+          if (imageType === 0) {
+            setImageBefore({ uri: image.path });
+            setBaseBefore(image.data.replace(/\n+/g, ''));
+          } else {
+            setImageAfter({ uri: image.path });
+            setBaseAfter(image.data.replace(/\s+/g, ''));
+          }
           imageIsUpload.current[imageType] = true;
         }).catch(err => {
           console.log(err);
@@ -88,7 +98,6 @@ const MyRealnameScreen: FC = () => {
           if (imageType === 0) setImageBefore({ uri: data });
           else setImageAfter({ uri: data });
           imageIsUpload.current[imageType] = true;
-          console.log(imageIsUpload);
         });
       }
     },
@@ -105,6 +114,7 @@ const MyRealnameScreen: FC = () => {
       if (!IdentityCodeValid(cardNum)) showError = '请输入正确的身份证号码';
       if (showError) {
         showMessage({
+          position: 'bottom',
           message: '请检查',
           description: showError,
           type: 'warning',
@@ -113,30 +123,23 @@ const MyRealnameScreen: FC = () => {
       }
       addEvent.submit();
     },
-    upLoadPic: async (img: ImageSourcePropType) => {
+    upLoadPic: async (base: string) => {
       const fm = new FormData();
-      const beforeUri = (img as ImageURISource).uri as string;
-      const file = {
-        uri: Platform.OS === 'android' ? beforeUri : beforeUri.replace('file://', ''),
-        type: `image/${beforeUri.split('.').pop()?.[0]}`,
-        name: beforeUri.split('/').pop()?.[0],
-      };
-      fm.append('file', file as any);
+      fm.append('file', base);
       const result = await ajax.post('/v1/upload/auth_photo', fm, {
         noHeaders: true,
       }).then(data => {
-        return data.data.Data.filePath;
+        return data.data.filePath;
       }).catch(err => {
         console.log(err);
       });
       return result;
     },
     submit: async () => {
-      loading.current = true;
+      // loading.current = true;
       const closeLoading = showComLoading('上传中');
       try {
-        const [beforeRemote, afterRemote] = await Promise.all([addEvent.upLoadPic(imgBefore), addEvent.upLoadPic(imgAfter)]);
-        const token = await ajax.get('/v1/auth/auth_view').then(data => data.data.token);
+        const [beforeRemote, afterRemote] = await Promise.all([addEvent.upLoadPic(baseBefore), addEvent.upLoadPic(baseAfter)]);
         const result = await ajax.post('/v1/auth/action_auth', {
           // 正面
           positive_photo: beforeRemote,
@@ -145,16 +148,19 @@ const MyRealnameScreen: FC = () => {
           real_name: realName,
           type: '1',
           id_card: cardNum,
-          token,
+          token: '',
         });
+        console.log(result);
         if (result.status === 200) {
           showMessage({
+            position: 'bottom',
             message: '提交成功，请等待审核',
             type: 'success',
           });
           setSubmitType('2');
         } else {
           showMessage({
+            position: 'bottom',
             message: result.message,
             type: 'warning',
           });
@@ -201,12 +207,14 @@ const MyRealnameScreen: FC = () => {
           if (tipType !== user.status) {
             if (user.status === '3') {
               showMessage({
+                position: 'bottom',
                 message: '身份认证被驳回，请重新认证',
                 type: 'warning',
                 autoHide: false,
               });
             } else if (user.status === '4') {
               showMessage({
+                position: 'bottom',
                 message: '身份认证成功',
                 type: 'success',
               });
@@ -216,12 +224,14 @@ const MyRealnameScreen: FC = () => {
         } catch (err) {
           if (user.status === '3') {
             showMessage({
+              position: 'bottom',
               message: '身份认证被驳回，请重新认证',
               type: 'warning',
               autoHide: false,
             });
           } else if (user.status === '4') {
             showMessage({
+              position: 'bottom',
               message: '身份认证成功',
               type: 'success',
             });

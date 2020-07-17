@@ -16,9 +16,9 @@ import ajax from '../../../data/fetch';
 const MyRechargeScreen: FC = () => {
   const navigation = useNavigation();
   const descArr = [
-    '1、该地址仅接受BTC,请勿往该地址转入非BTC资产，包括其相关联资产，否则您的资产将无法找回。',
-    '2、最小充值金额：0.001 BTC，小于该金额的充值将无法上账且无法退回。',
-    '3、您充值至上述地址后，需要整个网络节点的确认，1次网络确认后到账，6次后方可提币，我们将以短信形式通知您到账情况',
+    '1、该地址仅接受USDT,请勿往该地址转入非USDT资产，包括其相关联资产，否则您的资产将无法找回。',
+    '2、最小充值金额：100 USDT，小于该金额的充值将无法上账且无法退回。',
+    '3、您充值至上述地址后，需要整个网络节点的确认，6次网络确认后到账，12次后方可提币，我们将以短信形式通知您到账情况',
   ];
   const [loading, setLoading] = useState(false);
   const [coinName, setCoinName] = useState('');
@@ -26,21 +26,23 @@ const MyRechargeScreen: FC = () => {
   const [qrcode, setQrcode] = useState<ImageSourcePropType>(0);
   const [address, setAddress] = useState('');
   const [coinList, setCoinList] = useState<{name: string; icon: ImageSourcePropType}[]>([
-    { name: 'BTC', icon: require('../../../assets/images/coin/BTC.png') },
-    { name: 'USDT', icon: require('../../../assets/images/coin/BTC.png') },
-    { name: 'ETH', icon: require('../../../assets/images/coin/BTC.png') },
+    // { name: 'BTC', icon: require('../../../assets/images/coin/BTC.png') },
+    // { name: 'USDT', icon: require('../../../assets/images/coin/BTC.png') },
+    // { name: 'ETH', icon: require('../../../assets/images/coin/BTC.png') },
   ]);
   // 复制地址
   const copyAddress = (value: string) => {
     if (value) {
       Clipboard.setString(value);
       showMessage({
+        position: 'bottom',
         message: '',
         description: '充值地址复制成功',
         type: 'success',
       });
     } else {
       showMessage({
+        position: 'bottom',
         message: '',
         description: '数据加载中，请等待',
         type: 'warning',
@@ -51,6 +53,7 @@ const MyRechargeScreen: FC = () => {
   const changeCoin = () => {
     if (loading) {
       showMessage({
+        position: 'bottom',
         message: '数据获取中,请稍后重试',
         type: 'info',
       });
@@ -72,6 +75,7 @@ const MyRechargeScreen: FC = () => {
   useEffect(() => {
     ajax.get('/v1/recharge/coin_list').then(data => {
       if (data.status === 200) {
+        console.log(data);
         setCoinList(data?.data?.list?.map((item: any) => {
           return {
             name: item,
@@ -80,6 +84,7 @@ const MyRechargeScreen: FC = () => {
         }) || []);
       } else {
         showMessage({
+          position: 'bottom',
           message: data.message,
           type: 'warning',
         });
@@ -89,9 +94,10 @@ const MyRechargeScreen: FC = () => {
     }).finally(() => {});
   }, []);
   useEffect(() => {
-    setCoinName(coinList[0].name);
+    setCoinName(coinList?.[0]?.name);
   }, [coinList]);
   useEffect(() => {
+    if (!coinName) return;
     setLoading(true);
     ajax.get(`/v1/recharge/get_coin?symbol=${coinName}`).then(data => {
       if (data.status === 200) {
@@ -101,6 +107,7 @@ const MyRechargeScreen: FC = () => {
         });
       } else {
         showMessage({
+          position: 'bottom',
           message: data.message,
           type: 'warning',
         });

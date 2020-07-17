@@ -102,14 +102,12 @@
     },
     {
       "extent" : "full-screen",
-      "filename" : "640x960-1.jpg",
       "idiom" : "iphone",
       "orientation" : "portrait",
       "scale" : "2x"
     },
     {
       "extent" : "full-screen",
-      "filename" : "640x1136-1.jpg",
       "idiom" : "iphone",
       "orientation" : "portrait",
       "scale" : "2x",

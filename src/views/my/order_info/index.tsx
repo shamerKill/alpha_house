@@ -203,11 +203,6 @@ const MyOrderInfo: FC = () => {
   useEffect(addEvent.getDataSelectType, [selectType]);
 
   useEffect(() => {
-    setOrderList([
-      {
-        title: '充值', time: '2018-03-25  08:57:25', number: '1000.00', id: '0',
-      },
-    ]);
     return () => {
       outBoxClose.current && outBoxClose.current.close();
     };

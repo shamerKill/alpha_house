@@ -1,6 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import {
-  View, StyleProp, ViewStyle, TextProps, TouchableNativeFeedback, Image, ScrollViewProps,
+  View, StyleProp, ViewStyle, TextProps, TouchableNativeFeedback, Image, ScrollViewProps, Dimensions,
 } from 'react-native';
 import { Header, HeaderSubComponent } from 'react-native-elements';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -26,6 +26,9 @@ interface InLayoutHeadProps {
   leftComponent?: HeaderSubComponent,
   line?: true;
   onMomentumScrollEnd?: ScrollViewProps['onMomentumScrollEnd'];
+  // 页面是否定位
+  position?: true;
+  positionTop?: number;
 }
 
 const ComLayoutHead: FC<InLayoutHeadProps> = ({
@@ -44,8 +47,12 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
   leftComponent,
   line,
   onMomentumScrollEnd,
+  position,
+  positionTop,
 }) => {
   const navigation = useNavigation();
+  // 获取页面高度
+  const windowHeight = Dimensions.get('window').height;
   // 返回事件
   const goBackPage = () => navigation.goBack();
   const containerStyleDefault = () => {
@@ -76,7 +83,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
     return () => navigation.removeListener('state', addListenerEvent);
   }, []);
   return (
-    <View style={{ flex: 1, backgroundColor: themeWhite }}>
+    <View style={{ flex: 1, backgroundColor: themeWhite, position: 'relative' }}>
       <Header
         // 标题
         rightComponent={rightComponent}
@@ -125,23 +132,36 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
           ? <ComLine />
           : null
       }
-      {
-        overScroll
-          ? (
-            <View style={({ flex: 1, backgroundColor: defaultThemeBgColor, ...scrollStyle })}>
-              { children }
-            </View>
-          )
-          : (
-            <ScrollView
-              onMomentumScrollEnd={onMomentumScrollEnd}
-              scrollEventThrottle={16}
-              onScroll={onScroll}
-              style={({ flex: 1, backgroundColor: defaultThemeBgColor, ...scrollStyle })}>
-              { children }
-            </ScrollView>
-          )
-      }
+      <View style={[
+        {
+          flex: 1,
+        },
+        position && {
+          position: 'absolute',
+          width: '100%',
+          height: windowHeight - (positionTop || 40),
+          top: (positionTop || 40),
+          left: 0,
+        },
+      ]}>
+        {
+          overScroll
+            ? (
+              <View style={({ flex: 1, backgroundColor: defaultThemeBgColor, ...scrollStyle })}>
+                { children }
+              </View>
+            )
+            : (
+              <ScrollView
+                onMomentumScrollEnd={onMomentumScrollEnd}
+                scrollEventThrottle={16}
+                onScroll={onScroll}
+                style={({ flex: 1, backgroundColor: defaultThemeBgColor, ...scrollStyle })}>
+                { children }
+              </ScrollView>
+            )
+        }
+      </View>
 
     </View>
   );

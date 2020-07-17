@@ -43,6 +43,7 @@ const MySettingValueScreen: FC = () => {
     save: () => {
       if (defaultValue.current === [selectImage, value, value, selectSite, selectLanguage][settingState]) {
         showMessage({
+          position: 'bottom',
           message: '未更改',
           description: `${setListArr[settingState]}未进行修改无法进行提交`,
           type: 'warning',
@@ -76,6 +77,7 @@ const MySettingValueScreen: FC = () => {
         close();
         if (data.status === 200) {
           showMessage({
+            position: 'bottom',
             message: '修改成功',
             type: 'success',
           });
@@ -86,6 +88,7 @@ const MySettingValueScreen: FC = () => {
           navigation.goBack();
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });

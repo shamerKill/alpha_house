@@ -435,6 +435,7 @@ const TransactionScreen: FC = () => {
     changePass: () => {
       if (submitLoading) {
         showMessage({
+          position: 'bottom',
           message: '您有一笔订单正在提交，请稍后',
           type: 'warning',
         });
@@ -469,6 +470,7 @@ const TransactionScreen: FC = () => {
     getPassSubmit: (pass: string) => {
       if (parseFloat(vol) === 0) {
         showMessage({
+          position: 'bottom',
           message: '数量不能为0',
           type: 'warning',
         });
@@ -496,6 +498,7 @@ const TransactionScreen: FC = () => {
         if (data.status === 200) {
           setTimeout(() => {
             showMessage({
+              position: 'bottom',
               message: '订单委托成功',
               type: 'success',
             });
@@ -503,6 +506,7 @@ const TransactionScreen: FC = () => {
           }, 1000);
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });

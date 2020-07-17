@@ -31,6 +31,7 @@ const MyRecommendScreen: FC = () => {
         });
       } else {
         showMessage({
+          position: 'bottom',
           message: data.message,
           type: 'warning',
         });

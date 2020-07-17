@@ -73,6 +73,7 @@ const MySettingScreen: FC = () => {
         if (data.status === 200) {
           navigation.dispatch(StackActions.replace('Login'));
           showMessage({
+            position: 'bottom',
             message: '退出成功',
             type: 'success',
           });
@@ -88,6 +89,7 @@ const MySettingScreen: FC = () => {
           });
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });

@@ -2,7 +2,7 @@ import React, {
   FC, useState, useEffect, useRef,
 } from 'react';
 import {
-  View, Text, Image, ImageSourcePropType, ScrollViewProps, Dimensions, Platform,
+  View, Text, Image, ImageSourcePropType, ScrollViewProps, Dimensions, Platform, StatusBar,
 } from 'react-native';
 import { TouchableNativeFeedback, ScrollView } from 'react-native-gesture-handler';
 import Swiper from 'react-native-swiper';
@@ -10,10 +10,10 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import {
-  themeRed, themeGreen, themeBlack, themeGray,
+  themeRed, themeGreen, themeBlack, themeGray, themeWhite,
 } from '../../config/theme';
 import homeStyle from './index.style';
-import { positiveNumber } from '../../tools/number';
+import { positiveNumber, numberToFormatString } from '../../tools/number';
 import ComLine from '../../components/line';
 import ComLayoutHead from '../../components/layout/head';
 import useGetDispatch from '../../data/redux/dispatch';
@@ -100,7 +100,7 @@ const HomeScreenBanner: FC = () => {
               {
                 banner.map(item => (
                   <View style={homeStyle.bannerSlide} key={item.id}>
-                    <Image resizeMode="stretch" style={homeStyle.bannerSlideImage} source={item.source} />
+                    <Image resizeMode="stretch" style={homeStyle.bannerSlideImage} source={item.source} fadeDuration={0} />
                   </View>
                 ))
               }
@@ -291,6 +291,7 @@ const HomeScreenNav: FC<{ adv: TypeHomeNavProp }> = ({ adv }) => {
     if (link) navigation.navigate(link);
     else {
       showMessage({
+        position: 'bottom',
         message: '功能开发中',
         type: 'info',
       });
@@ -345,7 +346,7 @@ const HomeScreenMarketLine: FC<TypeHomeScreenMarketLine> = ({
 }) => {
   return (
     <View style={homeStyle.marketViewList}>
-      <View>
+      <View style={{ width: '30%' }}>
         <View>
           <Text>
             <Text style={{ color: themeBlack, fontWeight: 'bold', fontSize: 18 }}>{coin}</Text>
@@ -354,11 +355,17 @@ const HomeScreenMarketLine: FC<TypeHomeScreenMarketLine> = ({
         </View>
         <Text style={{ color: themeGray, fontSize: 12 }}>24h&nbsp;&nbsp;&nbsp;{count}</Text>
       </View>
-      <View>
+      <View style={{ width: '30%', alignItems: 'center' }}>
         <Text style={{ color: themeBlack, fontWeight: 'bold', fontSize: 16 }}>{price}</Text>
         <Text style={{ color: themeGray, fontSize: 12 }}>&yen;{rmbPrice}</Text>
       </View>
-      <Text style={{ fontSize: 18, fontWeight: 'bold', color: positiveNumber(range) ? themeGreen : themeRed }}>
+      <Text style={{
+        width: '30%',
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: positiveNumber(range) ? themeGreen : themeRed,
+        textAlign: 'right',
+      }}>
         {range}
       </Text>
     </View>
@@ -408,15 +415,15 @@ const HomeScreenMarket: FC = () => {
         return {
           coin: `${coin.symbol.replace('USDT', '')}`,
           unit: 'USDT',
-          count: coin.quo,
-          price: coin.close,
+          count: numberToFormatString(coin.quo),
+          price: parseFloat(coin.close).toFixed(4),
           rmbPrice: coin.rmb_close,
           range: `${range}%`,
           id: `${coin.symbol.replace('USDT', '')}/USDT`,
         };
       });
       setCoinMarketU(result);
-      setCoinMarketRange(result.sort((prev, after) => (parseFloat(prev.range) - parseFloat(after.range))));
+      setCoinMarketRange([...result].sort((prev, after) => (parseFloat(after.range) - parseFloat(prev.range))));
     };
     if (routePage === 'Home') {
       CoinToCoinSocket.getSocket().then(ws => {
@@ -434,7 +441,7 @@ const HomeScreenMarket: FC = () => {
       socket.current.send(tickerImg, 'unsub');
       socket.current.removeListener(tickerImg);
     }
-  }, []);
+  }, [routePage]);
   return (
     <View>
       {/* 头部 */}

@@ -34,6 +34,7 @@ const MyChangePassScreen: FC = () => {
       ajax.post('/v1/power/sms_send', fmData).then(data => {
         if (data.status !== 200) {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
@@ -87,6 +88,7 @@ const MyChangePassScreen: FC = () => {
     },
     errorMessage: (message: string) => {
       showMessage({
+        position: 'bottom',
         message,
         type: 'warning',
       });

@@ -20,6 +20,7 @@ const AccountForgetPass: FC = () => {
     verfiyBeforeSend: () => {
       if (!isPhone(account) && !isEmail(account)) {
         showMessage({
+          position: 'bottom',
           message: '账号输入错误',
           type: 'warning',
         });
@@ -41,6 +42,7 @@ const AccountForgetPass: FC = () => {
           navigation.navigate('AccountVerfiyCode', { type: 'forget', data: { account } });
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
@@ -56,7 +58,9 @@ const AccountForgetPass: FC = () => {
   return (
     <ComLayoutHead
       overScroll
-      scrollStyle={{ backgroundColor: themeWhite, padding: 10 }}>
+      position
+      scrollStyle={{ backgroundColor: themeWhite, padding: 10 }}
+      positionTop={80}>
       <Text h4>忘记密码</Text>
       <Text style={style.codeDesc}>验证您的账户</Text>
       <Text style={style.codeNoneDesc}>我们将向您的账户地址发送验证码</Text>

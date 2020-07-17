@@ -39,10 +39,10 @@ const AccountSetPassScreen: FC = () => {
     // 验证
     verfiy: () => {
       if (loading.current) return;
-      console.log(route.params.type);
       const result = isPass(pass);
       if (!result) {
         showMessage({
+          position: 'bottom',
           message: '密码输入格式错误',
           description: '密码规则:8-20位包含大小写字母/数字的密码',
           type: 'warning',
@@ -51,6 +51,7 @@ const AccountSetPassScreen: FC = () => {
       }
       if (pass !== rePass) {
         showMessage({
+          position: 'bottom',
           message: '请检查',
           description: '两次密码输入不一致',
           type: 'warning',
@@ -63,6 +64,7 @@ const AccountSetPassScreen: FC = () => {
     submitRegister: () => {
       if (!route.params.data) {
         showMessage({
+          position: 'bottom',
           message: '数据有误，请返回重新创建',
           type: 'danger',
         });
@@ -87,12 +89,15 @@ const AccountSetPassScreen: FC = () => {
       reqBody.DeviceInfo = uniqueId;
       // 邀请码
       reqBody.InviteCode = params.upUserCode;
+      reqBody.Code = params.verifyCode;
       // 请求
       loading.current = true;
+      alert(JSON.stringify(reqBody, null, 2));
       ajax.post<string>('/v1/power/sign_up', reqBody, { setToken: true }).then(data => {
         if (data.status === 200) {
           addEvent.submit();
           showMessage({
+            position: 'bottom',
             message: '注册成功，已登录',
             type: 'success',
           });
@@ -110,12 +115,14 @@ const AccountSetPassScreen: FC = () => {
           });
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
         }
       }).catch(() => {
         showMessage({
+          position: 'bottom',
           message: '用户输入有误，请重新创建',
           type: 'warning',
         });
@@ -127,6 +134,7 @@ const AccountSetPassScreen: FC = () => {
       console.log(route.params.data);
       if (!route.params.data) {
         showMessage({
+          position: 'bottom',
           message: '数据有误，请返回重新创建',
           type: 'danger',
         });
@@ -143,6 +151,7 @@ const AccountSetPassScreen: FC = () => {
       ajax.post<string>('/v1/power/edit_pass', reqBody, { setToken: true }).then(data => {
         if (data.status === 200) {
           showMessage({
+            position: 'bottom',
             message: '修改成功，请登录',
             type: 'success',
           });
@@ -155,12 +164,14 @@ const AccountSetPassScreen: FC = () => {
           navigation.dispatch(StackActions.push('Login'));
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
         }
       }).catch(() => {
         showMessage({
+          position: 'bottom',
           message: '用户输入有误，请重新创建',
           type: 'warning',
         });
@@ -182,6 +193,8 @@ const AccountSetPassScreen: FC = () => {
   return (
     <ComLayoutHead
       overScroll
+      position
+      positionTop={80}
       scrollStyle={{ backgroundColor: themeWhite, padding: 10 }}>
       <Text h4>设置密码</Text>
       <Text style={style.codeDesc}>用户 {account}</Text>

@@ -60,12 +60,14 @@ const ComTranscationLogView: FC<TypeLogsData> = ({
       ajax.post('/v1/currency/revoke', { id }).then(data => {
         if (data.status === 200) {
           showMessage({
+            position: 'bottom',
             message: '撤销成功',
             type: 'success',
           });
           ComTranscationView.prototype.getData();
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });

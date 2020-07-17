@@ -59,7 +59,7 @@ const ContractLogsAllScreen: FC = () => {
   // };
 
   useEffect(() => {
-    ajax.get(`/v1/bian/dealorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
+    ajax.get(`/contract/api/v1/bian/dealorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
       if (data.status === 200) {
         setHistoryLogsData(data?.data?.map((item: any) => ({
           id: item.binance_id,
@@ -76,7 +76,7 @@ const ContractLogsAllScreen: FC = () => {
     }).catch(err => {
       console.log(err);
     });
-    ajax.get(`/v1/bian/allorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
+    ajax.get(`/contract/api/v1/bian/allorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
       if (data.status === 200) {
         setGeneralEntrustementData(data?.data?.map((item: any) => ({
           id: item.binance_id,

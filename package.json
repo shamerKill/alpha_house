@@ -1,6 +1,6 @@
 {
   "name": "app",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -25,6 +25,7 @@
     "@react-navigation/stack": "^5.3.2",
     "@types/react-native-keyboard-spacer": "^0.4.1",
     "@types/react-redux": "^7.1.8",
+    "buffer": "^5.6.0",
     "dayjs": "^1.8.28",
     "expo-local-authentication": "^9.0.0",
     "react": "16.11.0",
@@ -48,6 +49,7 @@
     "react-native-svg": "^12.1.0",
     "react-native-swiper": "^1.6.0-rc.3",
     "react-native-unimodules": "^0.4.2",
+    "react-native-update": "^5.6.0",
     "react-native-vector-icons": "^6.6.0",
     "react-native-webview": "^9.4.0",
     "react-redux": "^7.2.0",

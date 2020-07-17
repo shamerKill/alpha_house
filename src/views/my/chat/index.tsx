@@ -8,10 +8,13 @@ import {
 import ComLayoutHead from '../../../components/layout/head';
 import onlyData from '../../../tools/onlyId';
 import { defaultThemeColor } from '../../../config/theme';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { InState } from '../../../data/redux/state';
 
 const MyChatScreen: FC = () => {
   // react-native-gifted-chat引用的 react-native-lightbox包有动画问题，无法处理，需要隐藏
   YellowBox.ignoreWarnings(['Animated']);
+  const [userInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
 
   const [messages, setMessages] = useState<IMessage[]>([]);
   const onLinePeople: IMessage['user'] = {
@@ -24,21 +27,22 @@ const MyChatScreen: FC = () => {
     onSend: (addMessages: IMessage[]) => {
       setMessages(prev => GiftedChat.append(prev, addMessages.map(item => {
         const result = { ...item };
-        result.user.avatar = 'https://placeimg.com/140/140/any';
+        result.user.avatar = userInfo.avatar as string;
         result.user.name = '用户';
         return result;
       })));
-      setMessages(prev => (
-        GiftedChat.append(prev, [
-          {
-            _id: onlyData.getOnlyData(),
-            text: '请问你有什么问题么😋',
-            createdAt: new Date(),
-            user: onLinePeople,
-            image: 'https://placeimg.com/1400/1000/any',
-          },
-        ])
-      ));
+      setMessages(prev => {
+        return (
+          GiftedChat.append(prev, [
+            {
+              _id: onlyData.getOnlyData(),
+              text: '我正在升级中，您可以添加客服小姐姐微信联系😁',
+              createdAt: new Date(),
+              user: onLinePeople,
+            },
+          ])
+        );
+      });
     },
   };
 
@@ -46,10 +50,10 @@ const MyChatScreen: FC = () => {
     setMessages([
       {
         _id: onlyData.getOnlyData(),
-        text: '请问你有什么问题么😋',
+        text: '我正在升级中，您可以添加客服小姐姐微信联系😁(点击可以放大)',
         createdAt: new Date(),
         user: onLinePeople,
-        image: 'https://placeimg.com/1400/1000/any',
+        image: 'https://serve.alfaex.pro/static/kefu1.png',
       },
     ]);
   }, []);

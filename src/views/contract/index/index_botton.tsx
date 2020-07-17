@@ -90,14 +90,16 @@ const ComContractIndexListPosition: FC<{data: TypePositionData, leverType: strin
       fm.side = ['BUY', 'SELL'][data.type];
       fm.price_type = 2;
       fm.postition_side = ['SHORT', 'LONG'][data.type];
-      ajax.post('/v1/bian/Order', fm).then(res => {
+      ajax.post('/contract/api/v1/bian/Order', fm).then(res => {
         if (res.status === 200) {
           showMessage({
+            position: 'bottom',
             message: '委托提交成功',
             type: 'success',
           });
         } else {
           showMessage({
+            position: 'bottom',
             message: res.message,
             type: 'warning',
           });
@@ -200,6 +202,7 @@ export const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = (
     backOrder: () => {
       if (loading.current) {
         showMessage({
+          position: 'bottom',
           message: '您有委托正在撤销中，请等待',
           type: 'warning',
         });
@@ -224,14 +227,16 @@ export const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt}> = (
     },
     submitBackOrder: () => {
       loading.current = true;
-      ajax.get(`/v1/bian/revoke_order?orderId=${data.id}&symbol=${data.coinType.split('/')[0]}`).then(res => {
+      ajax.get(`/contract/api/v1/bian/revoke_order?orderId=${data.id}&symbol=${data.coinType.split('/')[0]}`).then(res => {
         if (res.status === 200) {
           showMessage({
+            position: 'bottom',
             message: '撤销成功',
             type: 'success',
           });
         } else {
           showMessage({
+            position: 'bottom',
             message: res.message,
             type: 'warning',
           });
@@ -508,7 +513,7 @@ const ComContractIndexBottom: FC<{
   // 获取持仓单
   useEffect(() => {
     if (selectTab === 0) {
-      ajax.get(`/v1/bian/holdhourse_log?symbol=${coinType.split('/')[0]}`).then(data => {
+      ajax.get(`/contract/api/v1/bian/holdhourse_log?symbol=${coinType.split('/')[0]}`).then(data => {
         if (data.status === 200) {
           setPositionData(data?.data?.list?.map((item: any, index: number) => {
             if (item.type === '1') {
@@ -540,7 +545,7 @@ const ComContractIndexBottom: FC<{
         console.log(err);
       });
     } else if (selectTab === 1) {
-      ajax.get(`/v1/bian/entrust_log?symbol=${coinType.split('/')[0]}`).then(data => {
+      ajax.get(`/contract/api/v1/bian/entrust_log?symbol=${coinType.split('/')[0]}`).then(data => {
         if (data.status === 200) {
           setGeneralEntrustementData(data?.data?.map((item: any) => {
             return {
@@ -567,6 +572,7 @@ const ComContractIndexBottom: FC<{
   const socket = useRef<Socket|null>(null);
   const subSocket = useRef(false);
   useEffect(() => {
+    if (!userInfo.token) return;
     const tickerImg = `gold.market.ALL.account.${userInfo.token}`;
     const socketListener = (message: any) => {
       const resultData: {

@@ -40,6 +40,7 @@ export class Fetch {
     return this.baseURI;
   }
 
+
   // get方法
   async get<T = any>(
     uri: string, // 请求路径
@@ -55,7 +56,7 @@ export class Fetch {
     try {
       const result = await this.promise(
         // 链接
-        `${this.baseURI}${uri}`,
+        `${this.baseURI}${Fetch.checkUri(uri)}`,
         // 设置
         {
           method: 'GET',
@@ -106,7 +107,7 @@ export class Fetch {
       }
       const result = await this.promise(
         // 链接
-        `${this.baseURI}${uri}`,
+        `${this.baseURI}${Fetch.checkUri(uri)}`,
         // 设置
         req,
       );
@@ -138,9 +139,17 @@ export class Fetch {
     else result = '';
     return result;
   }
+
+  // 判断uri方法
+  static checkUri(uri: string) {
+    if (!/^\/contract/.test(uri)) {
+      return `/user/api${uri}`;
+    }
+    return uri;
+  }
 }
 
 const ajax = new Fetch({
-  baseURI: 'http://192.168.3.17:3001',
+  baseURI: 'https://serve.alfaex.pro',
 });
 export default ajax;

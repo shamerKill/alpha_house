@@ -55,6 +55,7 @@ const MyTransferScreen: FC = () => {
       setFromAccount(toAccount);
       setToAccunt(data);
       showMessage({
+        position: 'bottom',
         message: '',
         description: '已切换',
         type: 'success',
@@ -81,6 +82,7 @@ const MyTransferScreen: FC = () => {
     sendTrans: () => {
       if (loading) {
         showMessage({
+          position: 'bottom',
           message: '账户划转中...',
           type: 'warning',
         });
@@ -88,19 +90,21 @@ const MyTransferScreen: FC = () => {
       }
       setLoading(true);
       // type划转方向 1: 币币账户向usdt永续合约账户划转 2: usdt永续合约账户向币币账户划转
-      ajax.post('/v1/bian/transfer_account', {
+      ajax.post('/contract/api/v1/bian/transfer_account', {
         num: changeValue,
         symbol: coinType,
         type: fromAccount === '币币账户' ? '1' : '2',
       }).then(data => {
         if (data.status === 200) {
           showMessage({
+            position: 'bottom',
             message: '划转成功',
             type: 'success',
           });
           setChangeValue('');
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
@@ -121,7 +125,7 @@ const MyTransferScreen: FC = () => {
   }, [maxValueObj]);
 
   useEffect(() => {
-    ajax.get('/v1/bian/transfer_account_view').then(data => {
+    ajax.get('/contract/api/v1/bian/transfer_account_view').then(data => {
       if (data.status === 200) {
         setMaxValueObj({
           toAccount: `${data.data.usdtAsset.account}`,

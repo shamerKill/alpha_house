@@ -79,6 +79,7 @@ import com.android.build.OutputFile
 
 project.ext.react = [
     enableHermes: false,  // clean and rebuild if changing
+    bundleAssetName: "index.android.bundle",
     entryFile: "index.tsx"
 ]
 project.ext.vectoricons = [
@@ -138,7 +139,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.1"
+        versionName "0.0.5"
         // Caream
         missingDimensionStrategy 'react-native-camera', 'general'
         multiDexEnabled true // 解决添加react-native-camera报错问题
@@ -236,6 +237,9 @@ dependencies {
     }
     
     compile project(':react-native-vector-icons')
+
+    def appCenterSdkVersion = '3.2.2'
+    implementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
 }
 
 // Run this once to be able to run the application with BUCK

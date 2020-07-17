@@ -45,6 +45,7 @@ const LoginScreen: FC = () => {
       const message = '账号或密码输入错误';
       if (!isPhone(account) && !isEmail(account)) {
         showMessage({
+          position: 'bottom',
           message,
           type: 'warning',
         });
@@ -52,6 +53,7 @@ const LoginScreen: FC = () => {
       }
       if (!isPass(pass)) {
         showMessage({
+          position: 'bottom',
           message,
           type: 'warning',
         });
@@ -70,6 +72,7 @@ const LoginScreen: FC = () => {
         console.log(data);
         if (data.status === 200) {
           showMessage({
+            position: 'bottom',
             message: '登录成功',
             type: 'success',
           });
@@ -91,6 +94,7 @@ const LoginScreen: FC = () => {
           addEvent.goToHome();
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
@@ -122,6 +126,8 @@ const LoginScreen: FC = () => {
   return (
     <ComLayoutHead
       overScroll
+      position
+      positionTop={80}
       scrollStyle={{
         backgroundColor: themeWhite,
         position: 'relative',

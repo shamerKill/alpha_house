@@ -111,6 +111,7 @@ const MarketSearchScreen: FC = () => {
     submitSearch: (text: string) => {
       if (searchLoading) {
         showMessage({
+          position: 'bottom',
           message: '数据加载中,请等待',
           type: 'info',
         });
@@ -142,6 +143,7 @@ const MarketSearchScreen: FC = () => {
           });
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
@@ -190,11 +192,13 @@ const MarketSearchScreen: FC = () => {
         });
       } else if (data1.status === 200) {
         showMessage({
+          position: 'bottom',
           message: data2.data,
           type: 'warning',
         });
       } else {
         showMessage({
+          position: 'bottom',
           message: data1.data,
           type: 'warning',
         });

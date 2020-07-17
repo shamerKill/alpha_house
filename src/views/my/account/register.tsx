@@ -79,6 +79,7 @@ const RegisterScreen: FC = () => {
         addEvent.send();
       } else {
         showMessage({
+          position: 'bottom',
           message,
           type: 'warning',
         });
@@ -104,6 +105,7 @@ const RegisterScreen: FC = () => {
           });
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
@@ -119,6 +121,8 @@ const RegisterScreen: FC = () => {
   return (
     <ComLayoutHead
       overScroll
+      position
+      positionTop={80}
       scrollStyle={{
         backgroundColor: themeWhite,
         position: 'relative',

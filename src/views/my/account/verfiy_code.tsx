@@ -24,13 +24,12 @@ const AccountVerfiyCodeScreen: FC = () => {
   const codeLineOpacity = useRef(new Animated.Value(0));
   const codeLineOpacityValue = useRef(0);
   const codeInput = useRef<TextInput>(null);
+  const isLoading = useRef(false);
 
   const [account, setAccount] = useState('');
   const [time, setTime] = useState(60);
   const [code, setCode] = useState('');
   const [codeArr, setCodeArr] = useState<string[]>([]);
-  // 是否在请求中
-  const [loading, setLoading] = useState(false);
 
   const addEvent = {
     // 对焦输入框
@@ -47,7 +46,6 @@ const AccountVerfiyCodeScreen: FC = () => {
     send: () => {
       // 验证验证码
       const accountArr = route.params.data.account.split(' ');
-      console.log(accountArr);
       ajax.post('/v1/power/check_sms', {
         mobile: accountArr.length === 1 ? accountArr[0] : accountArr[1],
         type: 1,
@@ -71,7 +69,8 @@ const AccountVerfiyCodeScreen: FC = () => {
       });
     },
     sendCode: () => {
-      if (loading) return;
+      if (isLoading.current) return;
+      isLoading.current = true;
       const accountArr = route.params.data.account.split(' ');
       // 发送验证码
       ajax.post('/v1/power/send_sms', {
@@ -83,6 +82,7 @@ const AccountVerfiyCodeScreen: FC = () => {
           addEvent.setTimer();
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
@@ -90,7 +90,7 @@ const AccountVerfiyCodeScreen: FC = () => {
       }).catch(err => {
         console.log(err);
       }).finally(() => {
-        setLoading(false);
+        isLoading.current = false;
       });
     },
     // 发送验证码倒计时
@@ -136,6 +136,8 @@ const AccountVerfiyCodeScreen: FC = () => {
   return (
     <ComLayoutHead
       overScroll
+      position
+      positionTop={80}
       scrollStyle={{ backgroundColor: themeWhite, padding: 10 }}>
       <Text h4>输入验证码</Text>
       <Text style={style.codeDesc}>验证码已发至{account}</Text>

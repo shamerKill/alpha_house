@@ -30,6 +30,7 @@ const ContractScreen: FC = () => {
       // FIXME: 没有比本位合约和混合合约
       if (contractType !== 0) {
         showMessage({
+          position: 'bottom',
           message: '功能暂未开放，敬请期待',
           type: 'info',
         });

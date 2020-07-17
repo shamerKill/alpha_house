@@ -69,6 +69,7 @@ const MyWithdrawScreen: FC = () => {
     wihtdrawBtnFunc: () => {
       if (address === '') {
         showMessage({
+          position: 'bottom',
           message: '请输入提现地址',
           type: 'warning',
         });
@@ -76,6 +77,7 @@ const MyWithdrawScreen: FC = () => {
       }
       if (Number(num) < Number(littleNum)) {
         showMessage({
+          position: 'bottom',
           message: '提币数量不能小于最小提币数量',
           type: 'warning',
         });
@@ -83,6 +85,7 @@ const MyWithdrawScreen: FC = () => {
       }
       if (!canWithDraw) {
         showMessage({
+          position: 'bottom',
           message: '当天提币次数已达上限，请明日再试',
           type: 'warning',
         });
@@ -131,6 +134,7 @@ const MyWithdrawScreen: FC = () => {
           addEvent.postSuccess();
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });

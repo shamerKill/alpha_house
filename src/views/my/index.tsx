@@ -53,6 +53,7 @@ const MyScreen: FC = () => {
       if (value === '--') return;
       Clipboard.setString(value);
       showMessage({
+        position: 'bottom',
         message: '',
         description: '个人ID复制成功',
         type: 'success',
@@ -75,7 +76,6 @@ const MyScreen: FC = () => {
   const [userRMB, setUserRMB] = useState('');
   useEffect(() => {
     if (routePage !== 'My') return;
-    setUserHead(getHeadImage()[0]);
     setUserPhone(userInfo.account || '未登录');
     setUserId(userInfo.id);
     setUserBTC(userInfo.assets);
@@ -91,10 +91,14 @@ const MyScreen: FC = () => {
           },
         });
         setUserHead(getHeadImage()[Number(data.data.headimg)]);
-        setUserPhone(data.data.mobile);
+        setUserPhone(data.data.mobile || data.data.email);
         setUserId(`${data.data.unique_id}`);
         setUserRMB(data.data.goldcoin);
         setUserBTC(data.data.goldbtc);
+      } else {
+        setUserHead(getHeadImage()[0]);
+        setUserRMB('--');
+        setUserBTC('--');
       }
     }).catch(err => console.log(err));
   }, [routePage]);
@@ -146,8 +150,9 @@ const MyScreen: FC = () => {
         <View>
           <Text style={{
             paddingLeft: 10,
-            fontSize: 28,
-          }}>{userPhone}
+            fontSize: 20,
+          }}>
+            {userPhone}
           </Text>
           <View
             style={{
@@ -166,7 +171,7 @@ const MyScreen: FC = () => {
               </View>
             </TouchableNativeFeedback>
             <TouchableNativeFeedback onPress={() => addEvent.onCopy(userId)}>
-              <View style={{ flexDirection: 'row' }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
                 <Text style={{
                   marginLeft: -5,
                   fontSize: 15,

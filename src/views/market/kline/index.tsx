@@ -127,6 +127,7 @@ const MarketKlineDepthView: FC = () => {
   const route = useRoute<RouteProp<{markLine: { name: string }}, 'markLine'>>();
   const routeCoinType = route.params.name.split(' ')[0].replace('/', '');
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const [prevRoutePage] = useGetDispatch<InState['pageRouteState']['prevPageRoute']>('pageRouteState', 'prevPageRoute');
 
   // 买盘
   const [buyList, setBuyList] = useState<TypeList[]>([]);
@@ -184,20 +185,13 @@ const MarketKlineDepthView: FC = () => {
         console.log(err);
       });
     } else if (socket.current) {
-      if (!subSocket.current) {
+      if (!subSocket.current && routePage !== 'Contract') {
         subSocket.current = true;
         socket.current.send(tickerImg, 'unsub');
         socket.current.removeListener(socketListener);
       }
     }
-    return () => {
-      if (socket.current) {
-        subSocket.current = true;
-        socket.current.send(tickerImg, 'unsub');
-        socket.current.removeListener(tickerImg);
-      }
-    };
-  }, [routePage]);
+  }, [routePage, prevRoutePage]);
 
   return (
     <View style={style.logsView}>

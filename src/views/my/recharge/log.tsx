@@ -2,10 +2,10 @@
 import React, { FC, useState, useEffect } from 'react';
 import { ListItem } from 'react-native-elements';
 import { showMessage } from 'react-native-flash-message';
+import { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import ComLayoutHead from '../../../components/layout/head';
 import { themeWhite, themeGray, themeBlack } from '../../../config/theme';
 import ajax from '../../../data/fetch';
-import { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 
 const MyReachargeLogScreen: FC = () => {
   const [logs, setLogs] = useState<{type: string; num: string; time: string;}[]>([]);
@@ -43,6 +43,7 @@ const MyReachargeLogScreen: FC = () => {
         });
       } else {
         showMessage({
+          position: 'bottom',
           message: data.message,
           type: 'warning',
         });

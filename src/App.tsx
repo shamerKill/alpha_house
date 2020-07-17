@@ -7,9 +7,12 @@ import DataScreen from './data';
 import ComModalOutBg from './components/modal/outBg';
 import ComScanView from './components/scan';
 import ComPhotoView from './components/scan/photo';
+import CheckVersion from './components/hot_up';
+
 
 const App: FC = () => {
   useEffect(() => {
+    // 关闭启动图
     SplashScreen.hide();
   }, []);
   return (
@@ -29,6 +32,8 @@ const App: FC = () => {
           ? <KeyboardSpacer />
           : null
       }
+      {/* 版本号检查 */}
+      <CheckVersion />
     </View>
   );
 };

@@ -23,6 +23,7 @@ const MyRecommendLinkScreen: FC<{input: TypeMyRecommendLink}> = ({ input }) => {
     copyLink: () => {
       Clipboard.setString(input.link);
       showMessage({
+        position: 'bottom',
         message: '复制成功',
         description: '推广链接接成功',
         type: 'success',
@@ -32,6 +33,7 @@ const MyRecommendLinkScreen: FC<{input: TypeMyRecommendLink}> = ({ input }) => {
       const { uri } = input.pic as ImageURISource;
       if (!uri) {
         showMessage({
+          position: 'bottom',
           message: '加载中',
           description: '图片加载中，请耐心等待',
           type: 'info',
@@ -40,6 +42,7 @@ const MyRecommendLinkScreen: FC<{input: TypeMyRecommendLink}> = ({ input }) => {
       }
       if (isDownload.current) {
         showMessage({
+          position: 'bottom',
           message: '已存在',
           description: '图片已保存至手机，请前往图库查看',
           type: 'info',
@@ -52,12 +55,14 @@ const MyRecommendLinkScreen: FC<{input: TypeMyRecommendLink}> = ({ input }) => {
       const errFunc = (err: any) => {
         if (err.message.match('Permission denied')) {
           showMessage({
+            position: 'bottom',
             message: '权限不足',
             description: '请打开应用储存权限后点击下载',
             type: 'warning',
           });
         } else {
           showMessage({
+            position: 'bottom',
             message: '下载失败',
             description: '二维码下载失败，请手动截屏',
             type: 'warning',
@@ -72,6 +77,7 @@ const MyRecommendLinkScreen: FC<{input: TypeMyRecommendLink}> = ({ input }) => {
           if (data.edges.filter(item => item.node.image.filename === toFileName).length === 0) {
             CameraRoll.save(`file://${toFile}`).then(() => {
               showMessage({
+                position: 'bottom',
                 message: '保存成功',
                 description: '图片已保存至手机，请前往图库查看',
                 type: 'success',
@@ -80,6 +86,7 @@ const MyRecommendLinkScreen: FC<{input: TypeMyRecommendLink}> = ({ input }) => {
             }).catch((err) => errFunc(err));
           } else {
             showMessage({
+              position: 'bottom',
               message: '已存在',
               description: '图片已保存至手机，请前往图库查看',
               type: 'info',

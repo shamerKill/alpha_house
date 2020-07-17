@@ -447,18 +447,20 @@ const ContractContentView: FC<{
       });
     },
     submitChangeLeverType: (lever: string, close: () => void) => {
-      ajax.post('/v1/bian/update_lever', {
+      ajax.post('/contract/api/v1/bian/update_lever', {
         symbol: coinType.split('/')[0],
         lever: Number(lever),
       }).then(data => {
         if (data.status === 200) {
           setLaverValue(lever);
           showMessage({
+            position: 'bottom',
             message: '杠杆更改成功',
             type: 'success',
           });
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
@@ -512,6 +514,7 @@ const ContractContentView: FC<{
     openOrder: (type: 0|1) => {
       if (isLoading.current) {
         showMessage({
+          position: 'bottom',
           message: '已有委托正在提交,请稍后',
           type: 'info',
         });
@@ -525,6 +528,7 @@ const ContractContentView: FC<{
       // 判断手数
       if (Number(fixedValue) <= 0) {
         showMessage({
+          position: 'bottom',
           message: '开仓手数有误',
           type: 'warning',
         });
@@ -533,6 +537,7 @@ const ContractContentView: FC<{
       // 判断价格
       if (!isMarketPrice && parseFloat(fixedPrice) <= 0) {
         showMessage({
+          position: 'bottom',
           message: '请输入正确价格',
           type: 'warning',
         });
@@ -580,15 +585,17 @@ const ContractContentView: FC<{
       fm.side = ['SELL', 'BUY'][type];
       fm.price_type = Number(isMarketPrice) + 1;
       fm.postition_side = ['SHORT', 'LONG'][type];
-      ajax.post('/v1/bian/Order', fm).then(data => {
+      ajax.post('/contract/api/v1/bian/Order', fm).then(data => {
         if (data.status === 200) {
           showMessage({
+            position: 'bottom',
             message: '委托提交成功',
             type: 'success',
           });
           addEvent.getServerUserInfo();
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
@@ -603,6 +610,7 @@ const ContractContentView: FC<{
     closeOrder: (type: 0|1) => {
       if (isLoading.current) {
         showMessage({
+          position: 'bottom',
           message: '已有委托正在提交,请稍后',
           type: 'info',
         });
@@ -637,6 +645,7 @@ const ContractContentView: FC<{
       }
       if (Number(changeNum) > Number([canCloseValueSort, canCloseValueLang][type]) || Number(changeNum) === 0) {
         showMessage({
+          position: 'bottom',
           message: '所设平仓手数有误',
           type: 'warning',
         });
@@ -648,6 +657,7 @@ const ContractContentView: FC<{
         const ratio = Math.abs((titlePrice - willPrice) / (titlePrice || 1));
         if (ratio > 0.3) {
           showMessage({
+            position: 'bottom',
             message: '所设市价不能与指数价相差30%',
             type: 'warning',
           });
@@ -663,15 +673,17 @@ const ContractContentView: FC<{
       fm.side = ['BUY', 'SELL'][type];
       fm.price_type = Number(isMarketPrice) + 1;
       fm.postition_side = ['SHORT', 'LONG'][type];
-      ajax.post('/v1/bian/Order', fm).then(data => {
+      ajax.post('/contract/api/v1/bian/Order', fm).then(data => {
         if (data.status === 200) {
           showMessage({
+            position: 'bottom',
             message: '委托提交成功',
             type: 'success',
           });
           addEvent.getServerUserInfo();
         } else {
           showMessage({
+            position: 'bottom',
             message: data.message,
             type: 'warning',
           });
@@ -684,8 +696,8 @@ const ContractContentView: FC<{
     },
     // 获取用户信息
     getServerUserInfo: () => {
-      ajax.get('/v1/bian/gold_accounts').then(data => {
-        if (data.status === 200) {
+      ajax.get('/contract/api/v1/bian/gold_accounts').then(data => {
+        if (data.status === 200 && data.data.asset) {
           // 用户信息
           setTopInfo({
             asset: `${parseFloat(data.data.asset.availableBalance).toFixed(2)}/${parseFloat(data.data.asset.walletBalance).toFixed(2)}`,
