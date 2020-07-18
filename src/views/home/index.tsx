@@ -2,7 +2,7 @@ import React, {
   FC, useState, useEffect, useRef,
 } from 'react';
 import {
-  View, Text, Image, ImageSourcePropType, ScrollViewProps, Dimensions, Platform, StatusBar,
+  View, Text, Image, ImageSourcePropType, ScrollViewProps, Dimensions, Platform,
 } from 'react-native';
 import { TouchableNativeFeedback, ScrollView } from 'react-native-gesture-handler';
 import Swiper from 'react-native-swiper';
@@ -10,7 +10,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import {
-  themeRed, themeGreen, themeBlack, themeGray, themeWhite,
+  themeRed, themeGreen, themeBlack, themeGray,
 } from '../../config/theme';
 import homeStyle from './index.style';
 import { positiveNumber, numberToFormatString } from '../../tools/number';
@@ -469,12 +469,15 @@ const HomeScreenMarket: FC = () => {
           && (
             <View style={{ flexDirection: 'row' }}>
               <TouchableNativeFeedback onPress={() => coinMarketViewChange(0)}>
-                <Text
-                  style={
-                  coinType === 0 ? homeStyle.marketViewHeadRightTextSelect : homeStyle.marketViewHeadRightText
-                }>
-                  USDT
-                </Text>
+                <View style={{ width: 50, justifyContent: 'center' }}>
+                  <Text
+                    style={[
+                      coinType === 0 ? homeStyle.marketViewHeadRightTextSelect : homeStyle.marketViewHeadRightText,
+                      { flexWrap: 'nowrap' },
+                    ]}>
+                    USDT
+                  </Text>
+                </View>
               </TouchableNativeFeedback>
               {/* <TouchableNativeFeedback onPress={() => coinMarketViewChange(1)}>
                 <Text

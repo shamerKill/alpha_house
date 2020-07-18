@@ -122,6 +122,17 @@ const MarketSearchScreen: FC = () => {
         return reg.test(item.symbol);
       });
       setSearchList(filter);
+    },
+    // 添加搜索历史
+    addSearchLogs: (text: string) => {
+      if (searchLoading) {
+        showMessage({
+          position: 'bottom',
+          message: '数据加载中,请等待',
+          type: 'info',
+        });
+        return;
+      }
       setHistoryList(state => ([...state, text]));
     },
     // 添加/取消关注
@@ -130,7 +141,6 @@ const MarketSearchScreen: FC = () => {
         symbol,
         type: `${id}`,
       }).then(data => {
-        console.log(data);
         if (data.status === 200) {
           setSearchList(state => {
             return state.map(item => {
@@ -166,6 +176,7 @@ const MarketSearchScreen: FC = () => {
       const allData = data2.data;
       if (data1.status === 200 && data2.status === 200) {
         Object.keys(allData).forEach((key: string) => {
+          if (key === 'cash') return;
           allData[key].forEach((coin: string) => {
             searchDataBase.current.push({
               name: coin.replace(/^(.+)USDT$/, '$1/USDT'),
@@ -238,8 +249,8 @@ const MarketSearchScreen: FC = () => {
             ref={searchInput}
             placeholder="请输入想要搜索的币种"
             style={style.headViewSearchInput}
-            onChange={e => setSearch(e.nativeEvent.text)}
-            onSubmitEditing={e => addEvent.submitSearch(e.nativeEvent.text)} />
+            onChange={e => { setSearch(e.nativeEvent.text); addEvent.submitSearch(e.nativeEvent.text); }}
+            onSubmitEditing={e => addEvent.addSearchLogs(e.nativeEvent.text)} />
         </View>
         <TouchableNativeFeedback onPress={() => addEvent.rightClose()}>
           <View style={style.headViewBtnView}>

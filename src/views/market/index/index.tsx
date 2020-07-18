@@ -45,7 +45,10 @@ const MarketScreen: FC = () => {
 
   const addEvent = {
     // 前往页面
-    goToLinkWithLogin: (link: string, params?: object) => goToWithLogin(link, params),
+    goToLinkWithLogin: (link: string, params?: object) => {
+      console.log(dataView[0]);
+      goToWithLogin(link, params);
+    },
     // 点击头部切换
     headTabClick: (index: number, isScroll?: true) => {
       if (dataViewScrollIsClick.current) return;

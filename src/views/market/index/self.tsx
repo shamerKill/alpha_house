@@ -13,7 +13,7 @@ const MarketSelfView: FC<{data: TypeMarketListLine[]}> = ({ data }) => {
 
   const addEvent = {
     addLine: () => {
-      goToWidthLogin('Home');
+      goToWidthLogin('MarketSearch');
     },
   };
 

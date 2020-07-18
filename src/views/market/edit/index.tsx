@@ -3,11 +3,15 @@ import {
   View, TouchableNativeFeedback, Text, ScrollView, Image, StyleSheet, SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import { defaultThemeColor, themeWhite, defaultThemeBgColor } from '../../../config/theme';
 import { TypeMarketListLine } from '../index/type';
 import { ComMarketLineTypeView } from '../index/com_line';
 import showComAlert from '../../../components/modal/alert';
+import ajax from '../../../data/fetch';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { InState } from '../../../data/redux/state';
 
 type TypeMarketEditList = {
   name: TypeMarketListLine['name'];
@@ -54,9 +58,13 @@ const MarketEditList: FC<TypeMarketEditList & {onPress: (id: TypeMarketEditList[
 const MarketEdit: FC = () => {
   const navigation = useNavigation();
 
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+
   const [listData, setListData] = useState<TypeMarketEditList[]>([]);
   // 是否全部选中
   const [listAllSelected, setListAllSelected] = useState(false);
+  // 是否在请求中
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const addEvent = {
     // 全选按钮
@@ -89,6 +97,8 @@ const MarketEdit: FC = () => {
     },
     // 删除
     deleteList: () => {
+      if (searchLoading) return;
+      const deleteCoins = listData.filter(item => item.isSelected);
       const selectLength = listData.filter(item => item.isSelected).length;
       if (selectLength === 0) return;
       const close = showComAlert({
@@ -96,7 +106,23 @@ const MarketEdit: FC = () => {
         success: {
           text: '删除',
           onPress: () => {
-            setListData(state => state.filter(item => !item.isSelected));
+            Promise.all(deleteCoins.map(item => ajax.post('/v1/market/follow', { symbol: item.id, type: 2 }))).then((data) => {
+              const error = data.filter(item => item.status !== 200);
+              if (error.length === 0) {
+                setListData(state => state.filter(item => !item.isSelected));
+                showMessage({
+                  position: 'bottom',
+                  message: '删除成功',
+                  type: 'success',
+                });
+              } else {
+                showMessage({
+                  position: 'bottom',
+                  message: error[0].message,
+                  type: 'warning',
+                });
+              }
+            });
             close();
           },
         },
@@ -109,16 +135,47 @@ const MarketEdit: FC = () => {
   };
 
   useEffect(() => {
-    setListData([
-      {
-        name: 'ETH/USD 永续', id: 'ETH/USD 永续', isSelected: false, type: 1,
-      },
-      {
-        name: 'BTC/USD 永续', id: 'BTC/USD 永续', isSelected: false, type: 2,
-      },
-      { name: 'EOS/USD 永续', id: 'EOS/USD 永续', isSelected: false },
-    ]);
-  }, []);
+    // 获取数据
+    setSearchLoading(true);
+    if (routePage !== 'MarketEdit') return;
+    Promise.all([ajax.get('/v1/market/follow'), ajax.get('/v1/market/trade_pair')]).then(([data1, data2]) => {
+      const followData: string[] = data1.data.map((item: any) => item.symbol);
+      const allData = data2.data;
+      if (data1.status === 200 && data2.status === 200) {
+        const result: TypeMarketEditList[] = [];
+        Object.keys(allData).forEach((key: string) => {
+          if (key === 'cash') return;
+          allData[key].forEach((coin: string) => {
+            if (followData.includes(coin)) {
+              result.push({
+                name: coin.replace(/^(.+)USDT$/, '$1/USDT'),
+                id: coin,
+                isSelected: false,
+                type: 1,
+              });
+            }
+          });
+        });
+        setListData(result);
+      } else if (data1.status === 200) {
+        showMessage({
+          position: 'bottom',
+          message: data2.data,
+          type: 'warning',
+        });
+      } else {
+        showMessage({
+          position: 'bottom',
+          message: data1.data,
+          type: 'warning',
+        });
+      }
+    }).catch(err => {
+      console.log(err);
+    }).finally(() => {
+      setSearchLoading(false);
+    });
+  }, [routePage]);
 
   return (
     <ComLayoutHead

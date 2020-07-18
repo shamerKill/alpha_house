@@ -223,7 +223,6 @@ const homeStyle = StyleSheet.create({
   marketViewHeadRightTextSelect: {
     lineHeight: 50,
     color: defaultThemeColor,
-    width: 40,
     textAlign: 'center',
     fontSize: 12,
     paddingLeft: 5,

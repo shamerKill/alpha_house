@@ -181,11 +181,11 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
     const socketListener = (message: any) => {
       if (message?.buy && message?.sell) {
         if (message.buy.length < 6 || message.sell.length < 6) return;
-        const buyDataMem = message.buy.splice(0, 6).map((item: any) => ({
+        const buyDataMem = message.sell.reverse().splice(0, 6).map((item: any) => ({
           price: item[0],
           value: item[1],
         }));
-        const sellDataMem = message.sell.splice(0, 6).map((item: any) => ({
+        const sellDataMem = message.buy.splice(0, 6).map((item: any) => ({
           price: item[0],
           value: item[1],
         }));
@@ -250,7 +250,7 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
             <View key={index} style={style.contentListViewLi}>
               <Text style={[
                 style.contextListTitleLeft,
-                { color: themeGreen },
+                { color: themeRed },
               ]}>
                 {item.price}
               </Text>
@@ -260,7 +260,7 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
               </Text>
               <View style={[
                 style.contentListBg,
-                { backgroundColor: themeGreen, width: item.ratio },
+                { backgroundColor: themeRed, width: item.ratio },
               ]} />
             </View>
           ))
@@ -270,7 +270,7 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
         <Text style={style.contentIndexTitle}>
           <Text style={[
             style.contentIndexPrice,
-            { color: [themeGreen, themeRed][direction] },
+            { color: [themeRed, themeRed][direction] },
           ]}>
             {newPrice}
           </Text>
@@ -284,7 +284,7 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
             <View key={index} style={style.contentListViewLi}>
               <Text style={[
                 style.contextListTitleLeft,
-                { color: themeRed },
+                { color: themeGreen },
               ]}>
                 {item.price}
               </Text>
@@ -294,7 +294,7 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
               </Text>
               <View style={[
                 style.contentListBg,
-                { backgroundColor: themeRed, width: item.ratio },
+                { backgroundColor: themeGreen, width: item.ratio },
               ]} />
             </View>
           ))

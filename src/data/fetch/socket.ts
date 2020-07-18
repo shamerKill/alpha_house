@@ -3,8 +3,8 @@ import onlyData from '../../tools/onlyId';
 export class SocketClass {
   // 传入配置
   options: {
-      // 基础路径
-      baseURI: string,
+    // 基础路径
+    baseURI: string,
   };
 
   // 初始化的socket
@@ -31,6 +31,23 @@ export class SocketClass {
 
   // 心跳包类型
   private pingPongArr: [string, string] = ['{"ping":""}', 'pong'];
+
+  // 储存当前所有的请求
+  private nowSendReq: string[] = [];
+
+  // 添加请求
+  private saveSendReq = (value: string) => {
+    this.nowSendReq.push(value);
+  };
+
+  // 删除请求
+  private delSendReq = (value: string) => {
+    let delIndex = 0;
+    this.nowSendReq.forEach((item, index) => {
+      if (item === value) delIndex = index;
+    });
+    this.nowSendReq.splice(delIndex, 1);
+  };
 
   // 接受数据方法数组
   private onMessageList: {
@@ -76,13 +93,13 @@ export class SocketClass {
         prevCheckedType = this.onMessageList.length;
       }
     }, 1000 * this.checkPingPongLinkTime);
-  }
+  };
 
   // 开启失败
   private onError: WebSocket['onerror'] = () => {
     this.isOpen = false;
     this.isError = true;
-  }
+  };
 
   // 开启成功
   private onOpened = () => {
@@ -91,21 +108,30 @@ export class SocketClass {
     this.sendList.forEach(item => this.send(item.data, item.type));
     // 执行心跳
     this.pingPong();
-  }
+  };
 
   // 关闭
-  private onClose: WebSocket['onclose'] = (ev: Event) => {
+  private onClose: WebSocket['onclose'] = () => {
     console.log('close');
+    // 短线重连
+    if (this.nowSendReq.length) {
+      console.log('重连');
+      this.getSocket().then(ws => {
+        this.nowSendReq.forEach((value) => {
+          ws.send(value, 'sub');
+        });
+      });
+    }
     this.isOpen = false;
     // 清除定时器
     if (this.pingPongTime !== null) clearInterval(this.pingPongTime);
-  }  
+  };
 
   // 接受数据
   private onMessage = (event: MessageEvent) => {
     if (event.data === this.pingPongArr[1]) return;
     // 循环传出数据
-    let data = event.data;
+    let { data } = event;
     try {
       data = JSON.parse(data);
     } catch (e) {
@@ -116,7 +142,7 @@ export class SocketClass {
         item.func(data);
       }
     });
-  }
+  };
 
   // 链接
   createConnect(): Promise<void> {
@@ -145,8 +171,8 @@ export class SocketClass {
         });
       }
     });
-  }
-  
+  };
+
   // 成功链接后回调
   successConnect(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -184,20 +210,27 @@ export class SocketClass {
     const sendData = insetData;
     // 如果没有开启
     if (!this.isOpen) {
-      this.sendList.push({data, type});
+      this.sendList.push({ data, type });
       return false;
-    } else {
-      // 如果已经开启，发送所有数据
-      this.socket?.send(sendData);
-      return true;
     }
+    // 添加到现有数据中
+    if (type === 'sub') {
+      this.saveSendReq(data);
+    } else if (type === 'unsub') {
+      this.delSendReq(data);
+    }
+    // 如果已经开启，发送所有数据
+    this.socket?.send(sendData);
+    return true;
   }
 
   // 添加接受数据的函数
   addListener(func: (data: string|object) => any, tip?: string): boolean | string {
     // 去重判断
     let hasFunc = false;
-    this.onMessageList.forEach(item => {item.func === func && (hasFunc = true)});
+    this.onMessageList.forEach(item => {
+      if (item.func === func) hasFunc = true;
+    });
     if (!hasFunc) {
       const id = tip || onlyData.getOnlyData();
       this.onMessageList.push({
@@ -206,9 +239,8 @@ export class SocketClass {
       });
       // 返回函数句柄
       return id;
-    } else {
-      return false;
     }
+    return false;
   }
 
   // 删除接受数据的函数
@@ -216,17 +248,20 @@ export class SocketClass {
     let funcNumber = -1;
     // 如果传入的是函数句柄
     if (typeof func === 'string') {
-      this.onMessageList.forEach((item, index) => {item.id === func && (funcNumber = index)});
+      this.onMessageList.forEach((item, index) => {
+        if (item.id === func) funcNumber = index;
+      });
     } else {
-      this.onMessageList.forEach((item, index) => {item.func === func && (funcNumber = index)});
+      this.onMessageList.forEach((item, index) => {
+        if (item.func === func) funcNumber = index;
+      });
     }
     // 判断删除数据
     if (funcNumber !== -1) {
       this.onMessageList.splice(funcNumber, 1);
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
 
