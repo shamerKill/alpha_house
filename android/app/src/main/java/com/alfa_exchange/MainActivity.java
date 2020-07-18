@@ -1,4 +1,4 @@
-package com.alfa_exchange;
+package com.alpha_house;
 
 import android.os.Bundle;
 import com.facebook.react.ReactActivity;
@@ -17,6 +17,6 @@ public class MainActivity extends ReactActivity {
    */
   @Override
   protected String getMainComponentName() {
-    return "alfa_exchange";
+    return "alpha_house";
   }
 }

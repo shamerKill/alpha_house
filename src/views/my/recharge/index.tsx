@@ -16,7 +16,7 @@ import ajax from '../../../data/fetch';
 const MyRechargeScreen: FC = () => {
   const navigation = useNavigation();
   const descArr = [
-    '1、该地址仅接受USDT,请勿往该地址转入非USDT资产，包括其相关联资产，否则您的资产将无法找回。',
+    '1、该地址仅接受ERC20协议,请勿往该地址转入非USDT资产，包括其相关联资产，否则您的资产将无法找回。',
     '2、最小充值金额：100 USDT，小于该金额的充值将无法上账且无法退回。',
     '3、您充值至上述地址后，需要整个网络节点的确认，6次网络确认后到账，12次后方可提币，我们将以短信形式通知您到账情况',
   ];
@@ -99,7 +99,9 @@ const MyRechargeScreen: FC = () => {
   useEffect(() => {
     if (!coinName) return;
     setLoading(true);
+    console.log(`/v1/recharge/get_coin?symbol=${coinName}`);
     ajax.get(`/v1/recharge/get_coin?symbol=${coinName}`).then(data => {
+      console.log(data);
       if (data.status === 200) {
         setAddress(data.data.address);
         setQrcode({

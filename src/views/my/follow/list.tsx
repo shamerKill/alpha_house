@@ -32,7 +32,6 @@ const MyFollowListScreen: FC = () => {
 
   useEffect(() => {
     ajax.get('/v1/track/list').then(data => {
-      console.log(data);
       if (data.status === 200) {
         const result: InFollowLi[] = data.data.map((item: any) => {
           return {

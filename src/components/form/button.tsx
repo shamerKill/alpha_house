@@ -11,6 +11,7 @@ const ComFormButton: FC<{
   containerStyle?: ButtonProps['containerStyle'];
   gray?: boolean;
   disabled?: boolean;
+  loading?: boolean;
 }> = ({
   title,
   onPress,
@@ -19,10 +20,12 @@ const ComFormButton: FC<{
   gray,
   disabled,
   containerStyle,
+  loading,
 }) => {
   return (
     <Button
       disabled={disabled}
+      loading={loading}
       onPress={onPress}
       ViewComponent={LinearGradient}
       containerStyle={[

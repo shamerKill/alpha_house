@@ -181,7 +181,7 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
     const socketListener = (message: any) => {
       if (message?.buy && message?.sell) {
         if (message.buy.length < 6 || message.sell.length < 6) return;
-        const buyDataMem = message.sell.reverse().splice(0, 6).map((item: any) => ({
+        const buyDataMem = message.sell.splice(0, 6).reverse().map((item: any) => ({
           price: item[0],
           value: item[1],
         }));
@@ -385,6 +385,8 @@ const ContractContentView: FC<{
   const newPrice = useRef('--');
   // usdt/rmb汇率
   const [USDTToRMB] = useState(7);
+  // 开仓最小数量
+  const [submitMinValue, setSubmitMinValue] = useState(0);
 
 
   // 方法
@@ -547,9 +549,9 @@ const ContractContentView: FC<{
       const showTextArr = [
         [
           // 开空
-          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeRed }}>买入空单（卖出多单）</Text>，开仓{fixedValue}手？</Text>),
+          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeRed }}>买入空单（卖出多单）</Text>，开仓{fixedValue}？</Text>),
           // 开多
-          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeGreen }}>买入多单</Text>，开仓{fixedValue}手？</Text>),
+          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeGreen }}>买入多单</Text>，开仓{fixedValue}？</Text>),
         ],
         [
           (<Text><Text style={{ color: themeRed }}>买入空单</Text>，开仓{coinType} {willValues}手触发价格：{willDoPrice}；执行价格：{willTransPrice}；</Text>),
@@ -619,8 +621,8 @@ const ContractContentView: FC<{
       const close = showComAlert({
         title: ['平空', '平多'][type],
         desc: [
-          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeGreen }}>卖出空单</Text>，平仓{fixedValue}手？</Text>),
-          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeRed }}>卖出多单</Text>，平仓{fixedValue}手？</Text>),
+          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeGreen }}>卖出空单</Text>，平仓{fixedValue}？</Text>),
+          (<Text>确定以{isMarketPrice ? '市价' : `限价${fixedPrice}USDT`} <Text style={{ color: themeRed }}>卖出多单</Text>，平仓{fixedValue}？</Text>),
         ][type],
         success: {
           text: '确定',
@@ -701,12 +703,16 @@ const ContractContentView: FC<{
           // 用户信息
           setTopInfo({
             asset: `${parseFloat(data.data.asset.availableBalance).toFixed(2)}/${parseFloat(data.data.asset.walletBalance).toFixed(2)}`,
-            risk: `${Math.floor((data.data.asset.maintMargin / (data.data.asset.walletBalance || 1)) * 10000) / 100}%`,
-            use: `${Math.floor((data.data.asset.maintMargin / (data.data.asset.walletBalance || 1)) * 10000) / 100}%`,
+            risk: `${Math.floor((data.data.asset.maintMargin / (parseFloat(data.data.asset.walletBalance) || 1)) * 10000) / 100}%`,
+            use: `${Math.floor((data.data.asset.maintMargin / (parseFloat(data.data.asset.walletBalance) || 1)) * 10000) / 100}%`,
             lever: data.data.positions.filter((item: any) => item.symbol === coinType.replace('/', ''))[0]?.leverage,
           });
           // 更改杠杆
           setLaverValue(data.data.positions.filter((item: any) => item.symbol === coinType.replace('/', ''))[0].leverage);
+          setSubmitMinValue(() => {
+            const minObj = data.data.minimumOrder;
+            return minObj[coinType.replace('/USDT', '')];
+          });
           // 获取当前币保证金
           const newCoinSelf: number[] = data.data.positions.filter((item: any) => item.symbol === coinType.replace('/', '')).map((item: any) => parseFloat(item.maintMargin));
           setHaveOcupyBond(newCoinSelf.reduce((a, b) => (a + b)).toFixed(4));
@@ -753,9 +759,17 @@ const ContractContentView: FC<{
   // 根据百分比和可开手数更改当前手数
   useEffect(() => {
     if (doType === 0) {
-      const value = Math.round((parseFloat(canOpenValue) * fixedValueRatio) / 100);
+      const value = (parseFloat(canOpenValue) * fixedValueRatio) / 100;
+      if (fixedValueRatio === 100) {
+        setFixedValue(canOpenValue);
+        return;
+      }
       if (Number.isNaN(value)) return;
-      setFixedValue(value.toString());
+      let fixValue = 10;
+      if (value > 1) fixValue = 4;
+      else if (value > 10) fixValue = 2;
+      else if (value > 1000) fixValue = 0;
+      setFixedValue(`${parseFloat(value.toFixed(fixValue))}`);
     }
   }, [canOpenValue, fixedValueRatio]);
   // 如果是平仓，手数可以百分比
@@ -784,7 +798,7 @@ const ContractContentView: FC<{
   // 更改可开手数
   useEffect(() => {
     // 一个币几手
-    const handToCoin = 1 / serverCoinType.changeRatio;
+    const handToCoin = 1;
     // 可用资产(USDT)
     const canUseMoney = parseFloat(topInfo.asset.split('/')[0]);
     // 价格
@@ -796,10 +810,14 @@ const ContractContentView: FC<{
     // 杠杆
     const lever = leverValue;
     // 计算可开手数
-    const canOpenVolumn = Math.floor(handToCoin * (canUseMoney / price) * Number(lever));
+    const canOpenVolumn = handToCoin * (canUseMoney / price) * Number(lever);
     if (!Number.isNaN(canOpenVolumn)) {
+      let fixValue = 10;
+      if (canOpenVolumn > 1) fixValue = 6;
+      else if (canOpenVolumn > 10) fixValue = 4;
+      else if (canOpenVolumn > 1000) fixValue = 2;
       // 可开手数赋值
-      setCanOpenValue(`${canOpenVolumn}`);
+      setCanOpenValue(`${parseFloat(canOpenVolumn.toFixed(fixValue))}`);
     }
   }, [serverCoinType, topInfo, fixedPrice, leverValue, newPrice.current]);
   // 更改占用保证金
@@ -1021,8 +1039,7 @@ const ContractContentView: FC<{
                       style={style.priceSetInputInput}
                       value={fixedValue}
                       onChange={e => setFixedValue(e.nativeEvent.text)}
-                      placeholder="数量" />
-                    <Text style={style.priceSetInputText}>手</Text>
+                      placeholder={`最小${doType === 0 ? '开仓' : '平仓'}数量: ${submitMinValue}`} />
                   </View>
                   {/* 滚动条 */}
                   <ComSliderView
@@ -1043,7 +1060,7 @@ const ContractContentView: FC<{
                     {
                       doType === 0 && !isMarketPrice && (
                         <>
-                          <Text style={style.ratioThenText}>可开手数</Text>
+                          <Text style={style.ratioThenText}>可开仓数</Text>
                           <Text style={style.ratioThenText}>{canOpenValue}</Text>
                         </>
                       )
@@ -1051,7 +1068,7 @@ const ContractContentView: FC<{
                     {
                       doType === 1 && (
                         <>
-                          <Text style={style.ratioThenText}>可平手数</Text>
+                          <Text style={style.ratioThenText}>可平仓数</Text>
                           <Text style={style.ratioThenText}>多单:{canCloseValueLang}&nbsp;&nbsp;空单:{canCloseValueSort}</Text>
                         </>
                       )
@@ -1150,7 +1167,7 @@ const ContractContentView: FC<{
           {/* 标题 */}
           <View style={style.contentRightTitleView}>
             <Text style={style.contentRightTitleLeft}>价格</Text>
-            <Text style={style.contentRightTitleRight}>手数(手)</Text>
+            <Text style={style.contentRightTitleRight}>委托数</Text>
           </View>
           {/* 数据 */}
           <ContractRightValueView

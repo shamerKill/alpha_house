@@ -146,10 +146,12 @@ export class Fetch {
       return `/user/api${uri}`;
     }
     return uri;
+    // return uri.replace(/^\/(contract|user)\/api/, '');
   }
 }
 
 const ajax = new Fetch({
+  // baseURI: 'http://192.168.3.17:3004',
   baseURI: 'https://serve.alfaex.pro',
 });
 export default ajax;

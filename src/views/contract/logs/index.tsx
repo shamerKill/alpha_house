@@ -67,7 +67,7 @@ const ContractLogsAllScreen: FC = () => {
           type: item.direction - 1,
           coinType,
           successPrice: item.price,
-          successNumber: item.hands,
+          successNumber: item.num,
           successTime: item.update_time,
           serviceFee: item.fee,
           changeValue: item.profit,
@@ -77,6 +77,7 @@ const ContractLogsAllScreen: FC = () => {
       console.log(err);
     });
     ajax.get(`/contract/api/v1/bian/allorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
+      console.log(JSON.stringify(data, null, 2));
       if (data.status === 200) {
         setGeneralEntrustementData(data?.data?.map((item: any) => ({
           id: item.binance_id,
@@ -85,8 +86,8 @@ const ContractLogsAllScreen: FC = () => {
           coinType,
           leverType: item.lever,
           willPrice: item.price || '市价',
-          needNumber: item.hands,
-          successNumber: item.deal_num,
+          needNumber: item.coin_num,
+          successNumber: item.deal_coin_num,
           status: item.status - 1,
           startTime: item.create_time,
           stopTime: item.back_time || item.update_time,

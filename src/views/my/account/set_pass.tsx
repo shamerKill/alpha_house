@@ -92,7 +92,6 @@ const AccountSetPassScreen: FC = () => {
       reqBody.Code = params.verifyCode;
       // 请求
       loading.current = true;
-      alert(JSON.stringify(reqBody, null, 2));
       ajax.post<string>('/v1/power/sign_up', reqBody, { setToken: true }).then(data => {
         if (data.status === 200) {
           addEvent.submit();

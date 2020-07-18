@@ -4,13 +4,14 @@ import React, {
 import {
   View, Image, StyleSheet, Text, TouchableNativeFeedback, SafeAreaView, ScrollView, Animated,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import { TypeLeftOutList } from './type';
 import { modalOutBg } from '../../../components/modal/outBg';
 import {
   themeWhite, defaultThemeColor, defaultThemeBgColor, themeBlack, themeGray, themeGreen, themeRed, themeMoreBlue, getThemeOpacity,
 } from '../../../config/theme';
 import Socket, { marketSocket } from '../../../data/fetch/socket';
+import { useGoToWithLogin } from '../../../tools/routeTools';
 
 export const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutList[]; changeCoin: (id: TypeLeftOutList['id']) => void;}> = ({
   coinType,
@@ -136,7 +137,7 @@ const ContractHeadView: FC<{
   leftList,
   changeCallback,
 }) => {
-  const navigation = useNavigation();
+  const goToWithLogin = useGoToWithLogin();
   const [showMore, setShowMore] = useState(false);
 
   const addEvent = {
@@ -154,7 +155,20 @@ const ContractHeadView: FC<{
       if (typeof id === 'string') changeCallback({ coinType: id });
       else changeCallback({ coinType: id });
     },
-    // 显示更多内容
+    // 资金转入
+    assetChange: () => {
+      setShowMore(false);
+      goToWithLogin('transfer');
+    },
+    // 合约计算
+    contractComput: () => {
+      setShowMore(false);
+      showMessage({
+        position: 'bottom',
+        message: '功能暂未开放，敬请期待',
+        type: 'info',
+      });
+    },
   };
 
   return (
@@ -171,7 +185,7 @@ const ContractHeadView: FC<{
         </View>
       </TouchableNativeFeedback>
       <View style={style.headRightView}>
-        <TouchableNativeFeedback onPress={() => navigation.navigate('MarketKline', { name: coinType })}>
+        <TouchableNativeFeedback onPress={() => goToWithLogin('MarketKline', { name: coinType })}>
           <View style={style.headRightIconView}>
             <Image
               style={style.headRgihtIcon}
@@ -191,21 +205,25 @@ const ContractHeadView: FC<{
       {
         showMore && (
           <View style={style.moreView}>
-            <View style={style.moreViewList}>
-              <Image
-                style={style.moreViewIcon}
-                resizeMode="contain"
-                source={require('../../../assets/images/icons/contract_input.png')} />
-              <Text style={style.moreViewText}>资金转入</Text>
-            </View>
+            <TouchableNativeFeedback onPress={addEvent.assetChange}>
+              <View style={style.moreViewList}>
+                <Image
+                  style={style.moreViewIcon}
+                  resizeMode="contain"
+                  source={require('../../../assets/images/icons/contract_input.png')} />
+                <Text style={style.moreViewText}>资金转入</Text>
+              </View>
+            </TouchableNativeFeedback>
             <View style={style.moreViewLine} />
-            <View style={style.moreViewList}>
-              <Image
-                style={style.moreViewIcon}
-                resizeMode="contain"
-                source={require('../../../assets/images/icons/contract_counter.png')} />
-              <Text style={style.moreViewText}>合约计算器</Text>
-            </View>
+            <TouchableNativeFeedback onPress={addEvent.contractComput}>
+              <View style={style.moreViewList}>
+                <Image
+                  style={style.moreViewIcon}
+                  resizeMode="contain"
+                  source={require('../../../assets/images/icons/contract_counter.png')} />
+                <Text style={style.moreViewText}>合约计算器</Text>
+              </View>
+            </TouchableNativeFeedback>
             <View style={style.moreViewTop} />
           </View>
         )

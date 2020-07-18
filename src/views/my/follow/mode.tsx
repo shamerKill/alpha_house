@@ -29,7 +29,7 @@ const MyFollowModeScreen: FC = () => {
     `例如您设置跟单金额 x ${coinType}，不论交易员下单多少本金，您的下单本金均为 x ${coinType}。单次最低跟单金额为 ${min} ${coinType}。`,
     `单日累计跟随本金到达此数值后，将不再您跟随下单，最大为：${max} ${coinType}。`,
   ]);
-  const coinDataArr = useRef<{id: number; symbol: string; num: number}[]>([]);
+  const coinDataArr = useRef<{id: number|string; symbol: string; num: number}[]>([]);
 
   const [maxValue, setMaxValue] = useState(0);
   const [minValue, setMinValue] = useState(0);
@@ -65,7 +65,7 @@ const MyFollowModeScreen: FC = () => {
         if (!resultString) return '0';
         let result = parseFloat(resultString);
         if (type) {
-          if (type === 'cut') (result !== 0) && result--;
+          if (type === 'cut') (result > 1) && result--;
           if (type === 'add') result++;
           return result.toString();
         }
@@ -116,8 +116,8 @@ const MyFollowModeScreen: FC = () => {
         trackID: userId,
         contract_type: 1,
         symbol: coinDataArr.current.filter(item => item.symbol === coinType)[0].id,
-        num: orderMoney,
-        day_num: dayMoney,
+        num: parseFloat(orderMoney),
+        day_num: parseFloat(dayMoney),
       }).then(data => {
         if (data.status === 200) addEvent.submitSuccess();
         else showMessage({
@@ -151,13 +151,17 @@ const MyFollowModeScreen: FC = () => {
 
   useEffect(() => {
     ajax.get('/v1/track/edit_view?id=').then(data => {
-      if (data.status === 200) {
-        coinDataArr.current = data.data.value;
-        setCoinType(data.data.value[0].symbol);
-        setMinValue(data.data.value[0].num);
-        setOrderMoney(`${data.data.value[0].num}`);
-        setDayMoney(`${data.data.value[0].num * 100}`);
-        setMaxValue(data.data.value[0].num * 1000);
+      if (data.status === 200 && data.data.value) {
+        coinDataArr.current = Object.keys(data.data.value).map((coin, index) => ({
+          id: coin,
+          num: data.data.value[coin],
+          symbol: coin,
+        }));
+        setCoinType(coinDataArr.current[0].symbol);
+        setMinValue(coinDataArr.current[0].num);
+        setOrderMoney(`${coinDataArr.current[0].num}`);
+        setDayMoney(`${coinDataArr.current[0].num * 100}`);
+        setMaxValue(coinDataArr.current[0].num * 1000);
       }
     }).catch(err => console.log(err));
   }, []);
@@ -186,54 +190,54 @@ const MyFollowModeScreen: FC = () => {
         <View style={style.tabListView}>
           <Text style={style.tabListTitle}>单次跟单金额{coinType}</Text>
           <View style={style.tabListRight}>
-            <TouchableNativeFeedback onPress={() => addEvent.setValue(setOrderMoney, orderMoney, 'cut')}>
+            {/* <TouchableNativeFeedback onPress={() => addEvent.setValue(setOrderMoney, orderMoney, 'cut')}>
               <View style={style.tabListBtn}>
                 <StaticImage
                   resizeMode="contain"
                   style={style.tabListCut}
                   source={require('../../../assets/images/icons/cut.png')} />
               </View>
-            </TouchableNativeFeedback>
+            </TouchableNativeFeedback> */}
             <TextInput
               style={style.tabListInput}
               keyboardType="numeric"
               value={orderMoney}
               onChange={e => addEvent.setValue(setOrderMoney, e.nativeEvent.text)} />
-            <TouchableNativeFeedback onPress={() => addEvent.setValue(setOrderMoney, orderMoney, 'add')}>
+            {/* <TouchableNativeFeedback onPress={() => addEvent.setValue(setOrderMoney, orderMoney, 'add')}>
               <View style={style.tabListBtn}>
                 <StaticImage
                   resizeMode="contain"
                   style={style.tabListAdd}
                   source={require('../../../assets/images/icons/add.png')} />
               </View>
-            </TouchableNativeFeedback>
+            </TouchableNativeFeedback> */}
           </View>
           <Text style={style.tabListDesc}>{descArr(minValue, maxValue, coinType)[0]}</Text>
         </View>
         <View style={style.tabListView}>
           <Text style={style.tabListTitle}>单日跟随本金{coinType}</Text>
           <View style={style.tabListRight}>
-            <TouchableNativeFeedback onPress={() => addEvent.setValue(setDayMoney, dayMoney, 'cut')}>
+            {/* <TouchableNativeFeedback onPress={() => addEvent.setValue(setDayMoney, dayMoney, 'cut')}>
               <View style={style.tabListBtn}>
                 <StaticImage
                   resizeMode="contain"
                   style={style.tabListCut}
                   source={require('../../../assets/images/icons/cut.png')} />
               </View>
-            </TouchableNativeFeedback>
+            </TouchableNativeFeedback> */}
             <TextInput
               style={style.tabListInput}
               keyboardType="number-pad"
               value={dayMoney}
               onChange={e => addEvent.setValue(setDayMoney, e.nativeEvent.text)} />
-            <TouchableNativeFeedback onPress={() => addEvent.setValue(setDayMoney, dayMoney, 'add')}>
+            {/* <TouchableNativeFeedback onPress={() => addEvent.setValue(setDayMoney, dayMoney, 'add')}>
               <View style={style.tabListBtn}>
                 <StaticImage
                   resizeMode="contain"
                   style={style.tabListAdd}
                   source={require('../../../assets/images/icons/add.png')} />
               </View>
-            </TouchableNativeFeedback>
+            </TouchableNativeFeedback> */}
           </View>
           <Text style={style.tabListDesc}>{descArr(minValue, maxValue, coinType)[1]}</Text>
         </View>
@@ -314,8 +318,10 @@ const style = StyleSheet.create({
   tabListInput: {
     textAlign: 'center',
     width: 60,
-    height: 50,
-    fontSize: 13,
+    height: 40,
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: themeGray,
   },
   tabListDesc: {
     color: themeGray,

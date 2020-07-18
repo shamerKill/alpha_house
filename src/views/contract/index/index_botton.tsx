@@ -65,7 +65,7 @@ const ComContractIndexListPosition: FC<{data: TypePositionData, leverType: strin
     // 平仓
     closeOrder: () => {
       const close = showComAlert({
-        desc: `是否进行委托${['平空', '平多'][data.type]}${data.allValue}手?`,
+        desc: `是否进行委托${['平空', '平多'][data.type]}${data.allValue}${data.coinType.replace('/USDT', '')}?`,
         success: {
           text: '平仓',
           onPress: () => {
@@ -164,8 +164,8 @@ const ComContractIndexListPosition: FC<{data: TypePositionData, leverType: strin
       </View>
       {/* 详情 */}
       <View style={style.listInfo}>
-        <Text style={style.listInfoText}>总仓&nbsp;{data.allValue}</Text>
-        <Text style={style.listInfoText}>占用保证金&nbsp;{data.useBond}</Text>
+        <Text style={style.listInfoText}>总仓&nbsp;{data.allValue}{data.coinType.replace('/USDT', '')}</Text>
+        <Text style={style.listInfoText}>占用保证金&nbsp;{data.useBond}USDT</Text>
         <Text style={style.listInfoText}>预估强评价&nbsp;{data.willBoomPrice}</Text>
         {/* <Text style={style.listInfoText}>维持保证金率&nbsp;{data.useBondRatio}</Text> */}
       </View>
@@ -510,63 +510,69 @@ const ComContractIndexBottom: FC<{
   // 止盈止损数据类型
   const [orderData, setOrderData] = useState<TypeStopOrder[]>([]);
 
+  const addEvent = {
+    getListData: () => {
+      if (selectTab === 0) {
+        ajax.get(`/contract/api/v1/bian/holdhourse_log?symbol=${coinType.split('/')[0]}`).then(data => {
+          if (data.status === 200) {
+            setPositionData(data?.data?.list?.map((item: any, index: number) => {
+              if (item.type === '1') {
+                setCanCloseOrderValue(state => ({
+                  ...state,
+                  lang: item.coin_num,
+                }));
+              } else {
+                setCanCloseOrderValue(state => ({
+                  ...state,
+                  sort: item.coin_num,
+                }));
+              }
+              return {
+                id: index,
+                type: Number(item.type === '1') as TypePositionData['type'],
+                coinType,
+                leverType,
+                price: item.price,
+                profitValue: parseFloat(data.data.risk[Number(item.type === '2')].unrealizedProfit),
+                profitRatio: `${((data.data.risk[Number(item.type === '2')].unrealizedProfit / (item.price * item.coin_num)) * 100).toFixed(2)}%`,
+                allValue: item.coin_num,
+                useBond: parseFloat(data.data.risk[Number(item.type === '2')].initialMargin),
+                willBoomPrice: item.flat_price,
+              };
+            }) || []);
+          }
+        }).catch(err => {
+          console.log(err);
+        });
+      } else if (selectTab === 1) {
+        ajax.get(`/contract/api/v1/bian/entrust_log?symbol=${coinType.split('/')[0]}`).then(data => {
+          if (data.status === 200) {
+            setGeneralEntrustementData(data?.data?.map((item: any) => {
+              return {
+                id: item.binance_id,
+                // eslint-disable-next-line no-nested-ternary
+                type: item.type === '1' ? (item.sell_buy === '1' ? 0 : 3) : (item.sell_buy === '1' ? 2 : 1),
+                coinType,
+                leverType,
+                willNumber: item.coin_num,
+                willPrice: item.price,
+                haveNumber: item.deal_coin_num,
+                backValue: parseFloat((item.coin_num - item.deal_coin_num).toFixed(3)),
+                state: Number(item.status === '8'),
+                time: item.create_time,
+              };
+            }) || []);
+          }
+        }).catch(err => {
+          console.log(err);
+        });
+      }
+    },
+  };
+
   // 获取持仓单
   useEffect(() => {
-    if (selectTab === 0) {
-      ajax.get(`/contract/api/v1/bian/holdhourse_log?symbol=${coinType.split('/')[0]}`).then(data => {
-        if (data.status === 200) {
-          setPositionData(data?.data?.list?.map((item: any, index: number) => {
-            if (item.type === '1') {
-              setCanCloseOrderValue(state => ({
-                ...state,
-                lang: item.num,
-              }));
-            } else {
-              setCanCloseOrderValue(state => ({
-                ...state,
-                sort: item.num,
-              }));
-            }
-            return {
-              id: index,
-              type: Number(item.type === '1') as TypePositionData['type'],
-              coinType,
-              leverType: item.lever,
-              price: item.price,
-              profitValue: parseFloat(data.data.risk[Number(item.type === '2')].unrealizedProfit),
-              profitRatio: `${((data.data.risk[Number(item.type === '2')].unrealizedProfit / (item.price * item.num)) * 100).toFixed(2)}%`,
-              allValue: item.num,
-              useBond: parseFloat(data.data.risk[Number(item.type === '2')].initialMargin),
-              willBoomPrice: item.flat_price,
-            };
-          }) || []);
-        }
-      }).catch(err => {
-        console.log(err);
-      });
-    } else if (selectTab === 1) {
-      ajax.get(`/contract/api/v1/bian/entrust_log?symbol=${coinType.split('/')[0]}`).then(data => {
-        if (data.status === 200) {
-          setGeneralEntrustementData(data?.data?.map((item: any) => {
-            return {
-              id: item.binance_id,
-              // eslint-disable-next-line no-nested-ternary
-              type: item.type === '1' ? (item.sell_buy === '1' ? 0 : 3) : (item.sell_buy === '1' ? 2 : 1),
-              coinType,
-              leverType: item.lever,
-              willNumber: item.num,
-              willPrice: item.price,
-              haveNumber: item.deal_num,
-              backValue: item.surplus_num,
-              state: Number(item.status === '8'),
-              time: item.create_time,
-            };
-          }) || []);
-        }
-      }).catch(err => {
-        console.log(err);
-      });
-    }
+    addEvent.getListData();
   }, [selectTab, coinType]);
 
   const socket = useRef<Socket|null>(null);
@@ -574,20 +580,14 @@ const ComContractIndexBottom: FC<{
   useEffect(() => {
     if (!userInfo.token) return;
     const tickerImg = `gold.market.ALL.account.${userInfo.token}`;
-    const socketListener = (message: any) => {
-      const resultData: {
-        [key: string]: {
-          [key: string]: string;
-        };
-      } = message.Tick;
-      console.log(resultData);
+    const socketListener = () => {
+      addEvent.getListData();
     };
     if (routePage === 'Contract') {
       // 获取USDT合约
       marketSocket.getSocket().then(ws => {
         socket.current = ws;
-        console.log(tickerImg);
-        ws.addListener(socketListener, tickerImg);
+        ws.addListener(socketListener, 'gold_market_ALL_account');
         ws.send(tickerImg, 'sub');
         subSocket.current = false;
       }).catch(err => {

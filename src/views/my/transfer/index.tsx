@@ -88,6 +88,22 @@ const MyTransferScreen: FC = () => {
         });
         return;
       }
+      if ((parseFloat(changeValue) || 0) <= 0) {
+        showMessage({
+          position: 'bottom',
+          message: '请输入正确转账数量',
+          type: 'warning',
+        });
+        return;
+      }
+      if (parseFloat(changeValue) > parseFloat(maxValueObj.fromAccount)) {
+        showMessage({
+          position: 'bottom',
+          message: '转账数量不能大于最多可转账数量',
+          type: 'warning',
+        });
+        return;
+      }
       setLoading(true);
       // type划转方向 1: 币币账户向usdt永续合约账户划转 2: usdt永续合约账户向币币账户划转
       ajax.post('/contract/api/v1/bian/transfer_account', {
@@ -96,6 +112,10 @@ const MyTransferScreen: FC = () => {
         type: fromAccount === '币币账户' ? '1' : '2',
       }).then(data => {
         if (data.status === 200) {
+          setMaxValueObj(state => ({
+            ...state,
+            fromAccount: `${parseFloat(state.fromAccount) - parseFloat(changeValue)}`,
+          }));
           showMessage({
             position: 'bottom',
             message: '划转成功',
@@ -250,7 +270,8 @@ const MyTransferScreen: FC = () => {
           </View>
           <ComFormButton
             containerStyle={style.submitBtn}
-            title="转账"
+            title={loading ? '转账中' : '转账'}
+            loading={loading}
             onPress={addEvent.sendTrans} />
         </ScrollView>
       </SafeAreaView>
