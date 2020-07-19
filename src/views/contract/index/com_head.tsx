@@ -214,7 +214,7 @@ const ContractHeadView: FC<{
                 <Text style={style.moreViewText}>资金转入</Text>
               </View>
             </TouchableNativeFeedback>
-            <View style={style.moreViewLine} />
+            {/* <View style={style.moreViewLine} />
             <TouchableNativeFeedback onPress={addEvent.contractComput}>
               <View style={style.moreViewList}>
                 <Image
@@ -223,7 +223,7 @@ const ContractHeadView: FC<{
                   source={require('../../../assets/images/icons/contract_counter.png')} />
                 <Text style={style.moreViewText}>合约计算器</Text>
               </View>
-            </TouchableNativeFeedback>
+            </TouchableNativeFeedback> */}
             <View style={style.moreViewTop} />
           </View>
         )
