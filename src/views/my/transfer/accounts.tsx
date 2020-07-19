@@ -37,7 +37,7 @@ const MytransferAccountsScreen: FC = () => {
   }, []);
   return (
     <ComLayoutHead
-      title="选择账户">
+      title="账户列表">
       <ComLine height={10} />
       {
         accountsList.map((item, index) => (

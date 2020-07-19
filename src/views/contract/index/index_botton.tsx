@@ -501,6 +501,8 @@ const ComContractIndexBottom: FC<{
 
   // 选项卡的第几个
   const [selectTab, setSelectTab] = useState(0);
+  const selectTabRef = useRef(selectTab);
+  const fristChange = useRef(true);
   // 持仓数据
   const [positionData, setPositionData] = useState<TypePositionData[]>([]);
   // 普通委托数据
@@ -509,11 +511,15 @@ const ComContractIndexBottom: FC<{
   const [planementData, setPlanementData] = useState<TypePlanEntrustement[]>([]);
   // 止盈止损数据类型
   const [orderData, setOrderData] = useState<TypeStopOrder[]>([]);
+  // 定时器
+  const timer = useRef(setTimeout(() => {}, 1));
+  const typeCoin = useRef(coinType.split('/')[0]);
 
   const addEvent = {
     getListData: () => {
-      if (selectTab === 0) {
-        ajax.get(`/contract/api/v1/bian/holdhourse_log?symbol=${coinType.split('/')[0]}`).then(data => {
+      const coin = coinType.split('/')[0];
+      if (selectTabRef.current === 0) {
+        ajax.get(`/contract/api/v1/bian/holdhourse_log?symbol=${coin}`).then(data => {
           if (data.status === 200) {
             setPositionData(data?.data?.list?.map((item: any, index: number) => {
               if (item.type === '1') {
@@ -533,25 +539,30 @@ const ComContractIndexBottom: FC<{
                 coinType,
                 leverType,
                 price: item.price,
-                profitValue: parseFloat(data.data.risk[Number(item.type === '2')].unrealizedProfit),
+                profitValue: data.data.risk[Number(item.type === '2')].unrealizedProfit,
                 profitRatio: `${((data.data.risk[Number(item.type === '2')].unrealizedProfit / (item.price * item.coin_num)) * 100).toFixed(2)}%`,
                 allValue: item.coin_num,
-                useBond: parseFloat(data.data.risk[Number(item.type === '2')].initialMargin),
+                useBond: data.data.risk[Number(item.type === '2')].initialMargin,
                 willBoomPrice: item.flat_price,
               };
             }) || []);
           }
         }).catch(err => {
           console.log(err);
+        }).finally(() => {
+          clearTimeout(timer.current);
+          timer.current = setTimeout(() => {
+            if (coin === typeCoin.current) addEvent.getListData();
+          }, 1000 * 5);
         });
       } else if (selectTab === 1) {
-        ajax.get(`/contract/api/v1/bian/entrust_log?symbol=${coinType.split('/')[0]}`).then(data => {
+        ajax.get(`/contract/api/v1/bian/entrust_log?symbol=${coin}`).then(data => {
           if (data.status === 200) {
             setGeneralEntrustementData(data?.data?.map((item: any) => {
               return {
                 id: item.binance_id,
                 // eslint-disable-next-line no-nested-ternary
-                type: item.type === '1' ? (item.sell_buy === '1' ? 0 : 3) : (item.sell_buy === '1' ? 2 : 1),
+                type: item.type === '1' ? (item.sell_buy === '1' ? 1 : 3) : (item.sell_buy === '1' ? 2 : 1),
                 coinType,
                 leverType,
                 willNumber: item.coin_num,
@@ -565,6 +576,11 @@ const ComContractIndexBottom: FC<{
           }
         }).catch(err => {
           console.log(err);
+        }).finally(() => {
+          clearTimeout(timer.current);
+          timer.current = setTimeout(() => {
+            if (coin === typeCoin.current) addEvent.getListData();
+          }, 1000 * 5);
         });
       }
     },
@@ -572,8 +588,16 @@ const ComContractIndexBottom: FC<{
 
   // 获取持仓单
   useEffect(() => {
+    if (!fristChange.current) selectTabRef.current = selectTab;
+  }, [selectTab]);
+  useEffect(() => {
     addEvent.getListData();
+    // eslint-disable-next-line prefer-destructuring
+    typeCoin.current = coinType.split('/')[0];
   }, [selectTab, coinType]);
+  useEffect(() => {
+    fristChange.current = false;
+  }, []);
 
   const socket = useRef<Socket|null>(null);
   const subSocket = useRef(false);
@@ -599,6 +623,7 @@ const ComContractIndexBottom: FC<{
         socket.current.send(tickerImg, 'unsub');
         socket.current.removeListener(tickerImg);
       }
+      clearTimeout(timer.current);
     }
   }, [routePage]);
 

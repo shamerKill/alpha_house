@@ -42,7 +42,8 @@ const MarketKlineInfo: FC = () => {
   useEffect(() => {
     const tickerImg = 'gold.market.ALL.ticker';
     const socketListener = (message: any) => {
-      const coinInfo = message.Tick[routeCoinType];
+      const coinInfo = message.Tick.filter((item: any) => item.symbol === routeCoinType)[0];
+      if (!coinInfo) return;
       const close = parseFloat(coinInfo.close);
       const open = parseFloat(coinInfo.open);
       const range = Math.floor(((close - open) / open) * 10000) / 100;
@@ -552,18 +553,22 @@ const MarketKlineScreen: FC = () => {
         </ScrollView>
         {/* 买入/卖出 */}
         <View style={style.bottomBtnsView}>
-          <View style={[
-            style.bottomBtn,
-            { backgroundColor: themeGreen },
-          ]}>
-            <Text style={style.bottomBtnText}>买入</Text>
-          </View>
-          <View style={[
-            style.bottomBtn,
-            { backgroundColor: themeRed },
-          ]}>
-            <Text style={style.bottomBtnText}>卖出</Text>
-          </View>
+          <TouchableNativeFeedback onPress={() => navigation.goBack()}>
+            <View style={[
+              style.bottomBtn,
+              { backgroundColor: themeGreen },
+            ]}>
+              <Text style={style.bottomBtnText}>买入</Text>
+            </View>
+          </TouchableNativeFeedback>
+          <TouchableNativeFeedback onPress={() => navigation.goBack()}>
+            <View style={[
+              style.bottomBtn,
+              { backgroundColor: themeRed },
+            ]}>
+              <Text style={style.bottomBtnText}>卖出</Text>
+            </View>
+          </TouchableNativeFeedback>
         </View>
       </SafeAreaView>
     </ComLayoutHead>

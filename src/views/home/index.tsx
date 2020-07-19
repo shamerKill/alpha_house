@@ -119,7 +119,7 @@ const HomeScreenComment: FC = () => {
   const swiperTime = 5;
   // 点击
   const commitClick = (id: string) => {
-    alert(id);
+    console.log(id);
   };
   useEffect(() => {
     ajax.get('/v1/article/article_list?types=1').then(data => {

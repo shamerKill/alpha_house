@@ -26,7 +26,7 @@ export type TypePositionData = {
 // 普通委托数据类型
 export type TypeGeneralEntrustemnt = {
   id: string|number; // 订单ID
-  type: 0|1|2|3, // 开空0，开多1,平空3,平多4
+  type: 0|1|2|3, // 开空0，开多1,平空2,平多3
   coinType: string; // 交易对
   leverType: string; // 杠杆倍数
   willNumber: number; // 委托量

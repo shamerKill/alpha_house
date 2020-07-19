@@ -11,7 +11,7 @@ import {
 
 // 普通委托
 export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog}> = ({ data }) => {
-  const typeNumber = Number(data.status === 1);
+  const typeNumber = data.status;
   return (
     <View style={style.listView}>
       {/* 头部 */}
@@ -26,7 +26,7 @@ export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog
           &nbsp;&nbsp;
           {data.coinType}
           &nbsp;&nbsp;
-          {data.leverType}X
+          {/* {data.leverType}X */}
         </Text>
         <Text style={[
           style.listTopTime,
@@ -49,7 +49,7 @@ export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog
           style.listCenterInnerCenter,
         ]}>
           <Text style={[style.listCenterValue]}>
-            {[data.needNumber, data.successNumber][typeNumber]}
+            {data.successNumber || data.needNumber}
           </Text>
           <Text style={style.listCenterDesc}>委托量</Text>
         </View>

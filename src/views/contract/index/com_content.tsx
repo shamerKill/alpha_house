@@ -15,7 +15,7 @@ import {
   defaultThemeBgColor, themeGray, themeBlack, themeWhite, themeGreen, themeTextGray, getThemeOpacity, defaultThemeColor, themeRed,
 } from '../../../config/theme';
 import showSelector from '../../../components/modal/selector';
-import { numberToFormatString } from '../../../tools/number';
+import { numberToFormatString, fiexedNumber } from '../../../tools/number';
 import showComAlert from '../../../components/modal/alert';
 import ajax from '../../../data/fetch';
 import useGetDispatch from '../../../data/redux/dispatch';
@@ -323,6 +323,7 @@ const ContractContentView: FC<{
   // console.log(selectType); // 合约类型
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   const [prevRoutePage] = useGetDispatch<InState['pageRouteState']['prevPageRoute']>('pageRouteState', 'prevPageRoute');
+  const [userIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
   const route = useRoute();
   const navigation = useNavigation();
 
@@ -387,6 +388,8 @@ const ContractContentView: FC<{
   const [USDTToRMB] = useState(7);
   // 开仓最小数量
   const [submitMinValue, setSubmitMinValue] = useState(0);
+  // 获取coin精度
+  const [accuracy, setAccuracy] = useState(0);
 
 
   // 方法
@@ -643,7 +646,7 @@ const ContractContentView: FC<{
     submitCloseOrder: (type: 0|1) => {
       let changeNum = fixedValue;
       if (/%/.test(fixedValue)) {
-        changeNum = `${Math.floor((parseFloat(fixedValue) * parseFloat([canCloseValueSort, canCloseValueLang][type])) / 100)}`;
+        changeNum = `${Math.floor((parseFloat(fixedValue) * parseFloat([canCloseValueSort, canCloseValueLang][type])) / 100).toFixed(accuracy)}`;
       }
       if (Number(changeNum) > Number([canCloseValueSort, canCloseValueLang][type]) || Number(changeNum) === 0) {
         showMessage({
@@ -702,16 +705,20 @@ const ContractContentView: FC<{
         if (data.status === 200 && data.data.asset) {
           // 用户信息
           setTopInfo({
-            asset: `${parseFloat(data.data.asset.availableBalance).toFixed(2)}/${parseFloat(data.data.asset.walletBalance).toFixed(2)}`,
+            asset: `${fiexedNumber(data.data.asset.availableBalance, 2)}/${fiexedNumber(data.data.asset.availableBalance, 2)}`,
             risk: `${Math.floor((data.data.asset.maintMargin / (parseFloat(data.data.asset.walletBalance) || 1)) * 10000) / 100}%`,
             use: `${Math.floor((data.data.asset.maintMargin / (parseFloat(data.data.asset.walletBalance) || 1)) * 10000) / 100}%`,
             lever: data.data.positions.filter((item: any) => item.symbol === coinType.replace('/', ''))[0]?.leverage,
           });
           // 更改杠杆
           setLaverValue(data.data.positions.filter((item: any) => item.symbol === coinType.replace('/', ''))[0].leverage);
+          const minObj = data.data.minimumOrder;
           setSubmitMinValue(() => {
-            const minObj = data.data.minimumOrder;
             return minObj[coinType.replace('/USDT', '')];
+          });
+          setAccuracy(() => {
+            const minNum: string = minObj[coinType.replace('/USDT', '')].toString();
+            return (minNum.split('.')[1] || '').length;
           });
           // 获取当前币保证金
           const newCoinSelf: number[] = data.data.positions.filter((item: any) => item.symbol === coinType.replace('/', '')).map((item: any) => parseFloat(item.maintMargin));
@@ -812,12 +819,8 @@ const ContractContentView: FC<{
     // 计算可开手数
     const canOpenVolumn = handToCoin * (canUseMoney / price) * Number(lever);
     if (!Number.isNaN(canOpenVolumn)) {
-      let fixValue = 10;
-      if (canOpenVolumn > 1) fixValue = 6;
-      else if (canOpenVolumn > 10) fixValue = 4;
-      else if (canOpenVolumn > 1000) fixValue = 2;
       // 可开手数赋值
-      setCanOpenValue(`${parseFloat(canOpenVolumn.toFixed(fixValue))}`);
+      setCanOpenValue(`${parseFloat(canOpenVolumn.toFixed(accuracy))}`);
     }
   }, [serverCoinType, topInfo, fixedPrice, leverValue, newPrice.current]);
   // 更改占用保证金
@@ -836,6 +839,12 @@ const ContractContentView: FC<{
   useEffect(() => {
     if (changePageLeverType) {
       changePageLeverType(leverValue);
+    }
+    if (setTopInfo) {
+      setTopInfo(state => ({
+        ...state,
+        lever: leverValue,
+      }));
     }
   }, [leverValue]);
   // 更改可平手数
@@ -908,22 +917,30 @@ const ContractContentView: FC<{
         changeCallback={changeConTypeCallback} />
       {/* 个人信息 */}
       <View style={style.topInfoView}>
-        <Text style={style.topInfoViewText}>
-          <Text>资产:可用/当前&nbsp;&nbsp;</Text>
-          <Text style={style.topInfoViewInfo}>{topInfo.asset}</Text>
-        </Text>
-        <Text style={[style.topInfoViewText, style.topInfoViewRight]}>
-          <Text>风险度:&nbsp;&nbsp;</Text>
-          <Text style={style.topInfoViewInfo}>{topInfo.risk}</Text>
-        </Text>
-        <Text style={style.topInfoViewText}>
-          <Text>资金使用率:&nbsp;&nbsp;</Text>
-          <Text style={style.topInfoViewInfo}>{topInfo.use}</Text>
-        </Text>
-        <Text style={[style.topInfoViewText, style.topInfoViewRight]}>
-          <Text>资金杠杆:&nbsp;&nbsp;</Text>
-          <Text style={style.topInfoViewInfo}>{topInfo.lever}</Text>
-        </Text>
+        {
+          userIsLogin === true ? (
+            <>
+              <Text style={style.topInfoViewText}>
+                <Text>资产:可用/当前&nbsp;&nbsp;</Text>
+                <Text style={style.topInfoViewInfo}>{topInfo.asset}</Text>
+              </Text>
+              <Text style={[style.topInfoViewText, style.topInfoViewRight]}>
+                <Text>风险度:&nbsp;&nbsp;</Text>
+                <Text style={style.topInfoViewInfo}>{topInfo.risk}</Text>
+              </Text>
+              <Text style={style.topInfoViewText}>
+                <Text>资金使用率:&nbsp;&nbsp;</Text>
+                <Text style={style.topInfoViewInfo}>{topInfo.use}</Text>
+              </Text>
+              <Text style={[style.topInfoViewText, style.topInfoViewRight]}>
+                <Text>资金杠杆:&nbsp;&nbsp;</Text>
+                <Text style={style.topInfoViewInfo}>{topInfo.lever}</Text>
+              </Text>
+            </>
+          ) : (
+            <Text>未登录</Text>
+          )
+        }
       </View>
       {/* 主内容区 */}
       <View style={style.content}>

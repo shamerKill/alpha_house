@@ -44,7 +44,7 @@ const ComMarketLine: FC<{data: TypeMarketListLine}> = ({ data }) => {
   } = data;
   const navigation = useNavigation();
   return (
-    <TouchableNativeFeedback onPress={() => navigation.navigate('MarketKline', { name })}>
+    <TouchableNativeFeedback onPress={() => navigation.navigate('Contract', { contractType: 1, coinType: name.split(' ')[0] })}>
       <View style={style.lineView}>
         <View style={style.lineLeft}>
           <View style={style.lineLeftText}>

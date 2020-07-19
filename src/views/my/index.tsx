@@ -239,12 +239,14 @@ const MyScreen: FC = () => {
         {/* 个人资产 */}
         <View style={{ paddingLeft: 20, paddingRight: 20 }}>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ fontSize: 16, color: '#7b85b2' }}>
-              总折合资产
-            </Text>
-            <StaticImage style={{ width: 12, height: 12 }} source={require('../../assets/images/icons/list_more.png')} />
-          </View>
+          <TouchableNativeFeedback onPress={() => goToWithLogin('transferAccounts')}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 16, color: '#7b85b2' }}>
+                总折合资产
+              </Text>
+              <StaticImage style={{ width: 12, height: 12 }} source={require('../../assets/images/icons/list_more.png')} />
+            </View>
+          </TouchableNativeFeedback>
 
           <Text style={{
             fontWeight: '700',

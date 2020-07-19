@@ -13,7 +13,7 @@ import ajax from '../../../data/fetch';
 
 const AccountForgetPass: FC = () => {
   const navigation = useNavigation();
-  const loading = useRef(false);
+  const [loading, setLoading] = useState(false);
   const [account, setAccount] = useState('');
 
   const addEvent = {
@@ -26,12 +26,12 @@ const AccountForgetPass: FC = () => {
         });
         return;
       }
-      if (loading.current) return;
+      if (loading) return;
       addEvent.send();
     },
     send: () => {
-      if (loading.current) return;
-      loading.current = true;
+      if (loading) return;
+      setLoading(true);
       // 发送验证码
       ajax.post('/v1/power/send_sms', {
         mobile: account,
@@ -50,7 +50,7 @@ const AccountForgetPass: FC = () => {
       }).catch(err => {
         console.log(err);
       }).finally(() => {
-        loading.current = false;
+        setLoading(false);
       });
     },
   };
@@ -76,9 +76,10 @@ const AccountForgetPass: FC = () => {
         value={account}
         onChangeText={value => setAccount(value)} />
       <ComFormButton
+        loading={loading}
         containerStyle={style.formButton}
         onPress={() => addEvent.verfiyBeforeSend()}
-        title="登录" />
+        title="发送验证码" />
       <View style={style.bgImageView}>
         <Image
           resizeMode="stretch"

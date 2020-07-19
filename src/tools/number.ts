@@ -4,6 +4,14 @@ export const positiveNumber = (value: number|string): boolean => {
   }
   return value > 0;
 };
+export const fiexedNumber = (value: number|string, sub: number): number => {
+  let res: number = 0;
+  if (typeof value === 'string') res = parseFloat(value);
+  else res = value;
+  const pow = 10 ** sub;
+  res = Math.floor(res * pow) / pow;
+  return res;
+};
 export const numberToFormatString = (value: number|string): string => {
   let data = value;
   if (typeof data === 'string') data = parseFloat(data);

@@ -30,7 +30,6 @@ const MySettingScreen: FC = () => {
   const [userInfoState, dispatchUserInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
   const [, dispatchUserIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
   const [pageRoute] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
-
   const [head, setHead] = useState<ImageSourcePropType|null>(null);
   const [nickName, setNickName] = useState(userInfoState.nickname);
   const [desc, setDesc] = useState(userInfoState.introduce);

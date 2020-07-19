@@ -61,14 +61,14 @@ const ContractLogsAllScreen: FC = () => {
   useEffect(() => {
     ajax.get(`/contract/api/v1/bian/dealorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
       if (data.status === 200) {
-        setHistoryLogsData(data?.data?.map((item: any) => ({
-          id: item.binance_id,
+        setHistoryLogsData(data?.data?.map((item: any, index: number) => ({
+          id: index,
           // eslint-disable-next-line no-nested-ternary
           type: item.direction - 1,
           coinType,
           successPrice: item.price,
           successNumber: item.num,
-          successTime: item.update_time,
+          successTime: item.update_time || item.create_time,
           serviceFee: item.fee,
           changeValue: item.profit,
         })) || []);
@@ -77,12 +77,11 @@ const ContractLogsAllScreen: FC = () => {
       console.log(err);
     });
     ajax.get(`/contract/api/v1/bian/allorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
-      console.log(JSON.stringify(data, null, 2));
       if (data.status === 200) {
         setGeneralEntrustementData(data?.data?.map((item: any) => ({
-          id: item.binance_id,
+          id: item.id,
           // eslint-disable-next-line no-nested-ternary
-          type: item.type === '1' ? (item.sell_buy === '1' ? 0 : 3) : (item.sell_buy === '1' ? 2 : 1),
+          type: item.type === '1' ? (item.sell_buy === '1' ? 1 : 2) : (item.sell_buy === '1' ? 3 : 0),
           coinType,
           leverType: item.lever,
           willPrice: item.price || '市价',
@@ -90,7 +89,7 @@ const ContractLogsAllScreen: FC = () => {
           successNumber: item.deal_coin_num,
           status: item.status - 1,
           startTime: item.create_time,
-          stopTime: item.back_time || item.update_time,
+          stopTime: item.back_time === '' ? item.create_time : item.back_time,
           changeValue: item.profit_per,
           orderType: item.price_type - 1,
         })) || []);

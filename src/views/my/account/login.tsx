@@ -64,12 +64,16 @@ const LoginScreen: FC = () => {
     send: () => {
       if (loading.current) return;
       loading.current = true;
+      console.log({
+        Account: account,
+        Password: pass,
+        DeviceInfo: getUniqueId(),
+      });
       ajax.post<string>('/v1/power/sign_in', {
         Account: account,
         Password: pass,
         DeviceInfo: getUniqueId(),
       }).then(data => {
-        console.log(data);
         if (data.status === 200) {
           showMessage({
             position: 'bottom',
