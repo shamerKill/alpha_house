@@ -18,12 +18,10 @@ const MyRecommendScreen: FC = () => {
   // 头部状态
   const [select, setSelect] = useState(1);
   // 推广链接数据
-  const [recommend, setRecommend] = useState<TypeMyRecommendLink>({ link: 'loading', pic: require('../../../assets/images/pic/share_bg.png') });
-
+  const [recommend, setRecommend] = useState<TypeMyRecommendLink>({ link: 'loading', pic: require('../../../assets/images/pic/share_bg.jpg') });
 
   useEffect(() => {
     ajax.get('/v1/user/invite').then(data => {
-      console.log(data);
       if (data.status === 200) {
         setRecommend({
           link: data.data.qrcodeUrl,

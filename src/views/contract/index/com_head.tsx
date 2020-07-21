@@ -205,7 +205,7 @@ const ContractHeadView: FC<{
       {
         showMore && (
           <View style={style.moreView}>
-            <TouchableNativeFeedback onPress={addEvent.assetChange}>
+            <TouchableNativeFeedback onPress={() => addEvent.assetChange()}>
               <View style={style.moreViewList}>
                 <Image
                   style={style.moreViewIcon}
@@ -239,6 +239,7 @@ const style = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
     zIndex: 2,
+    paddingBottom: 80,
   },
   headLeftView: {
     flexDirection: 'row',
@@ -315,6 +316,7 @@ const style = StyleSheet.create({
     right: 10,
     padding: 10,
     borderRadius: 3,
+    zIndex: 3,
   },
   moreViewLine: {
     height: 1,

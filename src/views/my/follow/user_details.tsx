@@ -25,7 +25,6 @@ type TypeUserInfo = {
 type TypeUserValue = {
   totalProfit: string; // 累计收益
   lastThreeProfit: string; // 近3周胜率
-  lastThreeBack: string; // 近3周最大回撤
   totalDays: number; // 交易时间
   totalLength: number; // 交易笔数
   totalPerson: number; // 累计跟随人数
@@ -58,7 +57,6 @@ const MyFollowUserDetails: FC = () => {
   }[] = [
     { title: '累计收益', key: 'totalProfit' },
     { title: '交易胜率', key: 'lastThreeProfit' },
-    { title: '最大回撤', key: 'lastThreeBack' },
     { title: '交易天数', key: 'totalDays' },
     { title: '交易笔数', key: 'totalLength' },
     { title: '累计跟随人数', key: 'totalPerson' },
@@ -76,20 +74,19 @@ const MyFollowUserDetails: FC = () => {
   // 获取数据
   useEffect(() => {
     ajax.get(`/v1/track/detail?trackID=${userId}`).then(data => {
+      console.log(data);
       if (data.status === 200) {
         const userData = data.data.userInfo;
         setUserInfo({
           head: getHeadImage()[Number(userData.headimg) || 0],
           name: userData.nickname,
-          time: userData.create_time.split(' ')[0],
+          time: userData.track_day.split(' ')[0],
           site: userData.location,
           desc: userData.description,
         });
         setUserProfit({
           totalProfit: `${userData.track_profit}%`,
           lastThreeProfit: `${Math.floor(userData.track_success_per * 10000) / 100}%`,
-          // FIXME: 不知道最大回撤啥意思
-          lastThreeBack: '0%',
           totalDays: data.data.track_day,
           totalLength: userData.order_num,
           totalPerson: userData.track_num,
@@ -102,14 +99,12 @@ const MyFollowUserDetails: FC = () => {
             coinType: item.symbol,
             multiple: `${item.lever}x`,
             openPrice: item.price,
-            // TODO: 没有平仓价
-            closePrice: '--',
+            closePrice: item.deal_price,
             profit: `${item.profit_per}%`,
             openTime: item.create_time,
-            closeTime: '--',
+            closeTime: item.update_time,
             orderId: item.id,
-            // TODO: 不知道订单类型的意义
-            orderType: '自动跟单',
+            orderType: ['', '持仓中', '已平仓', '部分平仓', '全部平仓', '部分平仓'][Number(item.status)],
           };
         });
         setLogList(result);
@@ -210,7 +205,7 @@ const MyFollowUserDetails: FC = () => {
                       <Text style={style.storyLogsBoxTopLeftInfo}>
                         <Text>{item.coinType}</Text>
                         <Text style={style.storyLogsBoxTopLeftSmall}>/USDT</Text>
-                        <Text>&nbsp;&nbsp;{item.multiple}</Text>
+                        {/* <Text>&nbsp;&nbsp;{item.multiple}</Text> */}
                       </Text>
                     </View>
                     <View style={style.storyLogsBoxTopPrice}>

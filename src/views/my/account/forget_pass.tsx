@@ -1,4 +1,4 @@
-import React, { FC, useState, useRef } from 'react';
+import React, { FC, useState } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { Text, Input } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
@@ -38,6 +38,7 @@ const AccountForgetPass: FC = () => {
         type: 2, // 注册短信
         mobile_area: '00',
       }).then(data => {
+        console.log(data);
         if (data.status === 200) {
           navigation.navigate('AccountVerfiyCode', { type: 'forget', data: { account } });
         } else {
@@ -46,6 +47,9 @@ const AccountForgetPass: FC = () => {
             message: data.message,
             type: 'warning',
           });
+          if (data.status === -31011) {
+            navigation.navigate('AccountVerfiyCode', { type: 'forget', data: { account } });
+          }
         }
       }).catch(err => {
         console.log(err);

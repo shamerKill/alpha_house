@@ -390,6 +390,8 @@ const ContractContentView: FC<{
   const [submitMinValue, setSubmitMinValue] = useState(0);
   // 获取coin精度
   const [accuracy, setAccuracy] = useState(0);
+  // 没有用户数据
+  const [noUserInfo, setNoUserInfo] = useState(true);
 
 
   // 方法
@@ -437,6 +439,14 @@ const ContractContentView: FC<{
     },
     // 杠杆倍数更改
     changeLeverType: () => {
+      if (noUserInfo) {
+        showMessage({
+          position: 'bottom',
+          message: '暂无合约资产，无法更改杠杆倍数',
+          type: 'info',
+        });
+        return;
+      }
       const close = showSelector({
         data: serverCoinType.leverList.map(item => ({
           data: item.lever,
@@ -703,6 +713,7 @@ const ContractContentView: FC<{
     getServerUserInfo: () => {
       ajax.get('/contract/api/v1/bian/gold_accounts').then(data => {
         if (data.status === 200 && data.data.asset) {
+          setNoUserInfo(false);
           // 用户信息
           setTopInfo({
             asset: `${fiexedNumber(data.data.asset.availableBalance, 2)}/${fiexedNumber(data.data.asset.availableBalance, 2)}`,
@@ -918,7 +929,7 @@ const ContractContentView: FC<{
       {/* 个人信息 */}
       <View style={style.topInfoView}>
         {
-          userIsLogin === true ? (
+          userIsLogin && !noUserInfo && (
             <>
               <Text style={style.topInfoViewText}>
                 <Text>资产:可用/当前&nbsp;&nbsp;</Text>
@@ -937,7 +948,15 @@ const ContractContentView: FC<{
                 <Text style={style.topInfoViewInfo}>{topInfo.lever}</Text>
               </Text>
             </>
-          ) : (
+          )
+        }
+        {
+          userIsLogin && noUserInfo && (
+            <Text style={style.topInfoViewText}>暂无合约资产</Text>
+          )
+        }
+        {
+          !userIsLogin && (
             <Text>未登录</Text>
           )
         }
@@ -1208,6 +1227,7 @@ const style = StyleSheet.create({
     padding: 10,
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginTop: -80,
   },
   topInfoViewText: {
     width: '70%',

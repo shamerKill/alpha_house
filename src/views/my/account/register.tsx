@@ -109,6 +109,16 @@ const RegisterScreen: FC = () => {
             message: data.message,
             type: 'warning',
           });
+          if (data.status === -31011) {
+            navigation.navigate('AccountVerfiyCode', {
+              type: 'register',
+              data: {
+                accountType,
+                account: accountType === 'email' ? email : `${phonePrefix} ${phone}`,
+                upUserCode,
+              },
+            });
+          }
         }
       }).catch(err => {
         console.log(err);

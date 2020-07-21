@@ -48,11 +48,10 @@ const AccountVerfiyCodeScreen: FC = () => {
       const accountArr = route.params.data.account.split(' ');
       ajax.post('/v1/power/check_sms', {
         mobile: accountArr.length === 1 ? accountArr[0] : accountArr[1],
-        type: 1,
+        type: route.params.type === 'register' ? 1 : 2,
         mobile_area: accountArr.length === 1 ? '00' : accountArr[0],
         code,
       }).then(data => {
-        console.log(data);
         if (data.status === 200) {
           navigation.navigate('AccountSetPass', {
             type: route.params.type,
@@ -62,7 +61,11 @@ const AccountVerfiyCodeScreen: FC = () => {
             },
           });
         } else {
-          console.log(data.message);
+          showMessage({
+            position: 'bottom',
+            message: data.message,
+            type: 'warning',
+          });
         }
       }).catch(err => {
         console.log(err);
