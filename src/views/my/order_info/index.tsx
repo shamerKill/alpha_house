@@ -182,7 +182,7 @@ const MyOrderInfo: FC = () => {
         if (data.status === 200) {
           setOrderList(state => {
             return state.concat(data?.data?.map((item: any) => ({
-              title: item.msg,
+              title: item.msg || item.account,
               time: item.create_time,
               number: item.num,
               id: item.id,
@@ -199,8 +199,14 @@ const MyOrderInfo: FC = () => {
     }
   };
 
-  useEffect(addEvent.getDataOrderType, [orderType]);
-  useEffect(addEvent.getDataSelectType, [selectType]);
+  useEffect(() => {
+    setOrderList([]);
+    addEvent.getDataOrderType();
+  }, [orderType]);
+  useEffect(() => {
+    setOrderList([]);
+    addEvent.getDataSelectType();
+  }, [selectType]);
 
   useEffect(() => {
     return () => {

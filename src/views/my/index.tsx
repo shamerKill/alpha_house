@@ -6,7 +6,7 @@ import { Image, ListItem } from 'react-native-elements';
 import { showMessage } from 'react-native-flash-message';
 import Clipboard from '@react-native-community/clipboard';
 import ComLayoutHead from '../../components/layout/head';
-import { themeGray } from '../../config/theme';
+import { themeGray, themeGreen } from '../../config/theme';
 import { useGoToWithLogin } from '../../tools/routeTools';
 import ajax from '../../data/fetch';
 import getHeadImage from '../../tools/getHeagImg';
@@ -17,14 +17,15 @@ import { InState, ActionsType } from '../../data/redux/state';
 const MyScreen: FC = () => {
   const [userInfo, dispatchUserInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const goToWithLogin = useGoToWithLogin();
   // 头部颜色
   const [statusBar, setStatusBar] = useState('#ccc9fe');
-  const goToWithLogin = useGoToWithLogin();
+  const [submitType, setSubmitType] = useState<'1'|'2'|'3'|'4'>('1');
   // 个人资产按钮
   const userMoneyBtns = [
     { icon: require('../../assets/images/icons/user_center_add.png'), name: '充值', link: 'recharge' },
     { icon: require('../../assets/images/icons/user_center_cut.png'), name: '提币', link: 'withdraw' },
-    { icon: require('../../assets/images/icons/user_center_change.png'), name: '转账', link: 'transfer' },
+    { icon: require('../../assets/images/icons/user_center_change.png'), name: '划转', link: 'transfer' },
   ];
   // 主要显示按钮
   const centerShowBtns = [
@@ -82,6 +83,7 @@ const MyScreen: FC = () => {
     setUserRMB('--');
     ajax.post('/userinfo', {}).then(data => {
       if (data.status === 200) {
+        if (data.data.auth_status) setSubmitType(data.data.auth_status);
         dispatchUserInfo({
           type: ActionsType.CHANGE_USER_INFO,
           data: {
@@ -159,17 +161,23 @@ const MyScreen: FC = () => {
               flexDirection: 'row',
               alignItems: 'center',
             }}>
-            <TouchableNativeFeedback onPress={() => addEvent.goToUserReal()}>
-              <View>
-                <StaticImage
-                  style={{
-                    width: 100,
-                    height: 40,
-                  }}
-                  resizeMode="contain"
-                  source={require('../../assets/images/icons/user_center_auth.png')} />
-              </View>
-            </TouchableNativeFeedback>
+            {
+              submitType === '4' ? (
+                <Text style={{ paddingLeft: 10, paddingRight: 10, color: themeGreen }}>已认证</Text>
+              ) : (
+                <TouchableNativeFeedback onPress={() => addEvent.goToUserReal()}>
+                  <View>
+                    <StaticImage
+                      style={{
+                        width: 100,
+                        height: 40,
+                      }}
+                      resizeMode="contain"
+                      source={require('../../assets/images/icons/user_center_auth.png')} />
+                  </View>
+                </TouchableNativeFeedback>
+              )
+            }
             <TouchableNativeFeedback onPress={() => addEvent.onCopy(userId)}>
               <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
                 <Text style={{

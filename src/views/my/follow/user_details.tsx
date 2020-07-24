@@ -74,7 +74,6 @@ const MyFollowUserDetails: FC = () => {
   // 获取数据
   useEffect(() => {
     ajax.get(`/v1/track/detail?trackID=${userId}`).then(data => {
-      console.log(data);
       if (data.status === 200) {
         const userData = data.data.userInfo;
         setUserInfo({

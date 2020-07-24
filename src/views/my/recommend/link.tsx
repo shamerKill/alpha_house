@@ -1,6 +1,6 @@
 import React, { FC, useRef } from 'react';
 import {
-  View, Text, ImageSourcePropType, Dimensions, ImageURISource,
+  View, Text, ImageSourcePropType, Dimensions, ImageURISource, TouchableNativeFeedback,
 } from 'react-native';
 import CameraRoll from '@react-native-community/cameraroll';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -20,8 +20,8 @@ export type TypeMyRecommendLink = {
 const MyRecommendLinkScreen: FC<{input: TypeMyRecommendLink}> = ({ input }) => {
   const isDownload = useRef(false);
   const addEvent = {
-    copyLink: () => {
-      Clipboard.setString(input.link);
+    copyLink: (str: string = input.link) => {
+      Clipboard.setString(str);
       showMessage({
         position: 'bottom',
         message: '复制成功',
@@ -141,13 +141,17 @@ const MyRecommendLinkScreen: FC<{input: TypeMyRecommendLink}> = ({ input }) => {
         marginTop: 20,
         paddingBottom: 20,
       }}>
-        <Image
-          source={input.pic}
-          resizeMode="contain"
-          style={{
-            width: '100%',
-            height: Math.round(Dimensions.get('window').width) * 1.28,
-          }} />
+        <TouchableNativeFeedback onPress={() => addEvent.copyLink(input.link.split('invite_code=')[1])}>
+          <View>
+            <Image
+              source={input.pic}
+              resizeMode="contain"
+              style={{
+                width: '100%',
+                height: Math.round(Dimensions.get('window').width) * 1.28,
+              }} />
+          </View>
+        </TouchableNativeFeedback>
         <ComFormButton
           title="下载二维码"
           onPress={() => addEvent.downloadCode()}

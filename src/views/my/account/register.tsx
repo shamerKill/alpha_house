@@ -74,6 +74,7 @@ const RegisterScreen: FC = () => {
       // 验证账号
       if (accountType === 'email' && !isEmail(email)) message = '请检查邮箱格式';
       if (accountType === 'phone' && !isPhone(phone)) message = '请检查手机号格式';
+      if (upUserCode === '') message = '邀请码为必填项';
       if (message === '') {
         // 发送数据
         addEvent.send();
@@ -217,7 +218,7 @@ const RegisterScreen: FC = () => {
             ]}
             ref={emailRef}
             keyboardType="email-address"
-            placeholder="邀请码(选填)"
+            placeholder="邀请码(必填)"
             value={upUserCode}
             onChangeText={value => setUpUserCode(value)} />
         </View>

@@ -117,15 +117,15 @@ const MyRoutes: TypeStackValue = [
         component: MySettingValueScreen,
       },
       {
-        name: 'transfer', // 转账
+        name: 'transfer', // 划转
         component: MyTransferScreen,
       },
       {
-        name: 'transferAccounts', // 转账选择账户
+        name: 'transferAccounts', // 划转选择账户
         component: MytransferAccountsScreen,
       },
       {
-        name: 'transferLogs', // 转账选择账户
+        name: 'transferLogs', // 划转选择账户
         component: MyTransferLogsScreen,
       },
       // 账户登录页面

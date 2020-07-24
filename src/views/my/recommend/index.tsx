@@ -25,7 +25,7 @@ const MyRecommendScreen: FC = () => {
       if (data.status === 200) {
         setRecommend({
           link: data.data.qrcodeUrl,
-          pic: { uri: data.data.qrcodeFile },
+          pic: { uri: `${data.data.qrcodeFile}?type=1` },
         });
       } else {
         showMessage({

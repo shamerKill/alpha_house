@@ -21,7 +21,7 @@ export interface TypeLogsWithdraw {
 }
 
 /**
- * 转账记录类型
+ * 划转记录类型
 **/
 export interface TypeLogsTransfer extends TypeLogsRecharge {}
 

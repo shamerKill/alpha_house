@@ -64,7 +64,8 @@ export class Fetch {
           headers: new Headers(fetchHeader),
         },
       );
-      return await result.json();
+      const resultJson = await result.json();
+      return resultJson;
     } catch (err) {
       return {
         status: -10086,

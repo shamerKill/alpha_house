@@ -15,7 +15,9 @@ const HomeHelpDetails: FC = () => {
     ajax.get(`/v1/help/help_detail?id=${id}`).then(data => {
       if (data.status === 200) {
         setTitle(data.data.title);
-        setDesc(data.data.content);
+        setDesc(data.data.content
+          .replace(/src="\/uploads/g, `src="${data.data.url}/uploads`)
+          .replace(/\s(width|height)=".*?"/g, ''));
       }
     }).catch(err => console.log(err));
   });

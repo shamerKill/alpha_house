@@ -99,7 +99,6 @@ const ContractScreen: FC = () => {
           canCloseOrderValue={canCloseOrderValue} />
         <ComContractIndexBotton
           selectType={selectType}
-          coinType={routeParams.coinType}
           leverType={leverType}
           setCanCloseOrderValue={setCanCloseOrderValue} />
       </ScrollView>

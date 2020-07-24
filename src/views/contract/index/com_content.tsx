@@ -142,7 +142,12 @@ const ComSliderView: FC<{
 };
 
 // 右侧数据显示
-const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefObject<string>; coinType: string;}> = ({ getPrice, coinType }) => {
+const ContractRightValueView: FC<{
+  USDTToRMB: number;
+  getPrice: React.MutableRefObject<string>;
+  coinType: string;
+  changeValue: (data: string) => void;
+}> = ({ getPrice, coinType, changeValue }) => {
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   const socket = useRef<Socket|null>(null);
   const subSocket = useRef(false);
@@ -167,6 +172,10 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
         return result;
       });
       return useData;
+    },
+    // 获取数据
+    getValueData: (data: string) => {
+      changeValue(data);
     },
   };
 
@@ -247,22 +256,26 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
       <View style={style.contentListView}>
         {
           buyData.map((item, index) => (
-            <View key={index} style={style.contentListViewLi}>
-              <Text style={[
-                style.contextListTitleLeft,
-                { color: themeRed },
-              ]}>
-                {item.price}
-              </Text>
-              <Text
-                style={style.contentListTitleRight}>
-                {numberToFormatString(item.value)}
-              </Text>
-              <View style={[
-                style.contentListBg,
-                { backgroundColor: themeRed, width: item.ratio },
-              ]} />
-            </View>
+            <TouchableNativeFeedback
+              key={index}
+              onPress={() => addEvent.getValueData(item.price)}>
+              <View key={index} style={style.contentListViewLi}>
+                <Text style={[
+                  style.contextListTitleLeft,
+                  { color: themeRed },
+                ]}>
+                  {item.price}
+                </Text>
+                <Text
+                  style={style.contentListTitleRight}>
+                  {numberToFormatString(item.value)}
+                </Text>
+                <View style={[
+                  style.contentListBg,
+                  { backgroundColor: themeRed, width: item.ratio },
+                ]} />
+              </View>
+            </TouchableNativeFeedback>
           ))
         }
       </View>
@@ -281,22 +294,26 @@ const ContractRightValueView: FC<{USDTToRMB: number, getPrice: React.MutableRefO
       <View style={style.contentListView}>
         {
           sellData.map((item, index) => (
-            <View key={index} style={style.contentListViewLi}>
-              <Text style={[
-                style.contextListTitleLeft,
-                { color: themeGreen },
-              ]}>
-                {item.price}
-              </Text>
-              <Text
-                style={style.contentListTitleRight}>
-                {numberToFormatString(item.value)}
-              </Text>
-              <View style={[
-                style.contentListBg,
-                { backgroundColor: themeGreen, width: item.ratio },
-              ]} />
-            </View>
+            <TouchableNativeFeedback
+              key={index}
+              onPress={() => addEvent.getValueData(item.price)}>
+              <View style={style.contentListViewLi}>
+                <Text style={[
+                  style.contextListTitleLeft,
+                  { color: themeGreen },
+                ]}>
+                  {item.price}
+                </Text>
+                <Text
+                  style={style.contentListTitleRight}>
+                  {numberToFormatString(item.value)}
+                </Text>
+                <View style={[
+                  style.contentListBg,
+                  { backgroundColor: themeGreen, width: item.ratio },
+                ]} />
+              </View>
+            </TouchableNativeFeedback>
           ))
         }
       </View>
@@ -396,6 +413,12 @@ const ContractContentView: FC<{
 
   // 方法
   const addEvent = {
+    // 更改价格
+    clickChangePrice: (value: string) => {
+      if (!isMarketPrice) {
+        setFixedPrice(value);
+      }
+    },
     // 委托方式更改
     changeEntrustType: () => {
       const data = [...entrustTypeData];
@@ -656,7 +679,12 @@ const ContractContentView: FC<{
     submitCloseOrder: (type: 0|1) => {
       let changeNum = fixedValue;
       if (/%/.test(fixedValue)) {
-        changeNum = `${Math.floor((parseFloat(fixedValue) * parseFloat([canCloseValueSort, canCloseValueLang][type])) / 100).toFixed(accuracy)}`;
+        if (fixedValue === '100%') {
+          changeNum = [canCloseValueSort, canCloseValueLang][type];
+        } else {
+          const pow = 10 ** accuracy;
+          changeNum = `${Math.floor((parseFloat(fixedValue) * parseFloat([canCloseValueSort, canCloseValueLang][type]) * pow) / 100) / pow}`;
+        }
       }
       if (Number(changeNum) > Number([canCloseValueSort, canCloseValueLang][type]) || Number(changeNum) === 0) {
         showMessage({
@@ -716,7 +744,7 @@ const ContractContentView: FC<{
           setNoUserInfo(false);
           // 用户信息
           setTopInfo({
-            asset: `${fiexedNumber(data.data.asset.availableBalance, 2)}/${fiexedNumber(data.data.asset.availableBalance, 2)}`,
+            asset: `${fiexedNumber(data.data.asset.availableBalance, 2)}/${fiexedNumber(data.data.asset.crossWalletBalance, 2)}`,
             risk: `${Math.floor((data.data.asset.maintMargin / (parseFloat(data.data.asset.walletBalance) || 1)) * 10000) / 100}%`,
             use: `${Math.floor((data.data.asset.maintMargin / (parseFloat(data.data.asset.walletBalance) || 1)) * 10000) / 100}%`,
             lever: data.data.positions.filter((item: any) => item.symbol === coinType.replace('/', ''))[0]?.leverage,
@@ -749,7 +777,7 @@ const ContractContentView: FC<{
                 { lever: '50', selfRatio: 0.02 },
                 { lever: '100', selfRatio: 0.01 },
                 // { lever: '125', selfRatio: 0.008 },
-              ],
+              ].reverse(),
             });
           } else {
             setServerCoinType({
@@ -764,7 +792,7 @@ const ContractContentView: FC<{
                 { lever: '25', selfRatio: 0.04 },
                 { lever: '50', selfRatio: 0.02 },
                 { lever: '75', selfRatio: 0.013 },
-              ],
+              ].reverse(),
             });
           }
         }
@@ -783,10 +811,7 @@ const ContractContentView: FC<{
         return;
       }
       if (Number.isNaN(value)) return;
-      let fixValue = 10;
-      if (value > 1) fixValue = 4;
-      else if (value > 10) fixValue = 2;
-      else if (value > 1000) fixValue = 0;
+      const fixValue = accuracy;
       setFixedValue(`${parseFloat(value.toFixed(fixValue))}`);
     }
   }, [canOpenValue, fixedValueRatio]);
@@ -832,6 +857,8 @@ const ContractContentView: FC<{
     if (!Number.isNaN(canOpenVolumn)) {
       // 可开手数赋值
       setCanOpenValue(`${parseFloat(canOpenVolumn.toFixed(accuracy))}`);
+    } else {
+      setCanOpenValue('0');
     }
   }, [serverCoinType, topInfo, fixedPrice, leverValue, newPrice.current]);
   // 更改占用保证金
@@ -1063,7 +1090,7 @@ const ContractContentView: FC<{
                             color: isMarketPrice ? defaultThemeColor : themeBlack,
                           },
                         ]}>
-                          市价
+                          {isMarketPrice ? '市价' : '限价'}
                         </Text>
                       </View>
                     </StaticTouchableNativeFeedback>
@@ -1209,7 +1236,8 @@ const ContractContentView: FC<{
           <ContractRightValueView
             USDTToRMB={USDTToRMB}
             getPrice={newPrice}
-            coinType={coinType} />
+            coinType={coinType}
+            changeValue={addEvent.clickChangePrice} />
         </View>
       </View>
       <View style={style.comLineStyle} />

@@ -4,7 +4,7 @@ import React, {
 import {
   View, Text, Image as StaticImage, StyleSheet, TouchableNativeFeedback,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import {
   themeBlack, getThemeOpacity, themeGray, defaultThemeBgColor, themeGreen, themeRed, defaultThemeColor, themeWhite,
@@ -24,7 +24,7 @@ const ComContractIndexListPosition: FC<{data: TypePositionData, leverType: strin
   const navigation = useNavigation();
 
   // 盈亏颜色
-  const color = parseFloat(data.profitRatio) < 0 ? themeRed : themeGreen;
+  const color = parseFloat(data.profitValue) < 0 ? themeRed : themeGreen;
 
   const isLoading = useRef(false);
 
@@ -164,8 +164,18 @@ const ComContractIndexListPosition: FC<{data: TypePositionData, leverType: strin
       </View>
       {/* 详情 */}
       <View style={style.listInfo}>
-        <Text style={style.listInfoText}>总仓&nbsp;{data.allValue}{data.coinType.replace('/USDT', '')}</Text>
-        <Text style={style.listInfoText}>占用保证金&nbsp;{data.useBond}USDT</Text>
+        <Text style={[
+          style.listInfoText,
+          { width: '33%' },
+        ]}>
+          总仓&nbsp;{data.allValue}{data.coinType.replace('/USDT', '')}
+        </Text>
+        <Text style={[
+          style.listInfoText,
+          { width: '66%', textAlign: 'left' },
+        ]}>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;占用保证金&nbsp;{data.useBond}USDT
+        </Text>
         <Text style={style.listInfoText}>预估强评价&nbsp;{data.willBoomPrice}</Text>
         {/* <Text style={style.listInfoText}>维持保证金率&nbsp;{data.useBondRatio}</Text> */}
       </View>
@@ -479,18 +489,18 @@ export const ComContractIndexListOrder: FC<{data: TypeStopOrder}> = ({ data }) =
 };
 
 const ComContractIndexBottom: FC<{
-  coinType: string;
   selectType: 0|1|2;
   leverType: string;
   setCanCloseOrderValue: React.Dispatch<React.SetStateAction<{
     lang: string;
     sort: string;
   }>>}> = ({
-  coinType,
   leverType,
   // selectType,
   setCanCloseOrderValue,
 }) => {
+  const { params } = useRoute<RouteProp<{constract?: { coinType: string; }}, 'constract'>>();
+  const coinType = params ? params.coinType : '';
   const navigation = useNavigation();
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   const [userInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
@@ -516,33 +526,40 @@ const ComContractIndexBottom: FC<{
   const typeCoin = useRef(coinType.split('/')[0]);
 
   const addEvent = {
-    getListData: () => {
-      const coin = coinType.split('/')[0];
+    getListData: (lever: string = leverType) => {
+      let coin = coinType.split('/')[0];
+      if (!coin) {
+        coin = typeCoin.current;
+      }
       if (selectTabRef.current === 0) {
         ajax.get(`/contract/api/v1/bian/holdhourse_log?symbol=${coin}`).then(data => {
           if (data.status === 200) {
+            setCanCloseOrderValue({
+              lang: '0',
+              sort: '0',
+            });
             setPositionData(data?.data?.list?.map((item: any, index: number) => {
               if (item.type === '1') {
                 setCanCloseOrderValue(state => ({
                   ...state,
-                  lang: item.coin_num,
+                  lang: item.surplus_coin_num,
                 }));
               } else {
                 setCanCloseOrderValue(state => ({
                   ...state,
-                  sort: item.coin_num,
+                  sort: item.surplus_coin_num,
                 }));
               }
               return {
                 id: index,
                 type: Number(item.type === '1') as TypePositionData['type'],
                 coinType,
-                leverType,
+                leverType: lever,
                 price: item.price,
                 profitValue: data.data.risk[Number(item.type === '2')].unrealizedProfit,
                 profitRatio: `${((data.data.risk[Number(item.type === '2')].unrealizedProfit / (item.price * item.coin_num)) * 100).toFixed(2)}%`,
-                allValue: item.coin_num,
-                useBond: data.data.risk[Number(item.type === '2')].initialMargin,
+                allValue: item.surplus_coin_num,
+                useBond: parseFloat(data.data.risk[Number(item.type === '2')].initialMargin).toFixed(4),
                 willBoomPrice: item.flat_price,
               };
             }) || []);
@@ -552,7 +569,7 @@ const ComContractIndexBottom: FC<{
         }).finally(() => {
           clearTimeout(timer.current);
           timer.current = setTimeout(() => {
-            if (coin === typeCoin.current) addEvent.getListData();
+            if (coin === typeCoin.current) addEvent.getListData(lever);
           }, 1000 * 5);
         });
       } else if (selectTab === 1) {
@@ -564,7 +581,7 @@ const ComContractIndexBottom: FC<{
                 // eslint-disable-next-line no-nested-ternary
                 type: item.type === '1' ? (item.sell_buy === '1' ? 1 : 3) : (item.sell_buy === '1' ? 2 : 1),
                 coinType,
-                leverType,
+                leverType: lever,
                 willNumber: item.coin_num,
                 willPrice: item.price,
                 haveNumber: item.deal_coin_num,
@@ -579,7 +596,7 @@ const ComContractIndexBottom: FC<{
         }).finally(() => {
           clearTimeout(timer.current);
           timer.current = setTimeout(() => {
-            if (coin === typeCoin.current) addEvent.getListData();
+            if (coin === typeCoin.current) addEvent.getListData(lever);
           }, 1000 * 5);
         });
       }
@@ -598,6 +615,26 @@ const ComContractIndexBottom: FC<{
   useEffect(() => {
     fristChange.current = false;
   }, []);
+
+  useEffect(() => {
+    // 杠杆倍数跟随
+    setPositionData(state => {
+      return state.map(item => ({
+        ...item,
+        leverType,
+      }));
+    });
+    setGeneralEntrustementData(state => {
+      return state.map(item => ({
+        ...item,
+        leverType,
+      }));
+    });
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      if (coinType.split('/')[0] === typeCoin.current) addEvent.getListData(leverType);
+    }, 1000 * 5);
+  }, [leverType]);
 
   const socket = useRef<Socket|null>(null);
   const subSocket = useRef(false);

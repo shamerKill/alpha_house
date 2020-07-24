@@ -63,7 +63,7 @@ const MyTransferLogsScreen: FC = () => {
   }, []);
   return (
     <ComLayoutHead
-      title="转账记录"
+      title="划转记录"
       overScroll>
       <View style={style.headView}>
         <Text style={style.headText}>详情</Text>

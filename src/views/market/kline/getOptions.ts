@@ -486,8 +486,8 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         value += '<div style="color: #ccc; font-size: 12px;">';
         value += 'openPrice: ' + kLineData[1] + '<br />';
         value += 'closePrice: ' + kLineData[2] + '<br />';
-        value += 'heightPrice: ' + kLineData[3] + '<br />';
-        value += 'lowPrice: ' + kLineData[4];
+        value += 'lowPrice: ' + kLineData[3] + '<br />';
+        value += 'heightPrice: ' + kLineData[4];
         value += '</div>';
         return value;
       },

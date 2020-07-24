@@ -15,6 +15,9 @@ export const fiexedNumber = (value: number|string, sub: number): number => {
 export const numberToFormatString = (value: number|string): string => {
   let data = value;
   if (typeof data === 'string') data = parseFloat(data);
+  // 亿
+  const Y = 10 ** 8;
+  if (value > Y) return `${parseFloat((data / Y).toFixed(2)).toString()}亿`;
   // M
   const M = 10 ** 6;
   if (value > M) return `${parseFloat((data / M).toFixed(2)).toString()}M`;

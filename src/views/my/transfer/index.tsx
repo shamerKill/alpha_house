@@ -17,7 +17,7 @@ const MyTransferScreen: FC = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
 
-  // 转账币种
+  // 划转币种
   const [coinType, setCoinType] = useState('USDT');
   // 来自账户
   const [fromAccount, setFromAccount] = useState('币币账户');
@@ -49,7 +49,7 @@ const MyTransferScreen: FC = () => {
       console.log(type);
       navigation.navigate('transferAccounts');
     },
-    // 反转账户管道
+    // 反划转户管道
     reverseAccounts: () => {
       const data = fromAccount;
       setFromAccount(toAccount);
@@ -65,7 +65,7 @@ const MyTransferScreen: FC = () => {
         fromAccount: state.toAccount,
       }));
     },
-    // 更改转账数量
+    // 更改划转数量
     valueIputChange: (text: string) => {
       const result = text.replace(/[^\w|.]/g, '');
       setChangeValue(result);
@@ -91,7 +91,7 @@ const MyTransferScreen: FC = () => {
       if ((parseFloat(changeValue) || 0) <= 0) {
         showMessage({
           position: 'bottom',
-          message: '请输入正确转账数量',
+          message: '请输入正确划转数量',
           type: 'warning',
         });
         return;
@@ -99,7 +99,7 @@ const MyTransferScreen: FC = () => {
       if (parseFloat(changeValue) > parseFloat(maxValueObj.fromAccount)) {
         showMessage({
           position: 'bottom',
-          message: '转账数量不能大于最多可转账数量',
+          message: '划转数量不能大于最多可划转数量',
           type: 'warning',
         });
         return;
@@ -182,17 +182,17 @@ const MyTransferScreen: FC = () => {
           </TouchableNativeFeedback>
           {/* 标题 */}
           <View style={style.titleView}>
-            <Text style={style.titleTitle}>转账</Text>
+            <Text style={style.titleTitle}>划转</Text>
             {/* <TouchableNativeFeedback onPress={() => navigation.navigate('transferLogs')}>
               <View style={style.titleLogsView}>
-                <Text style={style.titleLogsText}>转账记录</Text>
+                <Text style={style.titleLogsText}>划转记录</Text>
               </View>
             </TouchableNativeFeedback> */}
           </View>
-          {/* 转账币种 */}
+          {/* 划转币种 */}
           <TouchableNativeFeedback onPress={addEvent.selectCoinType}>
             <View style={style.coinTypeView}>
-              <Text style={style.coinTypeDesc}>选择转账币种</Text>
+              <Text style={style.coinTypeDesc}>选择划转币种</Text>
               <View style={style.coinTypeRight}>
                 <Text style={style.coinTypeCoin}>{coinType}</Text>
                 <View style={style.coinTypeMore}>
@@ -238,10 +238,10 @@ const MyTransferScreen: FC = () => {
                 source={require('../../../assets/images/pic/card_bg.png')} />
             </View>
           </View>
-          {/* 转账数量 */}
+          {/* 划转数量 */}
           <View style={style.valueView}>
             <View style={style.valueViewInner}>
-              <Text style={style.valueLabel}>转账数量({coinType})</Text>
+              <Text style={style.valueLabel}>划转数量({coinType})</Text>
               <View style={style.valueInputView}>
                 {
                   changeValue === '' && <Text style={style.valueInputPlaceholder}>0.00</Text>
@@ -253,7 +253,7 @@ const MyTransferScreen: FC = () => {
                   onChange={e => addEvent.valueIputChange(e.nativeEvent.text)} />
               </View>
               <View style={style.valueBottom}>
-                <Text style={style.valueDesc}>最多可转账{maxValue}</Text>
+                <Text style={style.valueDesc}>最多可划转{maxValue}</Text>
                 <TouchableNativeFeedback onPress={() => addEvent.setAllValue()}>
                   <View style={style.valueAllBtn}>
                     <Text style={style.valueAllText}>全部</Text>
@@ -270,7 +270,7 @@ const MyTransferScreen: FC = () => {
           </View>
           <ComFormButton
             containerStyle={style.submitBtn}
-            title={loading ? '转账中' : '转账'}
+            title={loading ? '划转中' : '划转'}
             loading={loading}
             onPress={addEvent.sendTrans} />
         </ScrollView>
@@ -326,7 +326,7 @@ const style = StyleSheet.create({
   titleLogsText: {
     color: getThemeOpacity(themeWhite, 0.6),
   },
-  // 转账币种
+  // 划转币种
   coinTypeView: {
     margin: 10,
     backgroundColor: getThemeOpacity(themeWhite, 0.1),
@@ -355,7 +355,7 @@ const style = StyleSheet.create({
     width: 14,
     height: 14,
   },
-  // 转账账户更改
+  // 划转账户更改
   accountView: {
     position: 'relative',
     height: 140,
@@ -411,7 +411,7 @@ const style = StyleSheet.create({
     height: '100%',
     width: '100%',
   },
-  // 转账数量
+  // 划转数量
   valueView: {
     position: 'relative',
   },

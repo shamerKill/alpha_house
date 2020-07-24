@@ -25,7 +25,7 @@ import Socket, { marketSocket, CoinToCoinSocket } from '../../data/fetch/socket'
 
 // 头部
 const HomeScreenHead: FC = () => {
-  const [userInfoState] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
+  const [userIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
   const searchImg = require('../../assets/images/icons/search.png');
   const commentsImg = require('../../assets/images/icons/comments.png');
   const gotoWithLogin = useGoToWithLogin();
@@ -38,7 +38,7 @@ const HomeScreenHead: FC = () => {
     <View style={homeStyle.homeHead}>
       <Text style={homeStyle.homeHeadText}>
         {
-          userInfoState.account ? `Hi,${userInfoState.account}` : '未登录'
+          userIsLogin ? '欢迎来到ALFAEX' : '未登录'
         }
       </Text>
       <TouchableNativeFeedback
