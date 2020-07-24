@@ -608,10 +608,11 @@ const ComContractIndexBottom: FC<{
     if (!fristChange.current) selectTabRef.current = selectTab;
   }, [selectTab]);
   useEffect(() => {
-    addEvent.getListData();
+    clearTimeout(timer.current);
+    addEvent.getListData(leverType);
     // eslint-disable-next-line prefer-destructuring
     typeCoin.current = coinType.split('/')[0];
-  }, [selectTab, coinType]);
+  }, [selectTab, coinType, leverType]);
   useEffect(() => {
     fristChange.current = false;
   }, []);
@@ -630,10 +631,6 @@ const ComContractIndexBottom: FC<{
         leverType,
       }));
     });
-    clearTimeout(timer.current);
-    timer.current = setTimeout(() => {
-      if (coinType.split('/')[0] === typeCoin.current) addEvent.getListData(leverType);
-    }, 1000 * 5);
   }, [leverType]);
 
   const socket = useRef<Socket|null>(null);

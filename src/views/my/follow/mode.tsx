@@ -27,7 +27,7 @@ const MyFollowModeScreen: FC = () => {
   console.log(userId);
   const descArr = (min: number, max: number, coinType: string) => ([
     `例如您设置跟单金额 x ${coinType}，不论交易员下单多少本金，您的下单本金均为 x ${coinType}。单次最低跟单金额为 ${min} ${coinType}。`,
-    `单日累计跟随本金到达此数值后，将不再您跟随下单，最大为：${max} ${coinType}。`,
+    `单日累计跟随本金为跟单金额的整数倍`,
   ]);
   const coinDataArr = useRef<{id: number|string; symbol: string; num: number}[]>([]);
 
@@ -76,7 +76,7 @@ const MyFollowModeScreen: FC = () => {
       let valueMessage =  '';
       if (parseFloat(dayMoney) < parseFloat(orderMoney)) valueMessage = '单日跟随本金小于单次跟单金额';
       if (parseFloat(orderMoney) < minValue) valueMessage = '单次跟随金额低于最低金额';
-      if (parseFloat(dayMoney) > maxValue) valueMessage = '单日跟随本金大于最大跟随本本金';
+      if (`${parseFloat(dayMoney) % parseFloat(orderMoney)}`.split('.').length === 2) valueMessage = '单日累计跟随本金为跟单金额的整数倍';
       if (valueMessage) {
         return showMessage({
           position: 'bottom',

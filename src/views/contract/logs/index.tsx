@@ -71,7 +71,7 @@ const ContractLogsAllScreen: FC = () => {
           successTime: item.update_time || item.create_time,
           serviceFee: item.fee,
           changeValue: item.profit,
-        })) || []);
+        })).reverse() || []);
       }
     }).catch(err => {
       console.log(err);

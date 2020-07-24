@@ -69,7 +69,7 @@ export class Fetch {
     } catch (err) {
       return {
         status: -10086,
-        message: err.meesage || 'no message',
+        message: err.meesage || '请检查您的网络后重试当前操作',
       };
     }
   }
@@ -126,7 +126,7 @@ export class Fetch {
     } catch (err) {
       return {
         status: -10086,
-        message: err.meesage || 'no message',
+        message: err.meesage || '请检查您的网络后重试当前操作',
       };
     }
   }

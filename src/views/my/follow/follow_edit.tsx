@@ -22,7 +22,7 @@ const MyFollowEditScreen: FC = () => {
   const descArr = (min: number, max: number, coin: string) => ([
     '关闭后不再跟随交易员下单。已跟随开仓的订单，保持同步平仓，不受影响。',
     `例如您设置跟单金额 x ${coin}，不论交易员下单多少本金，您的下单本金均为 x ${coin}。单次最低跟单金额为 ${min} ${coin}。`,
-    `单日累计跟随本金到达此数值后，将不再您跟随下单，最大为：${max} ${coin}。`,
+    `单日累计跟随本金为跟单金额的整数倍`,
   ]);
 
   const [maxValue, setMaxValue] = useState(0);
@@ -33,7 +33,6 @@ const MyFollowEditScreen: FC = () => {
   const [withCoin, setWithCoin] = useState('');
   // 跟单开关
   const [withChecked, setWithChecked] = useState(false);
-  const checkedBox = useRef();
   // 跟单金额
   const [orderMoney, setOrderMoney] = useState('');
   // 单日跟随本金
@@ -82,7 +81,7 @@ const MyFollowEditScreen: FC = () => {
       let valueMessage =  '';
       if (parseFloat(dayMoney) < parseFloat(orderMoney)) valueMessage = '单日跟随本金小于单次跟单金额';
       if (parseFloat(orderMoney) < minValue) valueMessage = '单次跟随金额低于最低金额';
-      if (parseFloat(dayMoney) > maxValue) valueMessage = '单日跟随本金大于最大跟随本本金';
+      if (`${parseFloat(dayMoney) % parseFloat(orderMoney)}`.split('.').length === 2) valueMessage = '单日累计跟随本金为跟单金额的整数倍';
       if (valueMessage) {
         return showMessage({
         position: 'bottom',
