@@ -119,7 +119,7 @@ export const showPhoto: (content: React.ReactElement) => Promise<string> = (cont
         changeViewPhoto && changeViewPhoto(false);
         clearInterval(timer);
       }
-    }, 300);
+    }, 300) as any;
   });
 };
 

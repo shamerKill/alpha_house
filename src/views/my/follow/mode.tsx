@@ -76,7 +76,7 @@ const MyFollowModeScreen: FC = () => {
       let valueMessage =  '';
       if (parseFloat(dayMoney) < parseFloat(orderMoney)) valueMessage = '单日跟随本金小于单次跟单金额';
       if (parseFloat(orderMoney) < minValue) valueMessage = '单次跟随金额低于最低金额';
-      if (`${parseFloat(dayMoney) % parseFloat(orderMoney)}`.split('.').length === 2) valueMessage = '单日累计跟随本金为跟单金额的整数倍';
+      if (parseFloat(dayMoney) / parseFloat(orderMoney) % 1 !== 0) valueMessage = '单日累计跟随本金为跟单金额的整数倍';
       if (valueMessage) {
         return showMessage({
           position: 'bottom',

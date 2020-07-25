@@ -9,6 +9,7 @@ import { TouchableNativeFeedback } from 'react-native-gesture-handler';
 import ImagePicker from 'react-native-image-crop-picker';
 import { showMessage } from 'react-native-flash-message';
 import { useNavigation } from '@react-navigation/native';
+import RNFS from 'react-native-fs';
 import ComLayoutHead from '../../components/layout/head';
 import ComLine from '../../components/line';
 import {
@@ -94,9 +95,20 @@ const MyRealnameScreen: FC = () => {
                 : require('../../assets/images/pic/real_name_caream_after.png')
             } />
           </View>,
-        ).then(data => {
-          if (imageType === 0) setImageBefore({ uri: data });
-          else setImageAfter({ uri: data });
+        ).then(async (data) => {
+          try {
+            // TODO: 拍照没有进行图片压缩
+            const base = await RNFS.readFile(data, 'base64');
+            if (imageType === 0) {
+              setImageBefore({ uri: data });
+              setBaseBefore(base.replace(/\n+/g, ''));
+            } else {
+              setImageAfter({ uri: data });
+              setBaseAfter(base.replace(/\s+/g, ''));
+            }
+          } catch (err) {
+            console.log(err);
+          }
           imageIsUpload.current[imageType] = true;
         });
       }
@@ -139,7 +151,8 @@ const MyRealnameScreen: FC = () => {
       // loading.current = true;
       const closeLoading = showComLoading('上传中');
       try {
-        const [beforeRemote, afterRemote] = await Promise.all([addEvent.upLoadPic(baseBefore), addEvent.upLoadPic(baseAfter)]);
+        const beforeRemote = await addEvent.upLoadPic(baseBefore);
+        const afterRemote = await addEvent.upLoadPic(baseAfter);
         const result = await ajax.post('/v1/auth/action_auth', {
           // 正面
           positive_photo: beforeRemote,
@@ -150,7 +163,6 @@ const MyRealnameScreen: FC = () => {
           id_card: cardNum,
           token: '',
         });
-        console.log(result);
         if (result.status === 200) {
           showMessage({
             position: 'bottom',
@@ -190,13 +202,12 @@ const MyRealnameScreen: FC = () => {
 
   useEffect(() => {
     ajax.get('/v1/auth/auth_view').then(async data => {
-      console.log(data);
       // 如果有类型
       if (data?.data?.data) {
         const user = data.data.data;
         if (user.status) setSubmitType(data.data.data.status);
         if (user.status !== '3') {
-          if (user.positive_photo) setImageBefore({ uri: user.back_photo });
+          if (user.positive_photo) setImageBefore({ uri: user.positive_photo });
           if (user.back_photo) setImageAfter({ uri: user.back_photo });
           if (user.real_name) setRealName(user.real_name);
           if (user.id_card) setCardNum(user.id_card);

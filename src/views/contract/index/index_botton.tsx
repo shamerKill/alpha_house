@@ -525,14 +525,17 @@ const ComContractIndexBottom: FC<{
   const timer = useRef(setTimeout(() => {}, 1));
   const typeCoin = useRef(coinType.split('/')[0]);
 
+  const countNum = useRef(0);
+
   const addEvent = {
-    getListData: (lever: string = leverType) => {
+    getListData: (count: number, lever: string = leverType) => {
       let coin = coinType.split('/')[0];
       if (!coin) {
         coin = typeCoin.current;
       }
       if (selectTabRef.current === 0) {
         ajax.get(`/contract/api/v1/bian/holdhourse_log?symbol=${coin}`).then(data => {
+          if (count !== countNum.current) return;
           if (data.status === 200) {
             setCanCloseOrderValue({
               lang: '0',
@@ -569,11 +572,15 @@ const ComContractIndexBottom: FC<{
         }).finally(() => {
           clearTimeout(timer.current);
           timer.current = setTimeout(() => {
-            if (coin === typeCoin.current) addEvent.getListData(lever);
+            if (coin === typeCoin.current) {
+              countNum.current++;
+              addEvent.getListData(countNum.current, lever);
+            }
           }, 1000 * 5);
         });
       } else if (selectTab === 1) {
         ajax.get(`/contract/api/v1/bian/entrust_log?symbol=${coin}`).then(data => {
+          if (count !== countNum.current) return;
           if (data.status === 200) {
             setGeneralEntrustementData(data?.data?.map((item: any) => {
               return {
@@ -596,7 +603,10 @@ const ComContractIndexBottom: FC<{
         }).finally(() => {
           clearTimeout(timer.current);
           timer.current = setTimeout(() => {
-            if (coin === typeCoin.current) addEvent.getListData(lever);
+            if (coin === typeCoin.current) {
+              countNum.current++;
+              addEvent.getListData(countNum.current, lever);
+            }
           }, 1000 * 5);
         });
       }
@@ -609,7 +619,8 @@ const ComContractIndexBottom: FC<{
   }, [selectTab]);
   useEffect(() => {
     clearTimeout(timer.current);
-    addEvent.getListData(leverType);
+    countNum.current++;
+    addEvent.getListData(countNum.current, leverType);
     // eslint-disable-next-line prefer-destructuring
     typeCoin.current = coinType.split('/')[0];
   }, [selectTab, coinType, leverType]);
@@ -639,7 +650,8 @@ const ComContractIndexBottom: FC<{
     if (!userInfo.token) return;
     const tickerImg = `gold.market.ALL.account.${userInfo.token}`;
     const socketListener = () => {
-      addEvent.getListData();
+      countNum.current++;
+      addEvent.getListData(countNum.current);
     };
     if (routePage === 'Contract') {
       // 获取USDT合约
