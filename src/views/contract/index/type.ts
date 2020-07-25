@@ -19,6 +19,7 @@ export type TypePositionData = {
   useBond: string; // 占用保证金
   willBoomPrice: string; // 预估强评价
   useBondRatio: string; // 维持保证金率
+  time: string; // 订单时间
   // 没有止盈止损
   // stopWinValue: string; // 止盈手数
   // stopLowValue: string; // 止损手数

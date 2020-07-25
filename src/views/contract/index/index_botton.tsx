@@ -176,8 +176,18 @@ const ComContractIndexListPosition: FC<{data: TypePositionData, leverType: strin
         ]}>
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;占用保证金&nbsp;{data.useBond}USDT
         </Text>
-        <Text style={style.listInfoText}>预估强评价&nbsp;{data.willBoomPrice}</Text>
-        {/* <Text style={style.listInfoText}>维持保证金率&nbsp;{data.useBondRatio}</Text> */}
+        <Text style={[
+          style.listInfoText,
+          { width: '33%' },
+        ]}>
+          预估强评价&nbsp;{data.willBoomPrice}
+        </Text>
+        <Text style={[
+          style.listInfoText,
+          { width: '66%', textAlign: 'left' },
+        ]}>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;开仓时间&nbsp;{data.time}
+        </Text>
       </View>
       {/* 按钮 */}
       <View style={style.listBtns}>
@@ -535,6 +545,7 @@ const ComContractIndexBottom: FC<{
       }
       if (selectTabRef.current === 0) {
         ajax.get(`/contract/api/v1/bian/holdhourse_log?symbol=${coin}`).then(data => {
+          console.log(JSON.stringify(data, null, 2));
           if (count !== countNum.current) return;
           if (data.status === 200) {
             setCanCloseOrderValue({
@@ -564,6 +575,7 @@ const ComContractIndexBottom: FC<{
                 allValue: item.surplus_coin_num,
                 useBond: parseFloat(data.data.risk[Number(item.type === '2')].initialMargin).toFixed(4),
                 willBoomPrice: item.flat_price,
+                time: item.create_time,
               };
             }) || []);
           }
