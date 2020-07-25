@@ -93,7 +93,7 @@ const MyFollowUserDetails: FC = () => {
         });
         const result = data.data.orderList.map((item: any) => {
           return {
-            type: Number(item.sell_buy === '1'),
+            type: Number(item.type === '1'),
             win: item.profit_per >= 0,
             coinType: item.symbol,
             multiple: `${item.lever}x`,

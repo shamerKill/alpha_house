@@ -38,7 +38,7 @@ const MyFollowListScreen: FC = () => {
             head: getHeadImage()[item.headimg || 0],
             name: item.nickname,
             totalProfit: item.track_profit,
-            lastThreeWeek: Math.floor(item.track_success_per * 10000) / 100,
+            lastThreeWeek: Math.floor((item.track_success_per / item.order_num) * 10000) / 100,
             totalPerson: item.track_num,
             id: item.id,
           };
