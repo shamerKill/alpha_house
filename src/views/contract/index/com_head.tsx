@@ -12,11 +12,17 @@ import {
 } from '../../../config/theme';
 import Socket, { marketSocket } from '../../../data/fetch/socket';
 import { useGoToWithLogin } from '../../../tools/routeTools';
+import ComFormButton from '../../../components/form/button';
 
-export const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutList[]; changeCoin: (id: TypeLeftOutList['id']) => void;}> = ({
+export const ContractHeadLeftView: FC<{
+  coinType: string;
+  leftList: TypeLeftOutList[];
+  changeCoin: (id: TypeLeftOutList['id']) => void;
+  goToWithLogin: ReturnType<typeof useGoToWithLogin>}> = ({
   coinType,
   leftList,
   changeCoin,
+  goToWithLogin,
 }) => {
   const animatedValue = useRef(new Animated.Value(-400));
 
@@ -83,6 +89,7 @@ export const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutLi
     };
   }, []);
 
+
   return (
     <Animated.View style={[
       style.leftListView,
@@ -122,6 +129,18 @@ export const ContractHeadLeftView: FC<{coinType: string; leftList: TypeLeftOutLi
               );
             })
           }
+          <ComFormButton
+            style={{ marginTop: 20 }}
+            title="查看总持仓"
+            onPress={() => {
+              modalOutBg.outBgsetShow(false);
+              goToWithLogin(
+                'ContractAllPosition',
+                {
+                  coins: list.map(item => item.id),
+                },
+              );
+            }} />
         </ScrollView>
       </SafeAreaView>
     </Animated.View>
@@ -146,7 +165,8 @@ const ContractHeadView: FC<{
       modalOutBg.outBgsetChildren(<ContractHeadLeftView
         changeCoin={(id) => addEvent.goToLink(id)}
         leftList={leftList}
-        coinType={coinType} />);
+        coinType={coinType}
+        goToWithLogin={goToWithLogin} />);
       modalOutBg.outBgsetShow(true);
       modalOutBg.outBgCanClose(true);
     },
