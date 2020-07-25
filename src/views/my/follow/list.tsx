@@ -33,12 +33,12 @@ const MyFollowListScreen: FC = () => {
   useEffect(() => {
     ajax.get('/v1/track/list').then(data => {
       if (data.status === 200) {
-        const result: InFollowLi[] = data.data.map((item: any) => {
+        const result: InFollowLi[] = Object.values(data.data).map((item: any) => {
           return {
             head: getHeadImage()[item.headimg || 0],
             name: item.nickname,
             totalProfit: item.track_profit,
-            lastThreeWeek: Math.floor(item.track_success_per * 10000) / 100,
+            lastThreeWeek: Math.floor((item.track_success_per) * 10000) / 100,
             totalPerson: item.track_num,
             id: item.id,
           };

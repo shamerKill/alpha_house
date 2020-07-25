@@ -93,7 +93,7 @@ const MyFollowUserDetails: FC = () => {
         });
         const result = data.data.orderList.map((item: any) => {
           return {
-            type: Number(item.sell_buy === '1'),
+            type: Number(item.type === '1'),
             win: item.profit_per >= 0,
             coinType: item.symbol,
             multiple: `${item.lever}x`,
@@ -183,7 +183,7 @@ const MyFollowUserDetails: FC = () => {
         <View style={style.storyLogsView}>
           <View style={style.storyLogsViewTitle}>
             <Text style={style.storyLogsViewTitleleft}>历史持仓</Text>
-            <Text style={style.storyLogsViewTitleRight}>仅最近50条数据，数据每小时更新一次</Text>
+            <Text style={style.storyLogsViewTitleRight}>仅最近50条数据</Text>
           </View>
           {
             logList.map(item => (
@@ -253,7 +253,11 @@ const MyFollowUserDetails: FC = () => {
                     <Text style={style.storyLogsBoxBottomText}>
                       订单号:{item.orderId}
                     </Text>
-                    <Text style={style.storyLogsBoxBottomText}>
+                    <Text style={[
+                      style.storyLogsBoxBottomText,
+                      item.orderType === '持仓中' && { color: themeGreen },
+                      item.orderType === '部分平仓' && { color: themeRed },
+                    ]}>
                       订单类型:{item.orderType}
                     </Text>
                   </View>
