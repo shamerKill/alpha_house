@@ -3,13 +3,18 @@ import {
   View, Image, Text, StyleSheet,
 } from 'react-native';
 import { Button } from 'react-native-elements';
+import { useNavigation } from '@react-navigation/native';
 import { TypeMarketListLine } from './type';
 import ComMarketLine from './com_line';
 import { themeGray, defaultThemeBgColor, themeBlack } from '../../../config/theme';
 import { useGoToWithLogin } from '../../../tools/routeTools';
+import useGetDispatch from '../../../data/redux/dispatch';
+import { InState } from '../../../data/redux/state';
 
 const MarketSelfView: FC<{data: TypeMarketListLine[]}> = ({ data }) => {
+  const [userIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
   const goToWidthLogin = useGoToWithLogin();
+  const navigation = useNavigation();
 
   const addEvent = {
     addLine: () => {
@@ -27,13 +32,31 @@ const MarketSelfView: FC<{data: TypeMarketListLine[]}> = ({ data }) => {
               resizeMode="contain"
               style={style.noDataImage}
               source={require('../../../assets/images/pic/market_no_coin.png')} />
-            <Text style={style.noDataText}>您还没有收藏记录</Text>
-            <Button
-              containerStyle={style.noDataButtonContainer}
-              buttonStyle={style.noDataButton}
-              titleStyle={style.noDataButtonText}
-              onPress={addEvent.addLine}
-              title="添加自选" />
+            {
+              userIsLogin
+                ? (
+                  <>
+                    <Text style={style.noDataText}>您还没有收藏记录</Text>
+                    <Button
+                      containerStyle={style.noDataButtonContainer}
+                      buttonStyle={style.noDataButton}
+                      titleStyle={style.noDataButtonText}
+                      onPress={addEvent.addLine}
+                      title="添加自选" />
+                  </>
+                )
+                : (
+                  <>
+                    <Text style={style.noDataText}>未登录</Text>
+                    <Button
+                      containerStyle={style.noDataButtonContainer}
+                      buttonStyle={style.noDataButton}
+                      titleStyle={style.noDataButtonText}
+                      onPress={() => navigation.navigate('Login')}
+                      title="前往登录" />
+                  </>
+                )
+            }
           </View>
         )
       }

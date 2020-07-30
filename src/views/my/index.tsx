@@ -17,6 +17,7 @@ import { InState, ActionsType } from '../../data/redux/state';
 const MyScreen: FC = () => {
   const [userInfo, dispatchUserInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const [userIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
   const goToWithLogin = useGoToWithLogin();
   // 头部颜色
   const [statusBar, setStatusBar] = useState('#ccc9fe');
@@ -79,8 +80,12 @@ const MyScreen: FC = () => {
     if (routePage !== 'My') return;
     setUserPhone(userInfo.account || '未登录');
     setUserId(userInfo.id);
-    setUserBTC(userInfo.assets);
+    setUserBTC(userInfo.assets || '--');
     setUserRMB('--');
+    if (!userIsLogin) {
+      setUserHead(getHeadImage()[0]);
+      return;
+    }
     ajax.post('/userinfo', {}).then(data => {
       if (data.status === 200) {
         if (data.data.auth_status) setSubmitType(data.data.auth_status);
@@ -98,6 +103,8 @@ const MyScreen: FC = () => {
         setUserRMB(data.data.goldcoin);
         setUserBTC(data.data.goldbtc);
       } else {
+        setUserPhone('未登录');
+        setUserId('');
         setUserHead(getHeadImage()[0]);
         setUserRMB('--');
         setUserBTC('--');

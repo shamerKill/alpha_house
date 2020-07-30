@@ -165,6 +165,7 @@ const MarketKlineDepthView: FC = () => {
   useEffect(() => {
     const tickerImg = `gold.market.${routeCoinType}.depth`;
     const socketListener = (message: any) => {
+      if (message.buy.length < 10 || message.sell.length < 10) return;
       setBuyList(message.buy.map((item: any, index: number) => ({
         price: item[0],
         value: item[1],

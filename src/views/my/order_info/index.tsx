@@ -6,7 +6,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { ListItem } from 'react-native-elements';
 import ComLayoutHead from '../../../components/layout/head';
 import {
-  defaultThemeColor, themeWhite, themeGray, themeBlack,
+  defaultThemeColor, themeWhite, themeGray, themeBlack, defaultThemeBgColor,
 } from '../../../config/theme';
 import ComLine from '../../../components/line';
 import ComFormButton from '../../../components/form/button';
@@ -184,7 +184,7 @@ const MyOrderInfo: FC = () => {
             return state.concat(data?.data?.map((item: any) => ({
               title: item.msg || item.account,
               time: item.create_time,
-              number: item.num,
+              number: item.num.toFixed(5),
               id: item.id,
             })) || []);
           });
@@ -263,14 +263,40 @@ const MyOrderInfo: FC = () => {
       onMomentumScrollEnd={addEvent.onMomentumScrollEnd}>
         {
           orderList.map((item, index) => (
-            <ListItem
+            <View
               key={index}
-              title={item.title}
-              subtitle={item.time}
-              rightTitle={`${item.number} USDT`}
-              subtitleStyle={{ color: themeGray, paddingTop: 5 }}
-              rightTitleStyle={{ color: themeBlack, fontSize: 14 }}
-              bottomDivider />
+              style={{
+                flexDirection: 'row',
+                borderBottomColor: defaultThemeBgColor,
+                borderBottomWidth: 1,
+                paddingTop: 15,
+                paddingBottom: 15,
+                paddingLeft: 5,
+                paddingRight: 5,
+                alignItems: 'center',
+              }}>
+              <Text style={{
+                flex: 2,
+                color: themeBlack,
+              }}>
+                {item.title}
+              </Text>
+              <Text style={{
+                  flex: 2,
+                  color: defaultThemeColor,
+                  textAlign: 'right',
+                }}>
+                {`${item.number} USDT`}
+              </Text>
+              <Text style={{
+                flex: 2,
+                fontSize: 10,
+                color: themeGray,
+                textAlign: 'right',
+              }}>
+                {item.time}
+              </Text>
+            </View>
           ))
         }
       </ScrollView>

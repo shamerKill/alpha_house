@@ -1,10 +1,11 @@
 import React from 'react';
 import TypeStackValue from '../stackType';
 import ComIconBotton from '../../components/icon/bottom';
-import ContractScreen from '../../views/contract/index';
+// import ContractScreen from '../../views/contract/index';
 import ContractOrderCloseScreen from '../../views/contract/order_close';
 import ContractWillCloseScreen from '../../views/contract/will_close';
 import ContractLogsAllScreen from '../../views/contract/logs';
+import ContractIndexScreen from '../../views/contract/index/index';
 
 const ContractRoutes: TypeStackValue = [
   {
@@ -18,7 +19,7 @@ const ContractRoutes: TypeStackValue = [
             : require('../../assets/images/icons/contract_none.png')
         } />
     ),
-    component: ContractScreen,
+    component: ContractIndexScreen,
     screens: [
       {
         name: 'ContractOrderClose',

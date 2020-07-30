@@ -25,6 +25,7 @@ import Socket, { marketSocket, CoinToCoinSocket } from '../../data/fetch/socket'
 
 // 头部
 const HomeScreenHead: FC = () => {
+  const navitaion = useNavigation();
   const [userIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
   const searchImg = require('../../assets/images/icons/search.png');
   const commentsImg = require('../../assets/images/icons/comments.png');
@@ -36,11 +37,28 @@ const HomeScreenHead: FC = () => {
   const commentBtn = () => gotoWithLogin('HomeNewsList');
   return (
     <View style={homeStyle.homeHead}>
-      <Text style={homeStyle.homeHeadText}>
-        {
-          userIsLogin ? '欢迎来到ALFAEX' : '未登录'
-        }
-      </Text>
+      {
+        userIsLogin ? (
+          <Text style={homeStyle.homeHeadText}>
+            欢迎来到ALFAEX
+          </Text>
+        ) : (
+          <View style={{ flex: 1 }}>
+            <TouchableNativeFeedback onPress={() => {
+              navitaion.navigate('Login');
+            }}>
+              <Text style={{
+                fontWeight: 'bold',
+                fontSize: 20,
+                lineHeight: 40,
+                color: themeBlack,
+              }}>
+                未登录
+              </Text>
+            </TouchableNativeFeedback>
+          </View>
+        )
+      }
       <TouchableNativeFeedback
         onPress={searchBtn}>
         <Image

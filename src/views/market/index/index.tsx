@@ -22,6 +22,7 @@ import ajax from '../../../data/fetch';
 const MarketScreen: FC = () => {
   const screenWidth = Math.round(Dimensions.get('screen').width);
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const [userIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
 
   const goToWithLogin = useGoToWithLogin();
   const headScrollRef = useRef<ScrollView>(null);
@@ -46,7 +47,6 @@ const MarketScreen: FC = () => {
   const addEvent = {
     // 前往页面
     goToLinkWithLogin: (link: string, params?: object) => {
-      console.log(dataView[0]);
       goToWithLogin(link, params);
     },
     // 点击头部切换
@@ -200,18 +200,20 @@ const MarketScreen: FC = () => {
         console.log(err);
       });
       // 获取自选
-      ajax.get('/v1/market/follow').then(res => {
-        if (res.status === 200) {
-          selfLineType.current = res.data.map((item: any) => {
-            return {
-              type: Number(item.type) - 1,
-              symbol: item.symbol,
-            };
-          });
-        }
-      }).catch(err => {
-        console.log(err);
-      });
+      if (userIsLogin) {
+        ajax.get('/v1/market/follow').then(res => {
+          if (res.status === 200) {
+            selfLineType.current = res.data.map((item: any) => {
+              return {
+                type: Number(item.type) - 1,
+                symbol: item.symbol,
+              };
+            });
+          }
+        }).catch(err => {
+          console.log(err);
+        });
+      }
     } else if (socket.current) {
       if (subSocket.current) return;
       subSocket.current = true;

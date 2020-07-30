@@ -11,7 +11,7 @@ const useGetDispatch = <T>(
   const state = useSelector<InState, T>(store => {
     let obj: any = store;
     keys.forEach(key => {
-      if (obj[key]) obj = obj[key];
+      if (obj[key] !== undefined) obj = obj[key];
     });
     return obj as T;
   });

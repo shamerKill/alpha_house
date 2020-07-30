@@ -5,6 +5,7 @@ import {
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { Image, Text } from 'react-native-elements';
 import { ScrollView } from 'react-native-gesture-handler';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, defaultThemeColor, themeGray, themeTextGray, themeBlack, themeGreen, themeRed, defaultThemeBgColor,
@@ -66,7 +67,14 @@ const MyFollowUserDetails: FC = () => {
 
   const addEvent = {
     withPerson: () => {
-      if (!userInfo?.name) return;
+      if (!userInfo?.name) {
+        showMessage({
+          position: 'bottom',
+          message: '抱歉，当前大佬未完善个人资料，无法进行跟随',
+          type: 'info',
+        });
+        return;
+      }
       goToWithLogin('followMode', { id: userId, name: userInfo?.name });
     },
   };
@@ -84,7 +92,7 @@ const MyFollowUserDetails: FC = () => {
           desc: userData.description,
         });
         setUserProfit({
-          totalProfit: `${userData.track_profit}%`,
+          totalProfit: `${userData.track_profit}`,
           lastThreeProfit: `${Math.floor(userData.track_success_per * 10000) / 100}%`,
           totalDays: data.data.track_day,
           totalLength: userData.order_num,
@@ -94,12 +102,12 @@ const MyFollowUserDetails: FC = () => {
         const result = data.data.orderList.map((item: any) => {
           return {
             type: Number(item.type === '1'),
-            win: item.profit_per >= 0,
+            win: item.already_profit >= 0,
             coinType: item.symbol,
             multiple: `${item.lever}x`,
             openPrice: item.price,
             closePrice: item.deal_price,
-            profit: `${item.profit_per}%`,
+            profit: `${item.already_profit}`,
             openTime: item.create_time,
             closeTime: item.update_time,
             orderId: item.id,
@@ -235,7 +243,7 @@ const MyFollowUserDetails: FC = () => {
                       {item.profit}
                     </Text>
                     <Text style={style.storyLogsBoxTopRightTextDesc}>
-                      收益率
+                      盈亏
                     </Text>
                   </View>
                 </View>
@@ -455,7 +463,7 @@ const style = StyleSheet.create({
   },
   storyLogsBoxTopRightTextProfit: {
     textAlign: 'right',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
     paddingTop: 10,
   },

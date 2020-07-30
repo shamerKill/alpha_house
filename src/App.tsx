@@ -1,19 +1,47 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useCallback } from 'react';
 import SplashScreen from 'react-native-splash-screen';
-import { View } from 'react-native';
-import FlashMessage from 'react-native-flash-message';
+import { View, AppState, AppStateStatus } from 'react-native';
+import FlashMessage, { showMessage } from 'react-native-flash-message';
 // import KeyboardSpacer from 'react-native-keyboard-spacer';
 import DataScreen from './data';
 import ComModalOutBg from './components/modal/outBg';
 import ComScanView from './components/scan';
 import ComPhotoView from './components/scan/photo';
 import CheckVersion from './components/hot_up';
+import { marketSocket, CoinToCoinSocket } from './data/fetch/socket';
 
 
 const App: FC = () => {
-  useEffect(() => {
+  const closeSplash = useCallback(() => {
     // 关闭启动图
-    SplashScreen.hide();
+    Promise.all([CoinToCoinSocket.successConnect, marketSocket.successConnect]).then(() => {
+    }).catch(() => {
+      showMessage({
+        position: 'bottom',
+        message: '请检查您的网络',
+        type: 'warning',
+      });
+    }).finally(() => {
+      SplashScreen.hide();
+    });
+  }, []);
+  const listenerApp = useCallback((state: AppStateStatus) => {
+    if (state === 'active') {
+      marketSocket.sendMessageAgain();
+      CoinToCoinSocket.sendMessageAgain();
+    } else {
+      marketSocket.sendMessageWite();
+      CoinToCoinSocket.sendMessageWite();
+    }
+  }, []);
+  useEffect(() => {
+    // 监听app是否在前台显示
+    closeSplash();
+    AppState.removeEventListener('change', listenerApp);
+    AppState.addEventListener('change', listenerApp);
+    return () => {
+      AppState.removeEventListener('change', listenerApp);
+    };
   }, []);
   return (
     <View style={{ flex: 1 }}>

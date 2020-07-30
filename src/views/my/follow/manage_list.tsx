@@ -94,7 +94,7 @@ const MyFollowManageListScreen: FC = () => {
     ajax.get('/v1/track/own_list').then(data => {
       if (data.status) {
         setOrderTotal(data.data.orderNum);
-        setOrderWin(`${data.data.profitNum}%`);
+        setOrderWin(`${parseFloat(data.data.profitNum).toFixed(2)}%`);
         const result = data.data?.list?.map((item: any) => ({
           head: getHeadImage()[Number(item.headimg) || 0],
           name: item.nickname,

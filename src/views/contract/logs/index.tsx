@@ -8,7 +8,7 @@ import { themeWhite } from '../../../config/theme';
 import ComFormButton from '../../../components/form/button';
 import ComLine from '../../../components/line';
 import { ComContractIndexListGeneralLog, ComContractIndexListHistory } from './list';
-import { TypeGeneralEntrustemntLog, TypeHistoryLog } from '../index/type';
+import { TypeGeneralEntrustemntLog, TypeHistoryLog } from '../_index/type';
 import ajax from '../../../data/fetch';
 
 const ContractLogsAllScreen: FC = () => {
@@ -59,7 +59,7 @@ const ContractLogsAllScreen: FC = () => {
   // };
 
   useEffect(() => {
-    ajax.get(`/contract/api/v1/bian/dealorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
+    ajax.get(`/contract/api/v1/bian/dealorder_log?symbol=${coinType.replace('USDT', '')}`).then(data => {
       if (data.status === 200) {
         setHistoryLogsData(data?.data?.map((item: any, index: number) => ({
           id: index,
@@ -71,12 +71,12 @@ const ContractLogsAllScreen: FC = () => {
           successTime: item.update_time || item.create_time,
           serviceFee: item.fee,
           changeValue: item.profit,
-        })).reverse() || []);
+        })) || []);
       }
     }).catch(err => {
       console.log(err);
     });
-    ajax.get(`/contract/api/v1/bian/allorder_log?symbol=${coinType.split('/')[0]}`).then(data => {
+    ajax.get(`/contract/api/v1/bian/allorder_log?symbol=${coinType.replace('USDT', '')}`).then(data => {
       if (data.status === 200) {
         setGeneralEntrustementData(data?.data?.map((item: any) => ({
           id: item.id,

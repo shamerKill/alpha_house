@@ -37,7 +37,9 @@ export class SocketClass {
 
   // 添加请求
   private saveSendReq = (value: string) => {
-    this.nowSendReq.push(value);
+    if (!this.nowSendReq.includes(value)) {
+      this.nowSendReq.push(value);
+    }
   };
 
   // 删除请求
@@ -52,7 +54,7 @@ export class SocketClass {
   // 接受数据方法数组
   private onMessageList: {
     id: string;
-    func: (data: string) => any;
+    func: ((data: string) => any)[];
   }[] = [];
 
   constructor(
@@ -99,6 +101,14 @@ export class SocketClass {
   private onError: WebSocket['onerror'] = () => {
     this.isOpen = false;
     this.isError = true;
+    // 重新开启
+    console.log('Socket Error');
+    console.log(this.nowSendReq);
+    if (this.nowSendReq.length) {
+      setTimeout(() => {
+        this.sendMessageAgain();
+      }, 300);
+    }
   };
 
   // 开启成功
@@ -112,17 +122,11 @@ export class SocketClass {
 
   // 关闭
   private onClose: WebSocket['onclose'] = () => {
-    console.log('close');
-    // 短线重连
-    if (this.nowSendReq.length) {
-      console.log('重连');
-      this.getSocket().then(ws => {
-        this.nowSendReq.forEach((value) => {
-          ws.send(value, 'sub');
-        });
-      });
-    }
+    console.log('Socket Close');
+    console.log(this.nowSendReq);
+    // 断线重连
     this.isOpen = false;
+    this.sendMessageAgain();
     // 清除定时器
     if (this.pingPongTime !== null) clearInterval(this.pingPongTime);
   };
@@ -139,7 +143,7 @@ export class SocketClass {
     }
     this.onMessageList.forEach(item => {
       if (data.ch === item.id && item.func) {
-        item.func(data);
+        item.func.forEach(func => func(data));
       }
     });
   };
@@ -153,7 +157,7 @@ export class SocketClass {
           resolve();
           clearInterval(timer);
         } else if (this.isError) {
-          reject(new Error(this.socketErrorMessage));
+          reject(this.socketErrorMessage);
         }
       }, 100);
     });
@@ -193,6 +197,32 @@ export class SocketClass {
     return this.isOpen;
   }
 
+  // 重新发送所有请求
+  sendMessageAgain() {
+    if (this.nowSendReq.length) {
+      this.getSocket().then(ws => {
+        this.nowSendReq.forEach((value) => {
+          ws.send(value, 'sub');
+        });
+      }).catch(err => {
+        console.log('重新发送失败', err);
+      });
+    }
+  }
+
+  // 取消所有请求
+  sendMessageWite() {
+    if (this.nowSendReq.length) {
+      this.getSocket().then(ws => {
+        this.nowSendReq.forEach((value) => {
+          ws.socket?.send(`{"unsub":"${SocketClass.valueToString(value)}"}`);
+        });
+      }).catch(err => {
+        console.log('重新发送失败', err);
+      });
+    }
+  }
+
   // 主动关闭
   close() {
     try {
@@ -228,15 +258,37 @@ export class SocketClass {
   addListener(func: (data: string|object) => any, tip?: string): boolean | string {
     // 去重判断
     let hasFunc = false;
-    this.onMessageList.forEach(item => {
-      if (item.func === func) hasFunc = true;
+    let hasTip = false;
+    let hasTipFuncs = [];
+    let hasTipFuncIndex = 0;
+    this.onMessageList.forEach((item, index) => {
+      if (tip === item.id) {
+        hasTip = true;
+        hasTipFuncs = [...item.func];
+        hasTipFuncIndex = index;
+      }
+      item.func.forEach(inF => {
+        if (inF === func) hasFunc = true;
+      });
     });
     if (!hasFunc) {
       const id = tip || onlyData.getOnlyData();
-      this.onMessageList.push({
-        id,
-        func,
-      });
+      if (hasTip) {
+        hasTipFuncs.push(func);
+        this.onMessageList.splice(
+          hasTipFuncIndex,
+          1,
+          {
+            id,
+            func: hasTipFuncs,
+          },
+        );
+      } else {
+        this.onMessageList.push({
+          id,
+          func: [func],
+        });
+      }
       // 返回函数句柄
       return id;
     }
@@ -245,22 +297,38 @@ export class SocketClass {
 
   // 删除接受数据的函数
   removeListener(func: ((data: string|object) => any) | string) {
-    let funcNumber = -1;
     // 如果传入的是函数句柄
     if (typeof func === 'string') {
+      let funcNumber = -1;
       this.onMessageList.forEach((item, index) => {
         if (item.id === func) funcNumber = index;
       });
+      if (funcNumber !== -1) {
+        this.onMessageList.splice(funcNumber, 1);
+        return true;
+      }
     } else {
-      this.onMessageList.forEach((item, index) => {
-        if (item.func === func) funcNumber = index;
+      // 如果传入的是函数
+      let funcNumber = -1;
+      this.onMessageList = this.onMessageList.map((item, index) => {
+        const result = { ...item };
+        let inFuncNumber = -1;
+        result.func.forEach((inF, ind) => {
+          if (inF === func) inFuncNumber = ind;
+        });
+        if (inFuncNumber !== -1) {
+          result.func.splice(inFuncNumber, 1);
+        }
+        if (result.func.length === 0) funcNumber = index;
+        return result;
       });
-    }
-    // 判断删除数据
-    if (funcNumber !== -1) {
-      this.onMessageList.splice(funcNumber, 1);
+      if (funcNumber !== -1) {
+        this.onMessageList.splice(funcNumber, 1);
+        return true;
+      }
       return true;
     }
+    // 判断删除数据
     return false;
   }
 

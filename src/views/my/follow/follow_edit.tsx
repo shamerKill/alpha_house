@@ -1,15 +1,17 @@
-import React, { FC, useState, useEffect, useRef } from 'react';
+import React, {
+  FC, useState, useEffect, useRef,
+} from 'react';
 import {
-  TouchableNativeFeedback, Text, StyleSheet, View, Image as StaticImage, Animated,
+  TouchableNativeFeedback, Text, StyleSheet, View,
 } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { TextInput } from 'react-native-gesture-handler';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import {
   defaultThemeColor, themeWhite, themeTextGray, defaultThemeBgColor, themeGray,
 } from '../../../config/theme';
 import ComLine from '../../../components/line';
-import { showMessage } from 'react-native-flash-message';
 import showComAlert from '../../../components/modal/alert';
 import ComFormButton from '../../../components/form/button';
 import ComFormCheckRadius from '../../../components/form/checkRadius';
@@ -22,7 +24,7 @@ const MyFollowEditScreen: FC = () => {
   const descArr = (min: number, max: number, coin: string) => ([
     '关闭后不再跟随交易员下单。已跟随开仓的订单，保持同步平仓，不受影响。',
     `例如您设置跟单金额 x ${coin}，不论交易员下单多少本金，您的下单本金均为 x ${coin}。单次最低跟单金额为 ${min} ${coin}。`,
-    `单日累计跟随本金为跟单金额的整数倍`,
+    '单日累计跟随本金为跟单金额的整数倍',
   ]);
 
   const [maxValue, setMaxValue] = useState(0);
@@ -54,21 +56,21 @@ const MyFollowEditScreen: FC = () => {
         close: {
           text: '取消',
           onPress: () => close(),
-        }
+        },
       });
     },
     // 设置数量
-    setValue: (setType: React.Dispatch<React.SetStateAction<string>>, value: string, type?: 'cut'|'add') => {
+    setValue: (setType: React.Dispatch<React.SetStateAction<string>>, value: string) => {
       setType(() => {
-        const resultString = value.match(/[\d|\.]/g)?.join('');
-        if (!resultString) return '0';
-        let result = parseFloat(resultString);
-        if (type) {
-          if (type === 'cut') (result !== 0) && result--;
-          if (type === 'add') result++;
-          return result.toString();
-        }
-        return resultString;
+        // const resultString = value.match(/[\d|\.]/g)?.join('');
+        // if (!resultString) return '0';
+        // let result = parseFloat(resultString);
+        // if (type) {
+        //   if (type === 'cut') (result !== 0) && result--;
+        //   if (type === 'add') result++;
+        //   return result.toString();
+        // }
+        return value;
       });
     },
     // 跟单开关
@@ -78,17 +80,18 @@ const MyFollowEditScreen: FC = () => {
     },
     // 提交验证
     verfiy: () => {
-      let valueMessage =  '';
+      let valueMessage = '';
       if (parseFloat(dayMoney) < parseFloat(orderMoney)) valueMessage = '单日跟随本金小于单次跟单金额';
       if (parseFloat(orderMoney) < minValue) valueMessage = '单次跟随金额低于最低金额';
-      if (parseFloat(dayMoney) / parseFloat(orderMoney) % 1 !== 0) valueMessage = '单日累计跟随本金为跟单金额的整数倍';
+      if ((parseFloat(dayMoney) / parseFloat(orderMoney)) % 1 !== 0) valueMessage = '单日累计跟随本金为跟单金额的整数倍';
       if (valueMessage) {
-        return showMessage({
-        position: 'bottom',
+        showMessage({
+          position: 'bottom',
           message: '保存失败',
           description: valueMessage,
           type: 'warning',
         });
+        return;
       }
       addEvent.submit();
     },
@@ -100,7 +103,7 @@ const MyFollowEditScreen: FC = () => {
         contract_type: 1,
         symbol: coinID.current,
         num: orderMoney,
-        day_num: dayMoney
+        day_num: dayMoney,
       }).then(data => {
         if (data.status === 200) {
           addEvent.submitSuccess();
@@ -130,7 +133,7 @@ const MyFollowEditScreen: FC = () => {
           text: '取消',
           onPress: () => {
             close();
-          }
+          },
         },
       });
     },

@@ -7,7 +7,7 @@ import {
 } from '../../../config/theme';
 import {
   TypePlanEntrustementLog, TypeGeneralEntrustemntLog, TypeStopOrderLog, TypeHistoryLog,
-} from '../index/type';
+} from '../_index/type';
 
 // 普通委托
 export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog}> = ({ data }) => {
@@ -87,10 +87,10 @@ export const ComContractIndexListHistory: FC<{data: TypeHistoryLog}> = ({ data }
         <Text style={[
           style.listTitle,
           {
-            color: [themeGreen, themeRed][data.type],
+            color: [themeGreen, themeRed, themeRed, themeGreen][data.type],
           },
         ]}>
-          {['买入', '卖出'][data.type]}
+          {['开多', '开空', '平多', '平空'][data.type]}
           &nbsp;&nbsp;
           {data.coinType}
         </Text>

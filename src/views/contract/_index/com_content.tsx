@@ -767,11 +767,11 @@ const ContractContentView: FC<{
             setServerCoinType({
               changeRatio: parseFloat(data.data.values),
               leverList: [
-                { lever: '1', selfRatio: 1 },
-                { lever: '2', selfRatio: 0.5 },
-                { lever: '3', selfRatio: 0.333 },
-                { lever: '4', selfRatio: 0.25 },
-                { lever: '5', selfRatio: 0.2 },
+                // { lever: '1', selfRatio: 1 },
+                // { lever: '2', selfRatio: 0.5 },
+                // { lever: '3', selfRatio: 0.333 },
+                // { lever: '4', selfRatio: 0.25 },
+                // { lever: '5', selfRatio: 0.2 },
                 { lever: '10', selfRatio: 0.1 },
                 { lever: '20', selfRatio: 0.05 },
                 { lever: '50', selfRatio: 0.02 },
@@ -783,11 +783,11 @@ const ContractContentView: FC<{
             setServerCoinType({
               changeRatio: parseFloat(data.data.values),
               leverList: [
-                { lever: '1', selfRatio: 1 },
-                { lever: '2', selfRatio: 0.5 },
-                { lever: '3', selfRatio: 0.333 },
-                { lever: '4', selfRatio: 0.25 },
-                { lever: '5', selfRatio: 0.2 },
+                // { lever: '1', selfRatio: 1 },
+                // { lever: '2', selfRatio: 0.5 },
+                // { lever: '3', selfRatio: 0.333 },
+                // { lever: '4', selfRatio: 0.25 },
+                // { lever: '5', selfRatio: 0.2 },
                 { lever: '10', selfRatio: 0.1 },
                 { lever: '25', selfRatio: 0.04 },
                 { lever: '50', selfRatio: 0.02 },

@@ -85,6 +85,19 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
     onLoad: () => {
       // if (webRef.current) webRef.current.postMessage('');
     },
+    // 处理获取到的数据
+    dataSendToWeb: (inData: TypeKlineValue[]) => {
+      const newOptions: EChartOption = {
+        xAxis: [
+          { data: inData.map(item => item.time) },
+          { data: inData.map(item => item.time) },
+          { data: inData.map(item => item.time) },
+        ],
+        series: getOptionSerise(inData),
+      };
+      newOptions.title = getOptionTitle(newOptions.series);
+      webRef.current?.postMessage(toString(newOptions));
+    },
   };
 
   // 开发刷新
@@ -95,34 +108,43 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
   }, []);
   useEffect(() => {
     setGotData(false);
-    const getTimeValue = 500;
+    let splitNum = 0;
+    const getTimeValueStart = 100;
+    const getTimeValueMore = 500;
     const timeType: typeof showType = showType;
     const coinType = routeCoinType;
     const endTime = new Date().getTime();
-    let startTime = 0;
-    let fmTimeStr = 'MM-DD';
-    if (timeType === '1m') {
-      startTime = endTime - 500 * 60 * 1000;
-      fmTimeStr = 'hh:mm';
-    } else if (timeType === '5m') {
-      startTime = endTime - 500 * 5 * 60 * 1000;
-      fmTimeStr = 'hh:mm';
-    } else if (timeType === '15m') {
-      startTime = endTime - 500 * 15 * 60 * 1000;
-      fmTimeStr = 'hh:mm';
-    } else if (timeType === '1h') {
-      startTime = endTime - 500 * 60 * 60 * 1000;
-      fmTimeStr = 'MM-DD hh';
-    } else if (timeType === '4h') {
-      startTime = endTime - 500 * 4 * 60 * 60 * 1000;
-      fmTimeStr = 'MM-DD hh';
-    } else if (timeType === '1d') {
-      startTime = endTime - 500 * 24 * 60 * 60 * 1000;
-      fmTimeStr = 'MM-DD';
-    }
-    const useData: TypeKlineValue[] = [];
+    const getStartTime = (length = getTimeValueMore) => {
+      let startTime = 0;
+      let fmTimeStr = 'MM-DD';
+      if (timeType === '1m') {
+        startTime = endTime - length * 60 * 1000;
+        fmTimeStr = 'hh:mm';
+      } else if (timeType === '5m') {
+        startTime = endTime - length * 5 * 60 * 1000;
+        fmTimeStr = 'hh:mm';
+      } else if (timeType === '15m') {
+        startTime = endTime - length * 15 * 60 * 1000;
+        fmTimeStr = 'hh:mm';
+      } else if (timeType === '1h') {
+        startTime = endTime - length * 60 * 60 * 1000;
+        fmTimeStr = 'MM-DD hh';
+      } else if (timeType === '4h') {
+        startTime = endTime - length * 4 * 60 * 60 * 1000;
+        fmTimeStr = 'MM-DD hh';
+      } else if (timeType === '1d') {
+        startTime = endTime - length * 24 * 60 * 60 * 1000;
+        fmTimeStr = 'MM-DD';
+      }
+      return {
+        startTime,
+        fmTimeStr,
+      };
+    };
+    let useData: TypeKlineValue[] = [];
     const tickerImg = `gold.market.${coinType}.kline.${timeType}`;
-    const tickerReq = `{"req":"gold.market.${coinType}.kline.${timeType}","create_time":"${startTime}","end_time":"${endTime}","limit":"${getTimeValue}"}`;
+    const tickerReqStart = `{"req":"gold.market.${coinType}.kline.${timeType}","create_time":"${getStartTime(getTimeValueStart).startTime}","end_time":"${endTime}","limit":"${getTimeValueStart}"}`;
+    const tickerReqMore = `{"req":"gold.market.${coinType}.kline.${timeType}","create_time":"${getStartTime().startTime}","end_time":"${endTime}","limit":"${getTimeValueMore}"}`;
     const socketListener = (message: any) => {
       const resultData: {
         [key: string]: string;
@@ -130,10 +152,13 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
         [key: string]: string;
       }[] = message.Tick;
       if (Array.isArray(resultData)) {
-        setTimeout(() => setGotData(true), 200);
-        resultData.forEach((item: any) => {
-          useData.push({
-            time: formatTime(fmTimeStr, Number(item.create_unix)),
+        setGotData(true);
+        splitNum = resultData.length;
+        useData.splice(0, splitNum);
+        const splitDataArr: TypeKlineValue[] = [];
+        resultData.forEach((item) => {
+          splitDataArr.push({
+            time: formatTime(getStartTime().fmTimeStr, Number(item.create_unix)),
             maxValue: item.height,
             minValue: item.low,
             openValue: item.open,
@@ -142,12 +167,17 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
             create_unix: item.create_unix,
           });
         });
+        useData.splice(0, splitNum);
+        useData = [
+          ...splitDataArr,
+          ...useData,
+        ];
       } else {
         if (useData.length && resultData.create_unix === useData[useData.length - 1].create_unix) {
           useData.splice(-1, 1);
         }
         useData.push({
-          time: formatTime(fmTimeStr, Number(resultData.create_unix)),
+          time: formatTime(getStartTime().fmTimeStr, Number(resultData.create_unix)),
           maxValue: resultData.height,
           minValue: resultData.low,
           openValue: resultData.open,
@@ -156,16 +186,7 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
           create_unix: resultData.create_unix,
         });
       }
-      const newOptions: EChartOption = {
-        xAxis: [
-          { data: useData.map(item => item.time) },
-          { data: useData.map(item => item.time) },
-          { data: useData.map(item => item.time) },
-        ],
-        series: getOptionSerise(useData),
-      };
-      newOptions.title = getOptionTitle(newOptions.series);
-      webRef.current?.postMessage(toString(newOptions));
+      addEvent.dataSendToWeb(useData);
     };
     const inter = setInterval(() => {
       if (viewShowRef.current) {
@@ -173,7 +194,8 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
         marketSocket.getSocket().then(ws => {
           socket.current = ws;
           ws.addListener(socketListener, tickerImg);
-          ws.send(tickerReq);
+          ws.send(tickerReqStart);
+          ws.send(tickerReqMore);
           ws.send(tickerImg, 'sub');
           subSocket.current = false;
         }).catch(err => {
@@ -191,6 +213,10 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
       clearInterval(viewShowTimer.current);
     };
   }, [showType]);
+
+  useEffect(() => {
+    console.log(viewShow, gotData);
+  }, [viewShow, gotData]);
   return (
     <View
       style={[

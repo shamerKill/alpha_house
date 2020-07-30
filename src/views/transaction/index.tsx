@@ -13,7 +13,7 @@ import ComLayoutHead from '../../components/layout/head';
 import {
   themeWhite, themeGray, themeGreen, themeRed, themeMoreBlue, getThemeOpacity, defaultThemeBgColor, defaultThemeColor, themeBlack, themeTextGray,
 } from '../../config/theme';
-import { TypeLeftOutList } from '../contract/index/type';
+import { TypeLeftOutList } from '../contract/_index/type';
 import { modalOutBg } from '../../components/modal/outBg';
 import { numberToFormatString } from '../../tools/number';
 import ComLine from '../../components/line';
