@@ -1,4 +1,6 @@
-import React, { FC, useEffect, useCallback } from 'react';
+import React, {
+  FC, useEffect, useCallback, useRef,
+} from 'react';
 import SplashScreen from 'react-native-splash-screen';
 import { View, AppState, AppStateStatus } from 'react-native';
 import FlashMessage, { showMessage } from 'react-native-flash-message';
@@ -12,9 +14,10 @@ import { marketSocket, CoinToCoinSocket } from './data/fetch/socket';
 
 
 const App: FC = () => {
+  const fristIn = useRef(true);
   const closeSplash = useCallback(() => {
     // 关闭启动图
-    Promise.all([CoinToCoinSocket.successConnect, marketSocket.successConnect]).then(() => {
+    Promise.all([CoinToCoinSocket.successConnect(), marketSocket.successConnect()]).then(() => {
     }).catch(() => {
       showMessage({
         position: 'bottom',
@@ -27,8 +30,19 @@ const App: FC = () => {
   }, []);
   const listenerApp = useCallback((state: AppStateStatus) => {
     if (state === 'active') {
-      marketSocket.sendMessageAgain();
-      CoinToCoinSocket.sendMessageAgain();
+      if (fristIn.current) {
+        fristIn.current = false;
+        return;
+      }
+      if (!marketSocket.isConnect() || !CoinToCoinSocket.isConnect()) {
+        SplashScreen.show();
+      }
+      Promise.all([
+        marketSocket.sendMessageAgain(),
+        CoinToCoinSocket.sendMessageAgain(),
+      ]).finally(() => {
+        setTimeout(SplashScreen.hide, 500);
+      });
     } else {
       marketSocket.sendMessageWite();
       CoinToCoinSocket.sendMessageWite();

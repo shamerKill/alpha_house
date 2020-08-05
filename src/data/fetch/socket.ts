@@ -35,6 +35,12 @@ export class SocketClass {
   // 储存当前所有的请求
   private nowSendReq: string[] = [];
 
+  // 最高重连次数
+  private linkAgain: number = 10;
+
+  // 重连次数
+  private linkNum: number = 0;
+
   // 添加请求
   private saveSendReq = (value: string) => {
     if (!this.nowSendReq.includes(value)) {
@@ -67,6 +73,8 @@ export class SocketClass {
   }
 
   private createSocket = () => {
+    this.isError = false;
+    this.isOpen = false;
     // 创建socket
     try {
       this.socket = new WebSocket(this.options.baseURI);
@@ -98,17 +106,13 @@ export class SocketClass {
   };
 
   // 开启失败
-  private onError: WebSocket['onerror'] = () => {
+  private onError: WebSocket['onerror'] = (err) => {
     this.isOpen = false;
     this.isError = true;
     // 重新开启
     console.log('Socket Error');
     console.log(this.nowSendReq);
-    if (this.nowSendReq.length) {
-      setTimeout(() => {
-        this.sendMessageAgain();
-      }, 300);
-    }
+    this.socketErrorMessage = err.type;
   };
 
   // 开启成功
@@ -118,6 +122,7 @@ export class SocketClass {
     this.sendList.forEach(item => this.send(item.data, item.type));
     // 执行心跳
     this.pingPong();
+    this.linkNum = 0;
   };
 
   // 关闭
@@ -126,7 +131,13 @@ export class SocketClass {
     console.log(this.nowSendReq);
     // 断线重连
     this.isOpen = false;
-    this.sendMessageAgain();
+    if (this.nowSendReq.length) {
+      if (++this.linkNum < this.linkAgain) {
+        setTimeout(() => {
+          this.sendMessageAgain();
+        }, 1000);
+      }
+    }
     // 清除定时器
     if (this.pingPongTime !== null) clearInterval(this.pingPongTime);
   };
@@ -153,10 +164,13 @@ export class SocketClass {
     this.createSocket();
     return new Promise((resolve, reject) => {
       const timer = setInterval(() => {
-        if (this.isOpen) {
+        if (this.socket?.readyState === WebSocket.OPEN) {
           resolve();
           clearInterval(timer);
-        } else if (this.isError) {
+        } else if (this.socket?.readyState === WebSocket.CLOSED && this.linkAgain <= this.linkNum) {
+          // 重新链接
+          // 在onClose里处理
+          clearInterval(timer);
           reject(this.socketErrorMessage);
         }
       }, 100);
@@ -166,7 +180,7 @@ export class SocketClass {
   // 获取socket
   getSocket = (): Promise<this> => {
     return new Promise((reslove, reject) => {
-      if (this.isOpen) reslove(this);
+      if (this.socket?.readyState === WebSocket.OPEN) reslove(this);
       else {
         this.createConnect().then(() => {
           reslove(this);
@@ -181,7 +195,7 @@ export class SocketClass {
   successConnect(): Promise<void> {
     return new Promise((resolve, reject) => {
       const timer = setInterval(() => {
-        if (this.isOpen) {
+        if (this.socket?.readyState === WebSocket.OPEN) {
           resolve();
           clearInterval(timer);
         } else if (this.isError) {
@@ -194,25 +208,27 @@ export class SocketClass {
 
   // 返回是否成功链接
   isConnect() {
-    return this.isOpen;
+    return this.socket?.readyState === WebSocket.OPEN;
   }
 
   // 重新发送所有请求
-  sendMessageAgain() {
-    if (this.nowSendReq.length) {
-      this.getSocket().then(ws => {
+  sendMessageAgain(): Promise<void>|undefined {
+    return this.getSocket().then(ws => {
+      if (this.nowSendReq?.length) {
         this.nowSendReq.forEach((value) => {
+          ws.send(value, 'req');
           ws.send(value, 'sub');
         });
-      }).catch(err => {
-        console.log('重新发送失败', err);
-      });
-    }
+      }
+    }).catch(err => {
+      setTimeout(this.sendMessageAgain, 1000);
+      console.log('重新发送失败', err);
+    });
   }
 
   // 取消所有请求
   sendMessageWite() {
-    if (this.nowSendReq.length) {
+    if (this.nowSendReq?.length) {
       this.getSocket().then(ws => {
         this.nowSendReq.forEach((value) => {
           ws.socket?.send(`{"unsub":"${SocketClass.valueToString(value)}"}`);
@@ -225,6 +241,7 @@ export class SocketClass {
 
   // 主动关闭
   close() {
+    this.isOpen = false;
     try {
       this.socket?.close();
       return true;
@@ -250,8 +267,12 @@ export class SocketClass {
       this.delSendReq(data);
     }
     // 如果已经开启，发送所有数据
-    this.socket?.send(sendData);
-    return true;
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket?.send(sendData);
+      return true;
+    }
+    this.isOpen = false;
+    return false;
   }
 
   // 添加接受数据的函数
@@ -349,6 +370,7 @@ export const marketSocket = new SocketClass({
 });
 export const CoinToCoinSocket = new SocketClass({
   baseURI: 'wss://serve.alfaex.pro/cash/ws/market',
+  // baseURI: 'ws://192.168.3.10:3005/market',
 });
 
 type Socket = SocketClass;

@@ -1,5 +1,5 @@
 import React, {
-  FC, useState, useEffect, useRef,
+  FC, useState, useEffect,
 } from 'react';
 import {
   View, Text, TouchableNativeFeedback, Image, StyleSheet,
@@ -24,7 +24,7 @@ import { defaultUserInfoState } from '../../../data/redux/state/user';
 const LoginScreen: FC = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<{'login'?: { name: string; params?: object }}, 'login'>>();
-  const loading = useRef(false);
+  const [loading, setLoading] = useState(false);
   const [userInfoState, dispatchUserInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
   const [, dispatchUserIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
 
@@ -62,8 +62,8 @@ const LoginScreen: FC = () => {
       addEvent.send();
     },
     send: () => {
-      if (loading.current) return;
-      loading.current = true;
+      if (loading) return;
+      setLoading(true);
       console.log({
         Account: account,
         Password: pass,
@@ -106,7 +106,7 @@ const LoginScreen: FC = () => {
       }).catch((err) => {
         console.log(err);
       }).finally(() => {
-        loading.current = false;
+        setLoading(false);
       });
     },
     goToHome: () => {
@@ -179,6 +179,7 @@ const LoginScreen: FC = () => {
           </TouchableNativeFeedback>
         </View>
         <ComFormButton
+          loading={loading}
           containerStyle={style.formButton}
           onPress={() => addEvent.verfiyBeforeSend()}
           title="登录" />

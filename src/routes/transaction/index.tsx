@@ -1,6 +1,6 @@
 import React from 'react';
 import TypeStackValue from '../stackType';
-import TranscationScreen from '../../views/transaction';
+import TranscationScreen from '../../views/transaction/index';
 import ComIconBotton from '../../components/icon/bottom';
 import TranscationKlineScreen from '../../views/transaction/kline';
 

@@ -37,7 +37,7 @@ const MyFollowListScreen: FC = () => {
           return {
             head: getHeadImage()[item.headimg || 0],
             name: item.nickname,
-            totalProfit: item.track_profit,
+            totalProfit: `${(item.track_profit * 10).toFixed(2)}%`,
             lastThreeWeek: `${Math.floor((item.track_success_per) * 10000) / 100}`,
             totalPerson: item.track_num,
             id: item.id,
@@ -100,7 +100,7 @@ const FollowLi: FC<InFollowLi&{withPeopleFunc: (id: InFollowLi['id']) => void;}>
       <View style={style.valueView}>
         <View style={style.valueTextView}>
           <Text style={[style.valueText, style.valueTextLeft]}>{totalProfit}</Text>
-          <Text style={[style.valueTextDesc]}>累计收益</Text>
+          <Text style={[style.valueTextDesc]}>累计收益率</Text>
         </View>
         <View style={style.valueTextView}>
           <Text style={[style.valueText, style.valueTextCenter]}>{lastThreeWeek}%</Text>

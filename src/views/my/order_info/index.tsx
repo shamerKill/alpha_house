@@ -113,8 +113,8 @@ const MyOrderInfo: FC = () => {
       const offsetY = event.nativeEvent.contentOffset.y; //滑动距离
       const contentSizeHeight = event.nativeEvent.contentSize.height; //scrollView contentSize高度
       const oriageScrollHeight = event.nativeEvent.layoutMeasurement.height; //scrollView高度
-      if (offsetY + oriageScrollHeight >= contentSizeHeight){
-        console.log('加载数据');
+      console.log(offsetY + oriageScrollHeight, contentSizeHeight);
+      if (offsetY + oriageScrollHeight >= contentSizeHeight - 10){
         addEvent.getPageData();
       }else if(offsetY + oriageScrollHeight <= 1){
         //这个是没有数据了然后给了false  得时候还在往上拉

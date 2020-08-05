@@ -96,7 +96,8 @@ const MarketScreen: FC = () => {
       pageY: number, }> => {
       return new Promise((resolve, reject) => {
         if (box === null) {
-          reject(new Error('错误'));
+          // eslint-disable-next-line prefer-promise-reject-errors
+          reject('错误');
         } else {
           box.measure((x, y, width, height, pageX, pageY) => {
             resolve({

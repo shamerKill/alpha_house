@@ -6,19 +6,19 @@ import TypeStackValue from './stackType';
 import HomeRoutes from './home';
 import MarketRoutes from './market';
 import ContractRoutes from './contract';
-// import TransactionRoutes from './transaction';
+import TransactionRoutes from './transaction';
 import MyRoutes from './my';
 import { defaultThemeColor, themeGray, themeWhite } from '../config/theme';
 import useGetDispatch from '../data/redux/dispatch';
 import { InState, ActionsType } from '../data/redux/state';
 
-const StackValue: TypeStackValue = [
+export const StackValue: TypeStackValue = [
   // 首页
   ...HomeRoutes,
   ...MarketRoutes,
   ...ContractRoutes,
   // 隐藏币币行情
-  // ...TransactionRoutes,
+  ...TransactionRoutes,
   ...MyRoutes,
 ];
 

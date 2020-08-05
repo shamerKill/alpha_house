@@ -19,7 +19,8 @@ const storage = {
   async get<T=any>(key: string): Promise<T> {
     const result = await asyncStorage.getItem(key);
     return new Promise((resolve, reject) => {
-      if (result === null) reject(new Error('no Data'));
+      // eslint-disable-next-line prefer-promise-reject-errors
+      if (result === null) reject('no Data');
       else {
         try {
           resolve(JSON.parse(result));

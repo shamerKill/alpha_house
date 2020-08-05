@@ -2,14 +2,14 @@ import React, {
   FC, useState, useEffect, useRef,
 } from 'react';
 import {
-  View, StyleSheet, Image, Text, Animated, SafeAreaView, TouchableNativeFeedback as StaticTouchableNativeFeedback, Image as StaticImage,
+  View, StyleSheet, Image, Text, Animated, SafeAreaView, TouchableNativeFeedback as StaticTouchableNativeFeedback,
 } from 'react-native';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import {
   TouchableNativeFeedback, ScrollView, PanGestureHandlerGestureEvent, PanGestureHandler, TextInput,
 } from 'react-native-gesture-handler';
 import { showMessage } from 'react-native-flash-message';
-import Socket, { marketSocket, SocketClass } from '../../../data/fetch/socket';
+import Socket, { SocketClass, CoinToCoinSocket } from '../../../data/fetch/socket';
 import useGetDispatch from '../../../data/redux/dispatch';
 import { InState } from '../../../data/redux/state';
 import {
@@ -18,13 +18,12 @@ import {
 import { useGoToWithLogin } from '../../../tools/routeTools';
 import { modalOutBg } from '../../../components/modal/outBg';
 import { numberToFormatString, fiexedNumber } from '../../../tools/number';
-import showSelector from '../../../components/modal/selector';
-import storage from '../../../data/database';
 import showComAlert from '../../../components/modal/alert';
 import ajax from '../../../data/fetch';
-import { TypePositionData, TypeGeneralEntrustemnt } from './type';
+import { TypePositionData } from './type';
+import ComLayoutHead from '../../../components/layout/head';
 
-const routeName = 'Contract';
+const routeName = 'Transaction';
 
 // 滑块组件
 const ComSliderView: FC<{
@@ -211,16 +210,16 @@ const ContractRightValueView: FC<{
       { price: '', value: 0 },
     ]);
     // 获取深度
-    const tickerImg = `gold.market.${coinType.replace('/', '')}.depth`;
+    const tickerImg = `cash.market.${coinType.replace('/', '')}.depth`;
     const socketListener = (message: any) => {
       if (message?.buy && message?.sell) {
         if (message.buy.length < 6 || message.sell.length < 6) return;
         const buyDataMem = [...message.sell].splice(0, 6).reverse().map((item: any) => ({
-          price: item[0],
+          price: `${parseFloat(item[0])}`,
           value: item[1],
         }));
         const sellDataMem = [...message.buy].splice(0, 6).map((item: any) => ({
-          price: item[0],
+          price: `${parseFloat(item[0])}`,
           value: item[1],
         }));
         const allData = addEvent.setData([...buyDataMem, ...sellDataMem]);
@@ -229,7 +228,7 @@ const ContractRightValueView: FC<{
       }
     };
     if (routePage === routeName) {
-      marketSocket.getSocket().then(ws => {
+      CoinToCoinSocket.getSocket().then(ws => {
         socket.current = ws;
         ws.addListener(socketListener, tickerImg);
         ws.send(tickerImg, 'req');
@@ -290,7 +289,7 @@ const ContractRightValueView: FC<{
           ]}>
             {newPrice}
           </Text>
-          {/* &#8776;&yen;{((parseFloat(newPrice) || 0) * USDTToRMB).toFixed(2)} */}
+          {/* &#8776;&yen;{((parseFloat(newPrice) || 0) * USDTToRMB)} */}
         </Text>
         <Text style={style.contentIndexDesc}>最新指数&nbsp;{newPrice}</Text>
       </View>
@@ -408,19 +407,9 @@ export const ContractHeadLeftView: FC<{
 // 持仓列表视图
 const ComContractIndexListPosition: FC<{
   data: TypePositionData,
-  leverType: string;
-  newPrice: string;
-}> = ({ data, leverType, newPrice }) => {
+}> = ({ data }) => {
   const navigation = useNavigation();
-
-  const isLoading = useRef(false);
-
-  // 为实现盈亏
-  const [profitValue, setProfitValue] = useState(data.profitValue);
-  // 收益率
-  const [profitRatio, setProfitRatio] = useState(data.profitRatio);
-  // 占用保证金
-  const [stateUseBond, setStateUseBond] = useState(data.useBond);
+  // const isLoading = useRef(false);
 
   const addEvent = {
     // 计算颜色
@@ -479,62 +468,8 @@ const ComContractIndexListPosition: FC<{
     },
     // 执行平仓
     submitCloseOrder: () => {
-      isLoading.current = true;
-      const fm: {[key: string]: any} = {};
-      fm.price = 10;
-      fm.num = data.allValue;
-      fm.lever = Number(leverType);
-      fm.symbol = data.coinType.replace('USDT', '');
-      fm.side = ['BUY', 'SELL'][data.type];
-      fm.price_type = 2;
-      fm.postition_side = ['SHORT', 'LONG'][data.type];
-      ajax.post('/contract/api/v1/bian/Order', fm).then(res => {
-        if (res.status === 200) {
-          showMessage({
-            position: 'bottom',
-            message: '委托提交成功',
-            type: 'success',
-          });
-        } else {
-          showMessage({
-            position: 'bottom',
-            message: res.message,
-            type: 'warning',
-          });
-        }
-      }).catch(err => {
-        console.log(err);
-      }).finally(() => {
-        isLoading.current = false;
-      });
     },
   };
-
-  // 根据最新指数价计算未实现盈亏
-  useEffect(() => {
-    let ratio = 0;
-    if (data.type === 0) {
-      // 空单
-      const result = (parseFloat(data.price) - parseFloat(newPrice)) * parseFloat(data.allValue);
-      setProfitValue(`${parseFloat(result.toFixed(4))}`);
-      // 计算收益率
-      ratio = Math.floor(parseFloat((result / parseFloat(data.useBond)).toFixed(4)) * 10000) / 100;
-    } else if (data.type === 1) {
-      // 多单
-      const result = (parseFloat(newPrice) - parseFloat(data.price)) * parseFloat(data.allValue);
-      setProfitValue(`${parseFloat(result.toFixed(4))}`);
-      // 计算收益率
-      ratio = Math.floor(parseFloat((result / parseFloat(data.useBond)).toFixed(4)) * 10000) / 100;
-    }
-    if (ratio === Infinity) ratio = 0;
-    setProfitRatio(`${ratio}%`);
-  }, [newPrice]);
-
-  // 计算占用保证金
-  useEffect(() => {
-    const result = (parseFloat(newPrice) * parseFloat(data.allValue)) / parseFloat(leverType);
-    setStateUseBond(`${parseFloat(result.toFixed(4))}`);
-  }, [newPrice, leverType]);
 
   return (
     <View style={style.listView}>
@@ -550,7 +485,6 @@ const ComContractIndexListPosition: FC<{
           &nbsp;&nbsp;
           {data.coinType}
           &nbsp;&nbsp;
-          {leverType}X
         </Text>
       </View>
       {/* 中部 */}
@@ -566,25 +500,25 @@ const ComContractIndexListPosition: FC<{
           style.listCenterInner,
           style.listCenterInnerCenter,
         ]}>
-          <Text style={[
+          {/* <Text style={[
             style.listCenterValue,
             { color: addEvent.getColor(profitValue) },
           ]}>
             {profitValue}
           </Text>
-          <Text style={style.listCenterDesc}>未实现盈亏</Text>
+          <Text style={style.listCenterDesc}>未实现盈亏</Text> */}
         </View>
         <View style={[
           style.listCenterInner,
           style.listCenterInnerRight,
         ]}>
-          <Text style={[
+          {/* <Text style={[
             style.listCenterValue,
             { color: addEvent.getColor(profitValue) },
           ]}>
             {profitRatio}
           </Text>
-          <Text style={style.listCenterDesc}>收益率</Text>
+          <Text style={style.listCenterDesc}>收益率</Text> */}
         </View>
       </View>
       {/* 详情 */}
@@ -599,13 +533,13 @@ const ComContractIndexListPosition: FC<{
           style.listInfoText,
           { width: '66%', textAlign: 'left' },
         ]}>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;占用保证金&nbsp;{stateUseBond}USDT
+          {/* &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;占用保证金&nbsp;{stateUseBond}USDT */}
         </Text>
         <Text style={[
           style.listInfoText,
           { width: '33%' },
         ]}>
-          预估强平价&nbsp;{data.willBoomPrice}
+          {/* 预估强平价&nbsp;{data.willBoomPrice} */}
         </Text>
         <Text style={[
           style.listInfoText,
@@ -616,18 +550,18 @@ const ComContractIndexListPosition: FC<{
       </View>
       {/* 按钮 */}
       <View style={style.listBtns}>
-        {/* <StaticTouchableNativeFeedback onPress={() => addEvent.stopWin()}>
+        {/* <TouchableNativeFeedback onPress={() => addEvent.stopWin()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>止盈</Text>
           </View>
-        </StaticTouchableNativeFeedback>
+        </TouchableNativeFeedback>
         <View style={style.listBtnsLine} />
-        <StaticTouchableNativeFeedback onPress={() => addEvent.stopLow()}>
+        <TouchableNativeFeedback onPress={() => addEvent.stopLow()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>止损</Text>
           </View>
-        </StaticTouchableNativeFeedback>
-        <View style={style.listBtnsLine} /> */}
+        </TouchableNativeFeedback> */}
+        <View style={style.listBtnsLine} />
         <StaticTouchableNativeFeedback onPress={() => addEvent.closeOrder()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>平仓</Text>
@@ -638,7 +572,7 @@ const ComContractIndexListPosition: FC<{
   );
 };
 // 普通委托
-const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt; leverType: string;}> = ({ data, leverType }) => {
+const ComContractIndexListGeneral: FC<{data: TypePositionData;}> = ({ data }) => {
   const loading = useRef(false);
   const navigation = useNavigation();
   const addEvent = {
@@ -727,7 +661,6 @@ const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt; leverType: 
           &nbsp;&nbsp;
           {data.coinType}
           &nbsp;&nbsp;
-          {leverType}X
         </Text>
         <Text style={style.listTopTime}>{data.time}</Text>
       </View>
@@ -737,7 +670,7 @@ const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt; leverType: 
           style.listCenterInner,
           style.listCenterInnerLeft,
         ]}>
-          <Text style={style.listCenterValue}>{data.willNumber}</Text>
+          {/* <Text style={style.listCenterValue}>{data.willNumber}</Text> */}
           <Text style={style.listCenterDesc}>委托量</Text>
         </View>
         <View style={[
@@ -745,7 +678,7 @@ const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt; leverType: 
           style.listCenterInnerCenter,
         ]}>
           <Text style={[style.listCenterValue]}>
-            {data.willPrice}
+            {/* {data.willPrice} */}
           </Text>
           <Text style={style.listCenterDesc}>委托价格</Text>
         </View>
@@ -754,15 +687,15 @@ const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt; leverType: 
           style.listCenterInnerRight,
         ]}>
           <Text style={[style.listCenterValue]}>
-            {data.haveNumber}
+            {/* {data.haveNumber} */}
           </Text>
           <Text style={style.listCenterDesc}>已成交</Text>
         </View>
       </View>
       {/* 详情 */}
       <View style={style.listInfo}>
-        <Text style={style.listInfoText}>可撤&nbsp;{data.backValue}</Text>
-        <Text style={style.listInfoText}>状态&nbsp;{['未成交', '部分成交'][data.state]}</Text>
+        {/* <Text style={style.listInfoText}>可撤&nbsp;{data.backValue}</Text> */}
+        {/* <Text style={style.listInfoText}>状态&nbsp;{['未成交', '部分成交'][data.state]}</Text> */}
         {/* <Text style={style.listInfoText}>止盈触发价&nbsp;{data.winStartPrice}</Text>
         <Text style={style.listInfoText}>止盈执行价&nbsp;{data.winDoPrice}</Text>
         <Text style={style.listInfoText}>止损触发价&nbsp;{data.lowStartPrice}</Text>
@@ -790,23 +723,11 @@ type TypeAllCoinInfo = {
   symbol: string; // 币种信息
   newPirce: string; // 指数价格
   ratio: string; // 涨幅
-  lever: string; // 杠杆倍数
-  openMinValue: string; // 最小开仓数量
-  positionBuyNum: string; // 多单数量
-  positionSellNum: string; // 空单数量
-  initialMarginBuy: string; // 多单占用保证金
-  initialMarginSell: string; // 空单占用保证金
-  unrealizedProfitBuy: string; // 多单未实现盈亏
-  unrealizedProfitSell: string; // 空单未实现`盈亏
-  // 可开杠杆倍数
-  leverList: {
-    lever: string; // 可开杠杆倍数，
-    selfRatio: number; // 杠杆保证金率
-  }[];
-  // 持仓单
+  haveCoin: string; // 持币数量
+  // 当前委托单
   positionOrders: TypePositionData[];
-  // 委托单
-  entrustOrders: TypeGeneralEntrustemnt[];
+  // 历史委托单
+  entrustOrders: TypePositionData[];
 };
 
 const ContractUSDTScreen: FC = () => {
@@ -832,24 +753,16 @@ const ContractUSDTScreen: FC = () => {
   const [canUseAssets, setCanUseAssets] = useState('');
   // 当前全部资产
   const [userAllAssets, setUserAllAssets] = useState('');
-  // 资金使用率
-  const [assetsUseRatio, setAssetsUseRatio] = useState('');
-  // 风险度
-  const [riskLever, setRiskLever] = useState('');
 
   // 显示状态
   // 是否显示更多弹窗
   const [showMoreAlert, setShowMoreAlert] = useState(false);
-  // 开仓0还是平仓1
-  const [doType, setDoType] = useState<0|1>(0);
   // 是否以市价执行
   const [isMarketPrice, setMarketPrice] = useState(false);
   // 限价委托价格
   const [fixedPrice, setFixedPrice] = useState('');
   // 限价委托数量
   const [fixedValue, setFixedValue] = useState('');
-  // 限价委托数量是否获取了焦点
-  const [fixedFocus, setFixedFocus] = useState(false);
   // 数量百分比
   const [fixedValueRatio, setFixedValueRatio] = useState(0);
   // 底部记录选项卡
@@ -858,10 +771,6 @@ const ContractUSDTScreen: FC = () => {
   useEffect(() => {
     logSelectTabRef.current = logSelectTab;
   }, [logSelectTab]);
-  // 占用保证金
-  const [occupyBond, setOccupyBond] = useState('0');
-  // 可开仓数
-  const [canOpenValue, setCanOpenValue] = useState('0');
 
 
   // 各种币种数据
@@ -870,15 +779,7 @@ const ContractUSDTScreen: FC = () => {
     symbol: '', // 币种信息
     newPirce: '', // 指数价格
     ratio: '', // 涨幅
-    lever: '', // 杠杆倍数
-    openMinValue: '', // 最小开仓数量
-    positionBuyNum: '', // 多单数量
-    positionSellNum: '', // 空单数量
-    initialMarginBuy: '', // 多单占用保证金
-    initialMarginSell: '', // 空单占用保证金
-    unrealizedProfitBuy: '', // 多单未实现盈亏
-    unrealizedProfitSell: '', // 空单未实现盈亏
-    leverList: [],
+    haveCoin: '', // 持币数量
     positionOrders: [],
     entrustOrders: [],
   });
@@ -887,7 +788,7 @@ const ContractUSDTScreen: FC = () => {
   const [nowCoinInfo, setNowCoinInfo] = useState<TypeAllCoinInfo>({ ...defaultCoinListInfo.current });
 
   // 委托请求loading
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
 
   // 获取用户信息判断
   const getUserInfoMem = useRef(0);
@@ -907,117 +808,19 @@ const ContractUSDTScreen: FC = () => {
           setCanUseAssets(`${fiexedNumber(res.asset.availableBalance, 2)}`);
           // 当前资产
           setUserAllAssets(`${fiexedNumber(res.asset.crossWalletBalance, 2)}`);
-          // 资金使用率
-          setAssetsUseRatio(`${Math.floor((res.asset.maintMargin / (parseFloat(res.asset.walletBalance) || 1)) * 10000) / 100}%`);
           // 更改币种信息
-          setCoinListInfo(state => {
-            return state.map(item => {
-              const positionBuy = res.positions.filter((pos: any) => (
-                pos.symbol === item.symbol && pos.positionSide === 'LONG'
-              ))[0];
-              const positionSell = res.positions.filter((pos: any) => (
-                pos.symbol === item.symbol && pos.positionSide === 'SHORT'
-              ))[0];
-              const result = {
-                ...item,
-                openMinValue: res.minimumOrder[item.symbol.replace('USDT', '')],
-                initialMarginBuy: positionBuy.initialMargin,
-                initialMarginSell: positionSell.initialMargin,
-                lever: positionBuy.leverage,
-                leverList: addEvent.getCoinLeverInfo(item.symbol),
-                unrealizedProfitBuy: positionBuy.unrealizedProfit,
-                unrealizedProfitSell: positionSell.unrealizedProfit,
-              };
-              return result;
-            });
-          });
         }
       }).catch(err => {
         console.log(err);
       });
     },
-    // 获取持仓数据
+    // 获取当前委托数据
     fetchPostionsOrders: (nowCoinType: string) => {
-      ajax.get(`/contract/api/v1/bian/holdhourse_log?symbol=${nowCoinType.replace('USDT', '')}`).then(data => {
-        if (data.status === 200 && nowCoinType === coinTypeRef.current) {
-          // 多单数量
-          let buyNum = '0';
-          // 空单数量
-          let sellNum = '0';
-          const result: TypePositionData[] = data?.data?.list?.map((item: any, index: number) => {
-            if (item.type === '1') {
-              buyNum = item.surplus_coin_num;
-            } else {
-              sellNum = item.surplus_coin_num;
-            }
-            return {
-              id: index,
-              type: Number(item.type === '1') as TypePositionData['type'],
-              coinType: nowCoinType,
-              leverType: nowCoinInfo.lever,
-              price: item.price,
-              profitValue: data.data.risk[Number(item.type === '2')].unrealizedProfit,
-              profitRatio: `${
-                ((data.data.risk[Number(item.type === '2')].unrealizedProfit / parseFloat(data.data.risk[Number(item.type === '2')].initialMargin)) * 100).toFixed(2)
-              }%`,
-              allValue: item.surplus_coin_num,
-              useBond: parseFloat(data.data.risk[Number(item.type === '2')].initialMargin).toFixed(4),
-              willBoomPrice: '计算中...',
-              time: item.create_time,
-            };
-          }) || [];
-          // 赋值数据
-          setCoinListInfo(state => {
-            const newState = state.map(item => {
-              const res = { ...item };
-              if (res.symbol === nowCoinType) {
-                res.positionOrders = result;
-                res.positionBuyNum = buyNum;
-                res.positionSellNum = sellNum;
-              }
-              return res;
-            });
-            // 更改预估强平价
-            return addEvent.computBoomPrice(newState);
-          });
-        }
-      }).catch(err => {
-        console.log(err);
-      });
+      console.log(nowCoinType);
     },
-    // 获取普通委托数据
+    // 获取历史委托数据
     fetchEntrustOrders: (nowCoinType: string) => {
-      ajax.get(`/contract/api/v1/bian/entrust_log?symbol=${nowCoinType.replace('USDT', '')}`).then(data => {
-        if (data.status === 200 && nowCoinType === coinTypeRef.current) {
-          const result: TypeGeneralEntrustemnt[] = data?.data?.map((item: any) => {
-            return {
-              id: item.binance_id,
-              // eslint-disable-next-line no-nested-ternary
-              type: item.type === '1' ? (item.sell_buy === '1' ? 1 : 3) : (item.sell_buy === '1' ? 2 : 0),
-              coinType: nowCoinType,
-              leverType: nowCoinInfo.lever,
-              willNumber: item.coin_num,
-              willPrice: item.price,
-              haveNumber: item.deal_coin_num,
-              backValue: parseFloat((item.coin_num - item.deal_coin_num).toFixed(3)),
-              state: Number(item.status === '8'),
-              time: item.create_time,
-            };
-          }) || [];
-          // 赋值数据
-          setCoinListInfo(state => (
-            state.map(item => {
-              const res = { ...item };
-              if (res.symbol === nowCoinType) {
-                res.entrustOrders = result;
-              }
-              return res;
-            })
-          ));
-        }
-      }).catch(err => {
-        console.log(err);
-      });
+      console.log(nowCoinType);
     },
     // 币种显示类型
     showCointTypeText: (coin: string) => {
@@ -1072,118 +875,15 @@ const ContractUSDTScreen: FC = () => {
       modalOutBg.outBgsetShow(true);
       modalOutBg.outBgCanClose(true);
     },
-    // 获取当前币种的杠杆倍率
-    getCoinLeverInfo: (coin: string) => {
-      if (coin === 'BTCUSDT') {
-        return [
-          { lever: '10', selfRatio: 0.1 },
-          { lever: '20', selfRatio: 0.05 },
-          { lever: '50', selfRatio: 0.02 },
-          { lever: '100', selfRatio: 0.01 },
-        ].reverse();
-      }
-      return [
-        { lever: '10', selfRatio: 0.1 },
-        { lever: '25', selfRatio: 0.04 },
-        { lever: '50', selfRatio: 0.02 },
-        { lever: '75', selfRatio: 0.013 },
-      ].reverse();
-    },
-    // 杠杆倍数更改
-    changeLeverType: () => {
-      if (noUserInfo) {
-        showMessage({
-          position: 'bottom',
-          message: '暂无合约资产，无法更改杠杆倍数',
-          type: 'info',
-        });
-        return;
-      }
-      const close = showSelector({
-        data: addEvent.getCoinLeverInfo(coinType).map(item => ({
-          data: item.lever,
-          before: '杠杆 ',
-          after: 'X',
-        })),
-        selected: nowCoinInfo.lever,
-        onPress: (value) => {
-          if (typeof value !== 'string') {
-            ajax.post('/contract/api/v1/bian/update_lever', {
-              symbol: coinType.replace('USDT', ''),
-              lever: Number(value.data),
-            }).then(data => {
-              if (data.status === 200) {
-                setCoinListInfo(state => state.map(item => {
-                  const result = { ...item };
-                  if (result.symbol === coinType) {
-                    result.lever = value.data;
-                  }
-                  return result;
-                }));
-                showMessage({
-                  position: 'bottom',
-                  message: '杠杆更改成功',
-                  type: 'success',
-                });
-              } else {
-                showMessage({
-                  position: 'bottom',
-                  message: data.message,
-                  type: 'warning',
-                });
-              }
-            }).catch(err => {
-              console.log(err);
-            }).finally(() => {
-              close();
-            });
-          }
-          close();
-        },
-      });
-    },
     // 点击市价按钮,市价限价切换
     onMarketPrice: async () => {
-      let changeMarketType = false;
+      console.log(123);
       setMarketPrice(state => {
-        changeMarketType = !state;
-        return changeMarketType;
-      });
-      // 如果是市价转成限价，返回
-      if (!changeMarketType) return;
-      let storageNotShow = false;
-      try {
-        storageNotShow = await storage.get('marketChangeNotShowTip');
-      } catch (err) {
-        console.log(err);
-      }
-      if (storageNotShow) return;
-      const close = showComAlert({
-        title: '温馨提示',
-        desc: (
-          <View>
-            <Text>市价:</Text>
-            <Text style={{ color: getThemeOpacity(themeBlack, 0.6) }}>按当时市场价格即刻成交的指令。您在下达这种指令时无需指明具体的价位，而是要求以当时市场上可执行的最好价格达成交易，可能会产生较大的风险，请悉知。</Text>
-          </View>
-        ),
-        close: {
-          text: '不再提示',
-          onPress: () => {
-            storage.save('marketChangeNotShowTip', 'yes');
-            close();
-          },
-        },
-        success: {
-          text: '知道了',
-          onPress: () => {
-            close();
-          },
-        },
+        return !state;
       });
     },
     // 数量获取焦点时如果带有百分号，清空
     fixedValueFocus: () => {
-      setFixedFocus(true);
       if (/%+/.test(fixedValue)) {
         setFixedValueRatio(0);
       }
@@ -1191,83 +891,34 @@ const ContractUSDTScreen: FC = () => {
         setFixedValue('');
       }
     },
-    fixedValueBlur: () => {
-      setFixedFocus(false);
-    },
     // 订单提交弹窗0开多，1开空，2平多，3平空
     submitVerfiy: (type: 0|1|2|3) => {
-      if (!userIsLogin) {
-        showMessage({
-          position: 'bottom',
-          type: 'warning',
-          message: '尚未登录',
-        });
-        return;
-      }
-      if (noUserInfo) {
-        showMessage({
-          position: 'bottom',
-          type: 'warning',
-          message: '尚未充值',
-        });
-        return;
-      }
-      if (loading) return;
-      const splitNum = (`${nowCoinInfo.openMinValue}`.split('.')[1] || '').length;
-      let changeValue = fixedValue;
-      let message = '';
-      // 判断是否是限价，价格是否合理
-      if (!isMarketPrice && Math.abs((parseFloat(fixedPrice) || 0) / parseFloat(nowCoinInfo.newPirce) - 1) > 0.3) message = '限价委托和当前指数价不能相差超过30%';
-      // 判断开仓数量小数点后数据是否正确
-      if ((changeValue.split('.')?.[1] || '').length > splitNum) message = '开仓数量小数位有误';
-      if (changeValue === '0') message = '开仓数量有误';
-      // 开仓判断仓位数量
-      if (doType === 0) {
-        if (parseFloat(changeValue) > parseFloat(canOpenValue)) message = '开仓数量有误';
-      } else {
-        // 平仓仓位判断
-        // 如果是百分比
-        // eslint-disable-next-line no-lonely-if
-        if (/%/.test(changeValue)) {
-          if (type === 2) {
-            if (changeValue === '100%') {
-              changeValue = nowCoinInfo.positionBuyNum;
-            } else {
-              changeValue = ((parseFloat(changeValue) * parseFloat(nowCoinInfo.positionBuyNum)) / 100).toFixed(splitNum);
-            }
-          } else {
-            // eslint-disable-next-line no-lonely-if
-            if (changeValue === '100%') {
-              changeValue = nowCoinInfo.positionSellNum;
-            } else {
-              changeValue = ((parseFloat(changeValue) * parseFloat(nowCoinInfo.positionSellNum)) / 100).toFixed(splitNum);
-            }
-          }
-        }
-      }
-      // 如果是开仓判断数量是否正确
-      if (type === 0 || type === 1) {
-        // 判断开仓数量是否大于可开仓数量
-        if (parseFloat(changeValue) > parseFloat(canOpenValue)) message = '开仓数量超过可开仓数量';
-      } else if (changeValue === '') {
-        // 如果没有平仓数量
-        message = '请输入正确的数量';
-      } else {
-        // 如果是平仓数量是否正确
-      }
-      // 如果有message提示
-      if (message !== '') {
-        showMessage({
-          position: 'bottom',
-          type: 'warning',
-          message,
-        });
-        return;
-      }
-      // 订单提示
-      addEvent.submitAlert(type, changeValue).then(data => {
-        if (data) addEvent.submitOrder(type, changeValue);
+      showMessage({
+        position: 'bottom',
+        type: 'info',
+        message: '功能开发中，敬请期待',
       });
+      // if (!userIsLogin) {
+      //   showMessage({
+      //     position: 'bottom',
+      //     type: 'warning',
+      //     message: '尚未登录',
+      //   });
+      //   return;
+      // }
+      // if (noUserInfo) {
+      //   showMessage({
+      //     position: 'bottom',
+      //     type: 'warning',
+      //     message: '尚未充值',
+      //   });
+      //   return;
+      // }
+      // // 订单提示
+      // const changeValue = fixedValue;
+      // addEvent.submitAlert(type, changeValue).then(data => {
+      //   if (data) addEvent.submitOrder(type, changeValue);
+      // });
     },
     // 订单提示
     submitAlert: (type: 0|1|2|3, changeValue: string): Promise<boolean> => {
@@ -1308,129 +959,7 @@ const ContractUSDTScreen: FC = () => {
     },
     // 提交订单0开多，1开空，2平多，3平空
     submitOrder: (type: 0|1|2|3, changeValue: string) => {
-      const fm: {[key: string]: any} = {};
-      // price 价格
-      // price_type 市价2限价1
-      // num 数量
-      // lever 杠杆倍数
-      // symbol 币种
-      // side 买卖'SELL', 'BUY'
-      // postition_side 方向'SHORT', 'LONG'
-      if (isMarketPrice) {
-        fm.price = 1;
-      } else {
-        fm.price = parseFloat(fixedPrice);
-      }
-      fm.price_type = Number(isMarketPrice) + 1;
-      fm.num = parseFloat(changeValue);
-      fm.lever = parseFloat(nowCoinInfo.lever);
-      fm.symbol = nowCoinInfo.symbol.replace('USDT', '');
-      if (type === 0) {
-        fm.side = 'BUY';
-        fm.postition_side = 'LONG';
-      } else if (type === 1) {
-        fm.side = 'SELL';
-        fm.postition_side = 'SHORT';
-      } else if (type === 2) {
-        fm.side = 'SELL';
-        fm.postition_side = 'LONG';
-      } else if (type === 3) {
-        fm.side = 'BUY';
-        fm.postition_side = 'SHORT';
-      }
-      setLoading(true);
-      ajax.post('/contract/api/v1/bian/Order', fm).then(data => {
-        if (data.status === 200) {
-          showMessage({
-            position: 'bottom',
-            message: '委托提交成功',
-            type: 'success',
-          });
-        } else {
-          showMessage({
-            position: 'bottom',
-            message: data.message,
-            type: 'warning',
-          });
-        }
-      }).catch(err => {
-        console.log(err);
-      }).finally(() => {
-        setLoading(false);
-      });
-    },
-    // 获取维持保证金率/维持保证金速算额
-    getFollowRatio: (coin: string, orderNum: number): number[] => {
-      if (coin === 'BTCUSDT') {
-        if (orderNum < 50000) return [(0.4 / 100), 0];
-        if (orderNum < 250000) return [(0.5 / 100), 50];
-        if (orderNum < 1000000) return [(1 / 100), 1300];
-        if (orderNum < 5000000) return [(2.5 / 100), 16300];
-        if (orderNum < 20000000) return [(5 / 100), 141300];
-        if (orderNum < 50000000) return [(10 / 100), 1141300];
-        if (orderNum < 100000000) return [(12.5 / 100), 2391300];
-        if (orderNum < 200000000) return [(15 / 100), 4891300];
-        return [(25 / 100), 24891300];
-      }
-      if (orderNum < 10000) return [(0.65 / 100), 0];
-      if (orderNum < 50000) return [(1 / 100), 35];
-      if (orderNum < 250000) return [(2 / 100), 535];
-      if (orderNum < 1000000) return [(5 / 100), 8035];
-      if (orderNum < 2000000) return [(10 / 100), 58035];
-      if (orderNum < 5000000) return [(12.5 / 100), 108035];
-      if (orderNum < 10000000) return [(15 / 100), 233035];
-      return [(25 / 100), 1233035];
-    },
-    // 计算强平价
-    // 计算预估强平价方式
-    // https://www.binancezh.com/cn/support/faq/b3c689c1f50a44cabb3a84e663b81d93-如何计算永续合约的强平价格
-    computBoomPrice: (state: TypeAllCoinInfo[]): TypeAllCoinInfo[] => {
-      // 计算公式
-      // 可用资产
-      const assets = parseFloat(userAllAssets);
-      if (Number.isNaN(assets)) return state;
-      // 获取其他合约所有保证金和未实现盈亏
-      let otherBound = 0;
-      // 其他合约未实现盈亏
-      let otherWillChange = 0;
-      state.forEach(item => {
-        if (item.symbol === coinType) return;
-        otherBound += parseFloat(item.initialMarginBuy) + parseFloat(item.initialMarginSell);
-        otherWillChange += parseFloat(item.unrealizedProfitBuy) + parseFloat(item.unrealizedProfitSell);
-      });
-      return state.map(coin => {
-        const result = { ...coin };
-        if (result.symbol !== coinType) return result;
-        result.positionOrders = result.positionOrders.map(order => {
-          const res = { ...order };
-          // 在此计算-------------
-          // --------------------
-          const [inRatio, inValue] = addEvent.getFollowRatio(coinType, parseFloat(order.allValue) * parseFloat(coin.newPirce)); // 获取费率和速算额
-          // 分子
-          const resultMolecule = assets // 资产余额
-            - otherBound // 保证金
-            + otherWillChange // 未实现盈亏
-            + inValue // 保证金速算额
-            + (
-              (order.type === 0 ? 1 : -1) // 开多-或开空+
-              * parseFloat(order.allValue) // 持仓数量
-              * parseFloat(order.price) // 开仓价
-            );
-          // 分母
-          const resultDenominator = (parseFloat(order.allValue) * inRatio) // 双向费率计算
-            + ((order.type === 0 ? 1 : -1) * parseFloat(order.allValue)); // 仓位大小
-          const boomResult = resultMolecule / resultDenominator;
-          if (boomResult < 0) {
-            res.willBoomPrice = '--';
-          } else {
-            res.willBoomPrice = boomResult.toFixed(2);
-          }
-          // ----------
-          // ----------强平价
-          return res;
-        });
-        return result;
-      });
+      console.log('提交订单', type, changeValue);
     },
   };
 
@@ -1439,7 +968,7 @@ const ContractUSDTScreen: FC = () => {
   const stopScoket = useRef(false);
   useEffect(() => {
     let newPriceSocketRef: SocketClass|null = null;
-    const newPirceMark = 'gold.market.ALL.ticker';
+    const newPirceMark = 'cash.market.ALL.ticker';
     const newPirceMarkListener = (message: any) => {
       const resultData: {
         [key: string]: {
@@ -1454,7 +983,7 @@ const ContractUSDTScreen: FC = () => {
         const range = Math.floor(((close - open) / open) * 10000) / 100;
         result.push({
           symbol: item.symbol,
-          price: item.close,
+          price: `${parseFloat(item.close)}`,
           ratio: `${range}%`,
         });
       });
@@ -1464,7 +993,7 @@ const ContractUSDTScreen: FC = () => {
       stopScoket.current = true;
       // 页面切换的时候更新数据
       fristGetFetch.current = true;
-      marketSocket.getSocket().then(ws => {
+      CoinToCoinSocket.getSocket().then(ws => {
         newPriceSocketRef = ws;
         ws.addListener(newPirceMarkListener, newPirceMark);
         ws.send(newPirceMark, 'req');
@@ -1523,65 +1052,14 @@ const ContractUSDTScreen: FC = () => {
     setFixedPrice('');
     setFixedValue('');
     setFixedValueRatio(0);
-  }, [coinType, doType]);
-
-  // 占用保证金/可开仓数计算
-  useEffect(() => {
-    let price = parseFloat(fixedPrice);
-    const value = parseFloat(fixedValue);
-    const lever = parseFloat(nowCoinInfo.lever);
-    const splitNum = (`${nowCoinInfo.openMinValue}`.split('.')[1] || '').length;
-    if (isMarketPrice) price = parseFloat(nowCoinInfo.newPirce);
-    if (
-      !(price > 0) || !(lever > 0) || nowCoinInfo.leverList.length === 0
-    ) {
-      setOccupyBond('--');
-      setCanOpenValue('--');
-      return;
-    }
-    // 计算可开仓数
-    const canOpenVolumn = (parseFloat(canUseAssets) / price) * Number(lever);
-    setCanOpenValue(`${parseFloat(canOpenVolumn.toFixed(splitNum))}`);
-    if (!(value > 0)) return;
-    // 获取杠杆保证金率
-    const filterArr = nowCoinInfo.leverList.filter(item => Number(nowCoinInfo.lever) < Number(item.lever))[0];
-    const safeRatio = filterArr ? filterArr.selfRatio : nowCoinInfo.leverList[0].selfRatio;
-    // 占用保证金数 杠杆*价格*币数*资金占用率比例
-    const safeValue = price * value * safeRatio;
-    setOccupyBond(safeValue.toFixed(2));
-  }, [fixedPrice, fixedValue, nowCoinInfo.lever, nowCoinInfo.leverList, nowCoinInfo.openMinValue, canUseAssets, isMarketPrice, nowCoinInfo.newPirce]);
-
-  // 根据滚动条计算开仓数量
-  useEffect(() => {
-    if (fixedFocus) return;
-    if (doType === 1) {
-      if (fixedValueRatio !== 0) setFixedValue(`${fixedValueRatio}%`);
-      else setFixedValue('');
-      return;
-    }
-    // 市价情况下，为0
-    if (isMarketPrice) {
-      setFixedValue('');
-    }
-    const splitNum = (`${nowCoinInfo.openMinValue}`.split('.')[1] || '').length;
-    const value = (parseFloat(canOpenValue) * fixedValueRatio) / 100;
-    if (fixedValueRatio === 100 && parseFloat(canOpenValue) > 0) {
-      setFixedValue(canOpenValue);
-      return;
-    }
-    if (Number.isNaN(value)) {
-      setFixedValue('');
-    } else {
-      setFixedValue(`${parseFloat(value.toFixed(splitNum))}`);
-    }
-  }, [fixedValueRatio, canOpenValue, nowCoinInfo.openMinValue, doType]);
+  }, [coinType]);
 
   // 监听订单更改
+  // TODO: 需要更改成现货的订单
   const socket = useRef<Socket|null>(null);
   const subSocket = useRef(false);
   useEffect(() => {
     if (!userInfo.token) return;
-    addEvent.fetchUserInfo();
     const tickerImg = `gold.market.ALL.account.${userInfo.token}`;
     const socketListener = () => {
       if (logSelectTabRef.current === 0) addEvent.fetchPostionsOrders(coinTypeRef.current);
@@ -1599,93 +1077,64 @@ const ContractUSDTScreen: FC = () => {
       //   // 爆仓平仓
       // }
     };
-    let Timer = setTimeout(() => {}, 1);
     if (routePage === routeName) {
-      // 如果有用户信息，监听
-      Timer = setInterval(() => {
-        if (noUserInfo === false) {
-          clearTimeout(Timer);
-          // 获取USDT合约
-          marketSocket.getSocket().then(ws => {
-            socket.current = ws;
-            ws.addListener(socketListener, tickerImg);
-            ws.send(tickerImg, 'sub');
-            subSocket.current = false;
-          }).catch(err => {
-            console.log(err);
-          });
-        }
-      }, 100);
+      // 获取USDT合约
+      // marketSocket.getSocket().then(ws => {
+      //   socket.current = ws;
+      //   ws.addListener(socketListener, tickerImg);
+      //   ws.send(tickerImg, 'sub');
+      //   subSocket.current = false;
+      // }).catch(err => {
+      //   console.log(err);
+      // });
     } else if (socket.current) {
-      clearTimeout(Timer);
       if (subSocket.current) {
         subSocket.current = true;
         socket.current.send(tickerImg, 'unsub');
         socket.current.removeListener(tickerImg);
       }
     }
-  }, [routePage, noUserInfo]);
+  }, [routePage]);
 
-
-  // 计算风险度
-  useEffect(() => {
-    let riskLv = 0;
-    coinListInfo.forEach(coin => {
-      coin.positionOrders.forEach(order => {
-        if (order.type === 1) {
-          // 开多
-          const riskLvNew = parseFloat(order.willBoomPrice) / parseFloat(coin.newPirce);
-          if (riskLvNew > riskLv) riskLv = riskLvNew;
-        } else {
-          // 开空
-          const riskLvNew = parseFloat(coin.newPirce) / parseFloat(order.willBoomPrice);
-          if (riskLvNew > riskLv) riskLv = riskLvNew;
-        }
-      });
-    });
-    // 风险度数据太大，进行5次方计算
-    setRiskLever(`${(riskLv ** 5 * 100).toFixed(2)}%`);
-  }, [coinListInfo]);
-
-  // 计算可用资产
-  useEffect(() => {
-    // TODO: 计算可用/当前资产
-  }, [coinListInfo]);
 
   return (
-    <View style={style.pageView}>
-      {/* 头部 */}
-      <View style={style.headView}>
-        <TouchableNativeFeedback onPress={() => addEvent.showLeftChange()}>
-          <View style={style.headLeftView}>
-            <Image
-              style={style.headLeftIcon}
-              resizeMode="contain"
-              source={require('../../../assets/images/icons/contract_show_left.png')} />
-            <Text style={style.headLeftText}>
-              {addEvent.showCointTypeText(coinType)}
-            </Text>
+    <ComLayoutHead
+      close
+      overScroll
+      scrollStyle={{ backgroundColor: themeWhite }}>
+      <View style={style.pageView}>
+        {/* 头部 */}
+        <View style={style.headView}>
+          <TouchableNativeFeedback onPress={() => addEvent.showLeftChange()}>
+            <View style={style.headLeftView}>
+              <Image
+                style={style.headLeftIcon}
+                resizeMode="contain"
+                source={require('../../../assets/images/icons/contract_show_left.png')} />
+              <Text style={style.headLeftText}>
+                {addEvent.showCointTypeText(coinType)}现货
+              </Text>
+            </View>
+          </TouchableNativeFeedback>
+          <View style={style.headRightView}>
+            <TouchableNativeFeedback onPress={() => goToWithLogin('TranscationKline', { name: coinType })}>
+              <View style={style.headRightIconView}>
+                <Image
+                  style={style.headRgihtIcon}
+                  resizeMode="contain"
+                  source={require('../../../assets/images/icons/contract_kline.png')} />
+              </View>
+            </TouchableNativeFeedback>
+            <TouchableNativeFeedback onPress={() => setShowMoreAlert(state => !state)}>
+              <View style={style.headRightIconView}>
+                <Image
+                  style={style.headRgihtIcon}
+                  resizeMode="contain"
+                  source={require('../../../assets/images/icons/contract_more.png')} />
+              </View>
+            </TouchableNativeFeedback>
           </View>
-        </TouchableNativeFeedback>
-        <View style={style.headRightView}>
-          <TouchableNativeFeedback onPress={() => goToWithLogin('MarketKline', { name: coinType })}>
-            <View style={style.headRightIconView}>
-              <Image
-                style={style.headRgihtIcon}
-                resizeMode="contain"
-                source={require('../../../assets/images/icons/contract_kline.png')} />
-            </View>
-          </TouchableNativeFeedback>
-          <TouchableNativeFeedback onPress={() => setShowMoreAlert(state => !state)}>
-            <View style={style.headRightIconView}>
-              <Image
-                style={style.headRgihtIcon}
-                resizeMode="contain"
-                source={require('../../../assets/images/icons/contract_more.png')} />
-            </View>
-          </TouchableNativeFeedback>
-        </View>
-        {
+          {
           showMoreAlert && (
             <View style={style.moreView}>
               <TouchableNativeFeedback onPress={() => {
@@ -1704,336 +1153,183 @@ const ContractUSDTScreen: FC = () => {
             </View>
           )
         }
-      </View>
-      {/* 个人信息 */}
-      <View style={style.topInfoView}>
-        {
-          userIsLogin && !noUserInfo && (
-            <>
-              <Text style={style.topInfoViewText}>
-                <Text>资产:可用/当前&nbsp;&nbsp;</Text>
-                <Text style={style.topInfoViewInfo}>{canUseAssets}/{userAllAssets}</Text>
-              </Text>
-              <Text style={[style.topInfoViewText, style.topInfoViewRight]}>
-                <Text>风险度:&nbsp;&nbsp;</Text>
-                <Text style={style.topInfoViewInfo}>{riskLever}</Text>
-              </Text>
-              <Text style={style.topInfoViewText}>
-                <Text>资金使用率:&nbsp;&nbsp;</Text>
-                <Text style={style.topInfoViewInfo}>{assetsUseRatio}</Text>
-              </Text>
-              <Text style={[style.topInfoViewText, style.topInfoViewRight]}>
-                <Text>资金杠杆:&nbsp;&nbsp;</Text>
-                <Text style={style.topInfoViewInfo}>{nowCoinInfo.lever}</Text>
-              </Text>
-            </>
-          )
-        }
-        {
-          userIsLogin && noUserInfo && (
-            <Text style={style.topInfoViewText}>暂无合约资产</Text>
-          )
-        }
-        {
-          !userIsLogin && (
-            <Text>未登录</Text>
-          )
-        }
-      </View>
-      {/* 主内容区 */}
-      <View style={style.content}>
-        {/* 左侧操作区 */}
-        <View style={style.contentLeft}>
-          {/* 开仓平仓按钮 */}
-          <View style={style.typeChangeBtnsView}>
-            {
-              ['开仓', '平仓'].map((item, index) => (
-                <StaticTouchableNativeFeedback
-                  key={index}
-                  background={StaticTouchableNativeFeedback.Ripple('transparent')}
-                  onPress={() => setDoType(index as typeof doType)}>
-                  <View
-                    style={[
-                      style.typeChangeBtn,
-                      index === doType && style.typeChangeBtnSelect,
-                    ]}>
-                    <Text style={[
-                      style.typeChangeBtnText,
-                      index === doType && style.typeChangeBtnSelectText,
-                    ]}>
-                      {item}
-                    </Text>
-                    <View style={[
-                      style.typeChangeBtnBg,
-                      index === 0 && style.typeChangeBtnLeftBg,
-                    ]}>
-                      <Image
-                        resizeMode="stretch"
-                        style={style.typeChangeBtnBgImage}
-                        source={[
-                          require('../../../assets/images/pic/contract_btn_no_bg.png'),
-                          require('../../../assets/images/pic/contract_btn_bg.png'),
-                        ][Number(index === doType)]} />
-                    </View>
-                  </View>
-                </StaticTouchableNativeFeedback>
-              ))
-            }
-          </View>
-          {/* 委托类型/杠杆倍数 */}
-          <View style={style.moreTypeChange}>
-            <StaticTouchableNativeFeedback onPress={() => {}}>
-              <View style={style.moreTypeChangePress}>
-                <Text style={style.moreTypeChangeText}>
-                  限价委托
+        </View>
+        {/* 个人信息 */}
+        <View style={style.topInfoView}>
+          {
+            userIsLogin && !noUserInfo && (
+              <>
+                <Text style={style.topInfoViewText}>
+                  <Text>资产:可用/当前&nbsp;&nbsp;</Text>
+                  <Text style={style.topInfoViewInfo}>暂无</Text>
+                  {/* <Text style={style.topInfoViewInfo}>{canUseAssets}/{userAllAssets}</Text> */}
                 </Text>
-                <Image
-                  resizeMode="contain"
-                  style={style.moreTypeChangeIcon}
-                  source={require('../../../assets/images/icons/down.png')} />
-              </View>
-            </StaticTouchableNativeFeedback>
-            {
-              doType === 0 && (
-                <StaticTouchableNativeFeedback onPress={() => addEvent.changeLeverType()}>
-                  <View style={style.moreTypeChangePress}>
-                    <Text style={style.moreTypeChangeText}>杠杆&nbsp;{nowCoinInfo.lever}X</Text>
-                    <Image
-                      resizeMode="contain"
-                      style={style.moreTypeChangeIcon}
-                      source={require('../../../assets/images/icons/down.png')} />
-                  </View>
-                </StaticTouchableNativeFeedback>
-              )
-            }
-          </View>
-          {/* 价格操作区 */}
-          <View>
+              </>
+            )
+          }
+          {
+            userIsLogin && noUserInfo && (
+              <Text style={style.topInfoViewText}>暂无合约资产</Text>
+            )
+          }
+          {
+            !userIsLogin && (
+              <Text>未登录</Text>
+            )
+          }
+        </View>
+        {/* 主内容区 */}
+        <View style={style.content}>
+          {/* 左侧操作区 */}
+          <View style={style.contentLeft}>
+            {/* 价格操作区 */}
             <View>
-              {/* 价格 */}
-              <View style={style.priceSetView}>
-                <View style={style.priceSetViewLeft}>
-                  {
-                    isMarketPrice
-                      ? (
-                        <Text style={{ color: themeGray }}>以市价执行</Text>
-                      )
-                      : (
-                        <TextInput
-                          keyboardType="numeric"
-                          style={style.priceSetInputInput}
-                          value={fixedPrice}
-                          onChange={e => setFixedPrice(e.nativeEvent.text)}
-                          placeholder="价格" />
-                      )
-                  }
-                  {
-                    !isMarketPrice && <Text style={style.priceSetInputText}>USDT</Text>
-                  }
+              <View>
+                {/* 价格 */}
+                <View style={style.priceSetView}>
+                  <View style={style.priceSetViewLeft}>
+                    {
+                      isMarketPrice
+                        ? (
+                          <Text style={{ color: themeGray }}>以市价执行</Text>
+                        )
+                        : (
+                          <TextInput
+                            keyboardType="numeric"
+                            style={style.priceSetInputInput}
+                            value={fixedPrice}
+                            onChange={e => setFixedPrice(e.nativeEvent.text)}
+                            placeholder="价格" />
+                        )
+                    }
+                    {
+                      !isMarketPrice && <Text style={style.priceSetInputText}>USDT</Text>
+                    }
+                  </View>
+                  <StaticTouchableNativeFeedback onPress={() => {
+                    console.log(222);
+                    addEvent.onMarketPrice();
+                  }}>
+                    <View style={style.priceSetViewRight}>
+                      <Text style={[
+                        style.priceSetViewRightText,
+                        {
+                          color: isMarketPrice ? defaultThemeColor : themeBlack,
+                        },
+                      ]}>
+                        {isMarketPrice ? '市价' : '限价'}
+                      </Text>
+                    </View>
+                  </StaticTouchableNativeFeedback>
                 </View>
-                <StaticTouchableNativeFeedback onPress={() => addEvent.onMarketPrice()}>
-                  <View style={style.priceSetViewRight}>
-                    <Text style={[
-                      style.priceSetViewRightText,
-                      {
-                        color: isMarketPrice ? defaultThemeColor : themeBlack,
-                      },
-                    ]}>
-                      {isMarketPrice ? '市价' : '限价'}
-                    </Text>
-                  </View>
-                </StaticTouchableNativeFeedback>
-              </View>
-              {/* 数量 */}
-              <View style={style.priceSetValue}>
-                <TextInput
-                  keyboardType="number-pad"
-                  style={style.priceSetInputInput}
-                  value={fixedValue}
-                  onChange={e => setFixedValue(e.nativeEvent.text)}
-                  onFocus={() => addEvent.fixedValueFocus()}
-                  onBlur={() => addEvent.fixedValueBlur()}
-                  placeholder={`最小${doType === 0 ? '开仓' : '平仓'}数量: ${nowCoinInfo.openMinValue}`} />
-              </View>
-              {/* 滚动条 */}
-              <ComSliderView
-                fixedValueRatio={fixedValueRatio}
-                setFixedValueRatio={setFixedValueRatio} />
-              {/* 更多信息 */}
-              <View style={style.ratioThenTextView}>
-                {
-                  !isMarketPrice && (
-                    <>
-                      <Text style={style.ratioThenText}>
-                        {
-                          doType === 0
-                            ? '预占用保证金'
-                            : '已占用保证金'
-                        }
-                      </Text>
-                      <Text style={style.ratioThenText}>
-                        {
-                          doType === 0
-                            ? occupyBond
-                            : (parseFloat(nowCoinInfo.initialMarginBuy) + parseFloat(nowCoinInfo.initialMarginSell)).toFixed(4)
-                        }
-                      </Text>
-                    </>
-                  )
-                }
-              </View>
-              <View style={style.ratioThenTextView}>
-                {
-                  doType === 0 && !isMarketPrice && (
-                    <>
-                      <Text style={style.ratioThenText}>可开仓数</Text>
-                      <Text style={style.ratioThenText}>{canOpenValue}</Text>
-                    </>
-                  )
-                }
-                {
-                  doType === 0 && isMarketPrice && (
-                    <>
-                      <Text style={style.ratioThenText}>预计可开仓数量</Text>
-                      <Text style={style.ratioThenText}>{canOpenValue}</Text>
-                    </>
-                  )
-                }
-                {
-                  doType === 1 && (
-                    <>
-                      <Text style={style.ratioThenText}>可平仓数</Text>
-                      <Text style={style.ratioThenText}>
-                        多单:{nowCoinInfo.positionBuyNum}&nbsp;&nbsp;空单:{nowCoinInfo.positionSellNum}
-                      </Text>
-                    </>
-                  )
-                }
+                {/* 数量 */}
+                <View style={style.priceSetValue}>
+                  <TextInput
+                    keyboardType="number-pad"
+                    style={style.priceSetInputInput}
+                    value={fixedValue}
+                    onChange={e => setFixedValue(e.nativeEvent.text)}
+                    onFocus={() => addEvent.fixedValueFocus()}
+                    placeholder="交易数量(USDT)" />
+                </View>
+                {/* 滚动条 */}
+                <ComSliderView
+                  fixedValueRatio={fixedValueRatio}
+                  setFixedValueRatio={setFixedValueRatio} />
+                {/* 更多信息 */}
+                <View style={style.ratioThenTextView}>
+                  <Text style={style.ratioThenText}>持有USDT</Text>
+                  <Text style={style.ratioThenText}>{}</Text>
+                </View>
+                <View style={style.ratioThenTextView}>
+                  <Text style={style.ratioThenText}>持有{coinType.replace('USDT', '')}</Text>
+                  <Text style={style.ratioThenText}>{}</Text>
+                </View>
               </View>
             </View>
+            {/* 操作按钮 */}
+            <View style={style.doFuncBtnsView}>
+              <TouchableNativeFeedback onPress={() => addEvent.submitVerfiy(0)}>
+                <View style={[
+                  style.doFuncBtnView,
+                  { backgroundColor: themeGreen },
+                ]}>
+                  <Text style={style.doFuncBtnText}>买入</Text>
+                </View>
+              </TouchableNativeFeedback>
+              <TouchableNativeFeedback onPress={() => addEvent.submitVerfiy(1)}>
+                <View style={[
+                  style.doFuncBtnView,
+                  { backgroundColor: themeRed },
+                ]}>
+                  <Text style={style.doFuncBtnText}>卖出</Text>
+                </View>
+              </TouchableNativeFeedback>
+            </View>
           </View>
-          {/* 操作按钮 */}
-          <View style={style.doFuncBtnsView}>
-            <TouchableNativeFeedback onPress={() => {
-              if (doType === 0) addEvent.submitVerfiy(0);
-              else addEvent.submitVerfiy(2);
-            }}>
-              <View style={[
-                style.doFuncBtnView,
-                { backgroundColor: [themeGreen, themeRed][doType] },
-              ]}>
-                {
-                  doType === 0
-                    ? (
-                      <>
-                        <Text style={style.doFuncBtnText}>开多</Text>
-                        <Text style={style.doFuncBtnDesc}>看涨</Text>
-                      </>
-                    )
-                    : (
-                      <Text style={style.doFuncBtnText}>平多</Text>
-                    )
-                }
-              </View>
-            </TouchableNativeFeedback>
-            <TouchableNativeFeedback onPress={() => {
-              if (doType === 0) addEvent.submitVerfiy(1);
-              else addEvent.submitVerfiy(3);
-            }}>
-              <View style={[
-                style.doFuncBtnView,
-                { backgroundColor: [themeRed, themeGreen][doType] },
-              ]}>
-                {
-                  doType === 0
-                    ? (
-                      <>
-                        <Text style={style.doFuncBtnText}>开空</Text>
-                        <Text style={style.doFuncBtnDesc}>看跌</Text>
-                      </>
-                    )
-                    : (
-                      <Text style={style.doFuncBtnText}>平空</Text>
-                    )
-                }
-              </View>
-            </TouchableNativeFeedback>
+          {/* 数据列表区 */}
+          <View style={style.contentRight}>
+            {/* 标题 */}
+            <View style={style.contentRightTitleView}>
+              <Text style={style.contentRightTitleLeft}>价格</Text>
+              <Text style={style.contentRightTitleRight}>委托数</Text>
+            </View>
+            {/* 数据 */}
+            <ContractRightValueView
+              defalutPrice={nowCoinInfo.newPirce}
+              coinType={coinType}
+              changeValue={price => setFixedPrice(price)} />
           </View>
         </View>
-        {/* 数据列表区 */}
-        <View style={style.contentRight}>
-          {/* 标题 */}
-          <View style={style.contentRightTitleView}>
-            <Text style={style.contentRightTitleLeft}>价格</Text>
-            <Text style={style.contentRightTitleRight}>委托数</Text>
+        {/* 分隔符 */}
+        <View style={style.comLineStyle} />
+        <View>
+          {/* 选项卡 */}
+          <View style={style.tabView}>
+            <View style={style.tabViewLeft}>
+              {
+                ['当前委托', '历史委托'].map((item, index) => (
+                  <TouchableNativeFeedback
+                    key={index}
+                    onPress={() => setLogSelectTab(index)}>
+                    <View style={style.tabViewBtn}>
+                      <Text style={[
+                        style.tabViewBtnText,
+                        logSelectTab === index && { color: themeBlack, fontWeight: 'bold' },
+                      ]}>
+                        {item}
+                      </Text>
+                    </View>
+                  </TouchableNativeFeedback>
+                ))
+              }
+            </View>
           </View>
-          {/* 数据 */}
-          <ContractRightValueView
-            defalutPrice={nowCoinInfo.newPirce}
-            coinType={coinType}
-            changeValue={price => setFixedPrice(price)} />
-        </View>
-      </View>
-      {/* 分隔符 */}
-      <View style={style.comLineStyle} />
-      <View>
-        {/* 选项卡 */}
-        <View style={style.tabView}>
-          <View style={style.tabViewLeft}>
-            {
-              ['持仓', '普通委托'].map((item, index) => (
-                <TouchableNativeFeedback
-                  key={index}
-                  onPress={() => setLogSelectTab(index)}>
-                  <View style={style.tabViewBtn}>
-                    <Text style={[
-                      style.tabViewBtnText,
-                      logSelectTab === index && { color: themeBlack, fontWeight: 'bold' },
-                    ]}>
-                      {item}
-                    </Text>
-                  </View>
-                </TouchableNativeFeedback>
+          {/* 列表 */}
+          {
+            logSelectTab === 0
+            && (
+              nowCoinInfo.positionOrders.map(item => (
+                <ComContractIndexListPosition
+                  key={item.id}
+                  data={item} />
               ))
-            }
-          </View>
-          <TouchableNativeFeedback onPress={() => navigation.navigate('ContractLogs', { coin: coinType })}>
-            <View style={style.tabViewRight}>
-              <StaticImage
-                resizeMode="contain"
-                style={style.tabViewRightImage}
-                source={require('../../../assets/images/icons/contract_list_log.png')} />
-              <Text style={style.tabViewRightText}>全部</Text>
-            </View>
-          </TouchableNativeFeedback>
+            )
+          }
+          {/* 普通委托 */}
+          {
+            logSelectTab === 1
+            && (
+              nowCoinInfo.entrustOrders.map(item => (
+                <ComContractIndexListGeneral
+                  key={item.id}
+                  data={item} />
+              ))
+            )
+          }
         </View>
-        {/* 列表 */}
-        {
-          logSelectTab === 0
-          && (
-            nowCoinInfo.positionOrders.map(item => (
-              <ComContractIndexListPosition
-                key={item.id}
-                leverType={nowCoinInfo.lever}
-                newPrice={nowCoinInfo.newPirce}
-                data={item} />
-            ))
-          )
-        }
-        {/* 普通委托 */}
-        {
-          logSelectTab === 1
-          && (
-            nowCoinInfo.entrustOrders.map(item => (
-              <ComContractIndexListGeneral
-                key={item.id}
-                leverType={nowCoinInfo.lever}
-                data={item} />
-            ))
-          )
-        }
       </View>
-    </View>
+    </ComLayoutHead>
   );
 };
 
@@ -2368,10 +1664,12 @@ const style = StyleSheet.create({
   ratioThenTextView: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    height: 16,
+    height: 20,
+    marginTop: 4,
+    marginBottom: 4,
   },
   ratioThenText: {
-    fontSize: 12,
+    fontSize: 14,
     color: themeGray,
   },
   // 计划委托
@@ -2399,6 +1697,7 @@ const style = StyleSheet.create({
     borderRadius: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 10,
   },
   doFuncBtnText: {
     color: themeWhite,
