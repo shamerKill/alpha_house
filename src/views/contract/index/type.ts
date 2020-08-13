@@ -58,7 +58,7 @@ export type TypePlanEntrustement = {
 // 止盈止损数据类型
 export type TypeStopOrder = {
   id: string|number; // 订单ID
-  type: 0|1; // 开空0，开多1
+  type: 0|1; // 平空0，平多1
   coinType: string; // 交易对
   leverType: string; // 杠杆倍数
   startPrice: string; // 触发价格
@@ -118,10 +118,8 @@ export type TypeStopOrderLog = {
   id: string|number; // 订单ID
   type: 0|1; // 开空0，开多1
   coinType: string; // 交易对
-  leverType: string; // 杠杆倍数
   startPrice: string; // 触发价格
   doPrice: string; // 执行价格
-  number: number; // 数量
   isSuccess: boolean; // 成交true/撤销false
   startTime: string; // 开始时间
   stopTime: string; // 停止时间

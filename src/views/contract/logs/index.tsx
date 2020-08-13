@@ -7,9 +7,10 @@ import ComLayoutHead from '../../../components/layout/head';
 import { themeWhite } from '../../../config/theme';
 import ComFormButton from '../../../components/form/button';
 import ComLine from '../../../components/line';
-import { ComContractIndexListGeneralLog, ComContractIndexListHistory } from './list';
+import { ComContractIndexListGeneralLog, ComContractIndexListHistory, ComContractIndexListOrderLog } from './list';
 import { TypeGeneralEntrustemntLog, TypeHistoryLog } from '../_index/type';
 import ajax from '../../../data/fetch';
+import { TypeStopOrderLog } from '../index/type';
 
 const ContractLogsAllScreen: FC = () => {
   // const selectArr = [
@@ -23,7 +24,7 @@ const ContractLogsAllScreen: FC = () => {
     { name: '历史成交', id: 1 },
     // { name: '', id: 2 },
     // { name: '计划委托', id: 1 },
-    // { name: '止盈止损', id: 2 },
+    { name: '止盈止损', id: 2 },
   ];
   const route = useRoute<RouteProp<{logsIndex: { coin: string }}, 'logsIndex'>>();
   const coinType = route.params.coin;
@@ -39,7 +40,7 @@ const ContractLogsAllScreen: FC = () => {
   // 计划委托列表
   // const [planementData, setPlanementData] = useState<TypePlanEntrustementLog[]>([]);
   // 止盈止损列表
-  // const [orderData, setOrderData] = useState<TypeStopOrderLog[]>([]);
+  const [orderData, setOrderData] = useState<TypeStopOrderLog[]>([]);
 
   // const addEvent = {
   //   selectType: () => {
@@ -57,6 +58,32 @@ const ContractLogsAllScreen: FC = () => {
   //     });
   //   },
   // };
+
+  // 获取止盈止损
+  useEffect(() => {
+    ajax.get(`/contract/api/v2/order/profitLossLog?symbol=${route.params.coin.replace('USDT', '')}`).then(data => {
+      if (data.status === 200 && data.data) {
+        const result: TypeStopOrderLog[] = data.data.map((item: any) => {
+          return {
+            id: item.id,
+            type: item.direction === '平多' ? 1 : 0,
+            coinType: route.params.coin,
+            leverType: '--',
+            startPrice: item.price,
+            isSuccess: item.status === '2',
+            doPrice: item.price_action,
+            stopType: item.type === '止盈' ? 1 : 0,
+            orderType: 0,
+            startTime: item.create_time,
+            doTime: '--',
+          };
+        });
+        setOrderData(result);
+      }
+    }).catch(err => {
+      console.log(err);
+    });
+  }, [route.params.coin]);
 
   useEffect(() => {
     ajax.get(`/contract/api/v1/bian/dealorder_log?symbol=${coinType.replace('USDT', '')}`).then(data => {
@@ -152,11 +179,11 @@ const ContractLogsAllScreen: FC = () => {
         selectStatus === 2 && (
           <ScrollView style={style.scrollViewContent}>
             {
-              // orderData.map(item => (
-              //   <ComContractIndexListOrderLog
-              //     key={item.id}
-              //     data={item} />
-              // ))
+              orderData.map(item => (
+                <ComContractIndexListOrderLog
+                  key={item.id}
+                  data={item} />
+              ))
             }
           </ScrollView>
         )

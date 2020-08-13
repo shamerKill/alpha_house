@@ -35,10 +35,9 @@ const AccountForgetPass: FC = () => {
       // 发送验证码
       ajax.post('/v1/power/send_sms', {
         mobile: account,
-        type: 2, // 注册短信
+        type: 5, // 注册短信
         mobile_area: '00',
       }).then(data => {
-        console.log(data);
         if (data.status === 200) {
           navigation.navigate('AccountVerfiyCode', { type: 'forget', data: { account } });
         } else {

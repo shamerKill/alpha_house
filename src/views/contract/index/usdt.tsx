@@ -22,7 +22,8 @@ import showSelector from '../../../components/modal/selector';
 import storage from '../../../data/database';
 import showComAlert from '../../../components/modal/alert';
 import ajax from '../../../data/fetch';
-import { TypePositionData, TypeGeneralEntrustemnt } from './type';
+import { TypePositionData, TypeGeneralEntrustemnt, TypeStopOrder } from './type';
+import ComFormButton from '../../../components/form/button';
 
 const routeName = 'Contract';
 
@@ -411,6 +412,21 @@ const ComContractIndexListPosition: FC<{
   leverType: string;
   newPrice: string;
 }> = ({ data, leverType, newPrice }) => {
+  // 获取是否有止盈止损的提示框
+  const showStopAlert = useRef(true);
+
+  useEffect(() => {
+    storage.get<string>('showStopAlert').then(alertType => {
+      if (alertType === 'ok') {
+        showStopAlert.current = false;
+      } else {
+        showStopAlert.current = true;
+      }
+    }).catch(() => {
+      showStopAlert.current = true;
+    });
+  }, []);
+
   const navigation = useNavigation();
 
   const isLoading = useRef(false);
@@ -429,6 +445,9 @@ const ComContractIndexListPosition: FC<{
     },
     // 止盈止损弹窗
     stopAlert: () => {
+      if (!showStopAlert.current) {
+        return new Promise(resolve => resolve());
+      }
       return new Promise(resolve => {
         const close = showComAlert({
           title: '温馨提示',
@@ -445,6 +464,7 @@ const ComContractIndexListPosition: FC<{
             onPress: () => {
               close();
               resolve();
+              storage.save('showStopAlert', 'ok');
             },
           },
         });
@@ -453,12 +473,26 @@ const ComContractIndexListPosition: FC<{
     // 止盈
     stopWin: async () => {
       await addEvent.stopAlert();
-      navigation.navigate('ContractOrderClose', { id: data.id });
+      navigation.navigate('ContractOrderClose', {
+        id: data.id,
+        coinType: data.coinType,
+        type: data.type,
+        willType: 1,
+        openPrice: data.price,
+        value: data.allValue,
+      });
     },
     // 止损
     stopLow: async () => {
       await addEvent.stopAlert();
-      navigation.navigate('ContractOrderClose', { id: data.id });
+      navigation.navigate('ContractOrderClose', {
+        id: data.id,
+        coinType: data.coinType,
+        type: data.type,
+        willType: 0,
+        openPrice: data.price,
+        value: data.allValue,
+      });
     },
     // 平仓
     closeOrder: () => {
@@ -552,6 +586,28 @@ const ComContractIndexListPosition: FC<{
           &nbsp;&nbsp;
           {leverType}X
         </Text>
+        <ComFormButton
+          style={{
+            height: 24,
+            padding: 0,
+          }}
+          containerStyle={{
+            width: 100,
+          }}
+          fontStyle={{
+            fontSize: 12,
+          }}
+          gray={parseFloat(profitRatio) <= 0}
+          title="持仓收益分享"
+          onPress={() => {
+            navigation.navigate('ContractLogsShare', {
+              symbol: data.coinType, // 币种
+              type: data.type, // 开空/开多
+              openPrice: data.price, // 持仓均价
+              closePrice: newPrice, // 当前价格
+              ratio: profitRatio, // 收益率
+            });
+          }} />
       </View>
       {/* 中部 */}
       <View style={style.listCenter}>
@@ -568,7 +624,7 @@ const ComContractIndexListPosition: FC<{
         ]}>
           <Text style={[
             style.listCenterValue,
-            { color: addEvent.getColor(profitValue) },
+            { color: addEvent.getColor(profitRatio) },
           ]}>
             {profitValue}
           </Text>
@@ -580,7 +636,7 @@ const ComContractIndexListPosition: FC<{
         ]}>
           <Text style={[
             style.listCenterValue,
-            { color: addEvent.getColor(profitValue) },
+            { color: addEvent.getColor(profitRatio) },
           ]}>
             {profitRatio}
           </Text>
@@ -616,7 +672,7 @@ const ComContractIndexListPosition: FC<{
       </View>
       {/* 按钮 */}
       <View style={style.listBtns}>
-        {/* <StaticTouchableNativeFeedback onPress={() => addEvent.stopWin()}>
+        <StaticTouchableNativeFeedback onPress={() => addEvent.stopWin()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>止盈</Text>
           </View>
@@ -627,7 +683,7 @@ const ComContractIndexListPosition: FC<{
             <Text style={style.listBtnText}>止损</Text>
           </View>
         </StaticTouchableNativeFeedback>
-        <View style={style.listBtnsLine} /> */}
+        <View style={style.listBtnsLine} />
         <StaticTouchableNativeFeedback onPress={() => addEvent.closeOrder()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>平仓</Text>
@@ -723,7 +779,7 @@ const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt; leverType: 
             color: [themeRed, themeGreen, themeRed, themeGreen][data.type],
           },
         ]}>
-          {['开空', '开多', '平多', '平空'][data.type]}
+          {['开空', '开多', '平空', '平多'][data.type]}
           &nbsp;&nbsp;
           {data.coinType}
           &nbsp;&nbsp;
@@ -770,17 +826,140 @@ const ComContractIndexListGeneral: FC<{data: TypeGeneralEntrustemnt; leverType: 
       </View>
       {/* 按钮 */}
       <View style={style.listBtns}>
-        <TouchableNativeFeedback onPress={() => addEvent.backOrder()}>
+        <StaticTouchableNativeFeedback onPress={() => addEvent.backOrder()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>撤销</Text>
           </View>
-        </TouchableNativeFeedback>
+        </StaticTouchableNativeFeedback>
         <View style={style.listBtnsLine} />
         {/* <TouchableNativeFeedback onPress={() => addEvent.willStopOrder()}>
           <View style={style.listBtn}>
             <Text style={style.listBtnText}>预设止盈止损</Text>
           </View>
         </TouchableNativeFeedback> */}
+      </View>
+    </View>
+  );
+};
+// 止盈止损
+const ComContractIndexListOrder: FC<{data: TypeStopOrder, spliceOrder: () => void;}> = ({ data, spliceOrder }) => {
+  const [loading, setLoading] = useState(false);
+
+  const addEvent = {
+    // 撤销订单
+    backOrder: () => {
+      if (loading) return;
+      // 提示
+      const close = showComAlert({
+        title: '订单撤销',
+        desc: `是否撤销当前${['止盈', '止损'][data.type]}订单?`,
+        success: {
+          text: '确定',
+          onPress: () => {
+            addEvent.submit(close);
+          },
+        },
+        close: {
+          text: '取消',
+          onPress: () => {
+            close();
+          },
+        },
+      });
+    },
+    // 提交
+    submit: (close: () => void) => {
+      setLoading(true);
+      ajax.get(`/contract/api/v2/order/revokeProfitLoss?id=${data.id}`).then(res => {
+        if (res.status === 200) {
+          showMessage({
+            position: 'bottom',
+            type: 'success',
+            message: res.message,
+          });
+          spliceOrder();
+        } else {
+          showMessage({
+            position: 'bottom',
+            type: 'warning',
+            message: res.message,
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        close();
+        setLoading(false);
+      });
+    },
+  };
+
+  return (
+    <View style={style.listView}>
+      {/* 头部 */}
+      <View style={[style.listTop, { justifyContent: 'flex-start' }]}>
+        <Text style={[
+          style.listTitle,
+          {
+            color: [themeRed, themeGreen][data.type],
+          },
+        ]}>
+          {data.type === 0 ? '开空' : '开多'}
+          &nbsp;&nbsp;
+          {data.coinType}
+          &nbsp;&nbsp;
+          {data.leverType}X
+        </Text>
+        <Text style={style.listTitleDesc}>{['未触发', '触发'][data.state]}</Text>
+      </View>
+      {/* 中部 */}
+      <View style={style.listCenter}>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerLeft,
+        ]}>
+          <Text style={style.listCenterValue}>{data.startPrice}</Text>
+          <Text style={style.listCenterDesc}>触发价格</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerCenter,
+        ]}>
+          <Text style={[style.listCenterValue]}>
+            {data.doPrice}
+          </Text>
+          <Text style={style.listCenterDesc}>执行价格</Text>
+        </View>
+        <View style={[
+          style.listCenterInner,
+          style.listCenterInnerRight,
+        ]}>
+          <Text style={[style.listCenterValue, { color: [themeRed, themeGreen][data.stopType] }]}>
+            {['止损', '止盈'][data.stopType]}
+          </Text>
+          <Text style={style.listCenterDesc}>盈损</Text>
+        </View>
+      </View>
+      {/* 详情 */}
+      <View style={style.listInfo}>
+        <Text style={style.listInfoText}>方式&nbsp;{['限价', '市价'][data.doPriceType]}</Text>
+        <Text style={style.listInfoText}>状态&nbsp;{['未触发', '已触发'][data.state]}</Text>
+        <Text style={[style.listInfoText, { width: '100%' }]}>委托时间&nbsp;{data.sendTime}</Text>
+        <Text style={[style.listInfoText, { width: '100%' }]}>触发时间&nbsp;{data.doTime}</Text>
+      </View>
+      {/* 按钮 */}
+      <View style={style.listBtns}>
+        {/* <TouchableNativeFeedback>
+          <View style={style.listBtn}>
+            <Text style={style.listBtnText}>修改</Text>
+          </View>
+        </TouchableNativeFeedback>
+        <View style={style.listBtnsLine} /> */}
+        <StaticTouchableNativeFeedback onPress={() => addEvent.backOrder()}>
+          <View style={style.listBtn}>
+            <Text style={style.listBtnText}>撤销</Text>
+          </View>
+        </StaticTouchableNativeFeedback>
       </View>
     </View>
   );
@@ -807,6 +986,8 @@ type TypeAllCoinInfo = {
   positionOrders: TypePositionData[];
   // 委托单
   entrustOrders: TypeGeneralEntrustemnt[];
+  // 止盈止损单
+  stopOrders: TypeStopOrder[];
 };
 
 const ContractUSDTScreen: FC = () => {
@@ -881,6 +1062,7 @@ const ContractUSDTScreen: FC = () => {
     leverList: [],
     positionOrders: [],
     entrustOrders: [],
+    stopOrders: [],
   });
 
   // 当前币种数据
@@ -944,14 +1126,14 @@ const ContractUSDTScreen: FC = () => {
           let buyNum = '0';
           // 空单数量
           let sellNum = '0';
-          const result: TypePositionData[] = data?.data?.list?.map((item: any, index: number) => {
+          const result: TypePositionData[] = data?.data?.list?.map((item: any) => {
             if (item.type === '1') {
               buyNum = item.surplus_coin_num;
             } else {
               sellNum = item.surplus_coin_num;
             }
             return {
-              id: index,
+              id: item.id,
               type: Number(item.type === '1') as TypePositionData['type'],
               coinType: nowCoinType,
               leverType: nowCoinInfo.lever,
@@ -1010,6 +1192,40 @@ const ContractUSDTScreen: FC = () => {
               const res = { ...item };
               if (res.symbol === nowCoinType) {
                 res.entrustOrders = result;
+              }
+              return res;
+            })
+          ));
+        }
+      }).catch(err => {
+        console.log(err);
+      });
+    },
+    // 获取止盈止损数据
+    fetchStopOrders: (nowCoinType: string) => {
+      ajax.get(`/contract/api/v2/order/profitLossOnline?symbol=${nowCoinType.replace('USDT', '')}`).then(data => {
+        if (data.status === 200 && data.data) {
+          const result: TypeStopOrder[] = data.data.map((item: any) => {
+            return {
+              id: item.id,
+              type: item.direction === '平多' ? 1 : 0,
+              coinType: nowCoinType,
+              leverType: nowCoinInfo.lever,
+              startPrice: item.price,
+              doPrice: item.price_action,
+              stopType: item.type === '止盈' ? 1 : 0,
+              doPriceType: 0,
+              state: 0,
+              sendTime: item.create_time,
+              doTime: '--',
+            };
+          });
+          // 赋值数据
+          setCoinListInfo(state => (
+            state.map(item => {
+              const res = { ...item };
+              if (res.symbol === nowCoinType) {
+                res.stopOrders = result;
               }
               return res;
             })
@@ -1197,10 +1413,22 @@ const ContractUSDTScreen: FC = () => {
     // 订单提交弹窗0开多，1开空，2平多，3平空
     submitVerfiy: (type: 0|1|2|3) => {
       if (!userIsLogin) {
-        showMessage({
-          position: 'bottom',
-          type: 'warning',
-          message: '尚未登录',
+        const close = showComAlert({
+          title: '尚未登录',
+          desc: '是否前往登录?',
+          success: {
+            text: '登录',
+            onPress: () => {
+              navigation.navigate('Login');
+              close();
+            },
+          },
+          close: {
+            text: '取消',
+            onPress: () => {
+              close();
+            },
+          },
         });
         return;
       }
@@ -1515,6 +1743,8 @@ const ContractUSDTScreen: FC = () => {
       addEvent.fetchPostionsOrders(coinTypeRef.current);
     } else if (logSelectTab === 1) {
       addEvent.fetchEntrustOrders(coinTypeRef.current);
+    } else if (logSelectTab === 2) {
+      addEvent.fetchStopOrders(coinTypeRef.current);
     }
   }, [coinType, logSelectTab, userAllAssets]);
 
@@ -1582,10 +1812,12 @@ const ContractUSDTScreen: FC = () => {
   useEffect(() => {
     if (!userInfo.token) return;
     addEvent.fetchUserInfo();
-    const tickerImg = `gold.market.ALL.account.${userInfo.token}`;
+    const tickerImgStart = 'gold.market.ALL.account';
+    const tickerImg = `${tickerImgStart}.${userInfo.token}`;
     const socketListener = () => {
       if (logSelectTabRef.current === 0) addEvent.fetchPostionsOrders(coinTypeRef.current);
       else if (logSelectTabRef.current === 1) addEvent.fetchEntrustOrders(coinTypeRef.current);
+      else if (logSelectTabRef.current === 2) addEvent.fetchStopOrders(coinTypeRef.current);
       addEvent.fetchUserInfo();
       // if (data.tick.type === 1) {
       //   // 创建委托
@@ -1608,7 +1840,7 @@ const ContractUSDTScreen: FC = () => {
           // 获取USDT合约
           marketSocket.getSocket().then(ws => {
             socket.current = ws;
-            ws.addListener(socketListener, tickerImg);
+            ws.addListener(socketListener, tickerImgStart);
             ws.send(tickerImg, 'sub');
             subSocket.current = false;
           }).catch(err => {
@@ -1655,7 +1887,7 @@ const ContractUSDTScreen: FC = () => {
   return (
     <View style={style.pageView}>
       {/* 头部 */}
-      <View style={style.headView}>
+      <View style={[style.headView]}>
         <TouchableNativeFeedback onPress={() => addEvent.showLeftChange()}>
           <View style={style.headLeftView}>
             <Image
@@ -1964,8 +2196,8 @@ const ContractUSDTScreen: FC = () => {
         <View style={style.contentRight}>
           {/* 标题 */}
           <View style={style.contentRightTitleView}>
-            <Text style={style.contentRightTitleLeft}>价格</Text>
-            <Text style={style.contentRightTitleRight}>委托数</Text>
+            <Text style={style.contentRightTitleLeft}>价格(USDT)</Text>
+            <Text style={style.contentRightTitleRight}>委托数({coinType.replace('USDT', '')})</Text>
           </View>
           {/* 数据 */}
           <ContractRightValueView
@@ -1981,7 +2213,7 @@ const ContractUSDTScreen: FC = () => {
         <View style={style.tabView}>
           <View style={style.tabViewLeft}>
             {
-              ['持仓', '普通委托'].map((item, index) => (
+              ['持仓', '普通委托', '止盈止损'].map((item, index) => (
                 <TouchableNativeFeedback
                   key={index}
                   onPress={() => setLogSelectTab(index)}>
@@ -1997,7 +2229,7 @@ const ContractUSDTScreen: FC = () => {
               ))
             }
           </View>
-          <TouchableNativeFeedback onPress={() => navigation.navigate('ContractLogs', { coin: coinType })}>
+          <TouchableNativeFeedback onPress={() => goToWithLogin('ContractLogs', { coin: coinType })}>
             <View style={style.tabViewRight}>
               <StaticImage
                 resizeMode="contain"
@@ -2029,6 +2261,30 @@ const ContractUSDTScreen: FC = () => {
                 key={item.id}
                 leverType={nowCoinInfo.lever}
                 data={item} />
+            ))
+          )
+        }
+        {/* 止盈止损 */}
+        {
+          logSelectTab === 2
+          && (
+            nowCoinInfo.stopOrders.map((item, index) => (
+              <ComContractIndexListOrder
+                key={`${item.id}${index}`}
+                data={item}
+                spliceOrder={() => {
+                  setCoinListInfo(state => {
+                    let result = [...state];
+                    result = result.map(coin => {
+                      const newCoin = { ...coin };
+                      if (newCoin.symbol === coinType) {
+                        newCoin.stopOrders.splice(index, 1);
+                      }
+                      return newCoin;
+                    });
+                    return result;
+                  });
+                }} />
             ))
           )
         }

@@ -213,10 +213,7 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
       clearInterval(viewShowTimer.current);
     };
   }, [showType]);
-
-  useEffect(() => {
-    console.log(viewShow, gotData);
-  }, [viewShow, gotData]);
+  
   return (
     <View
       style={[

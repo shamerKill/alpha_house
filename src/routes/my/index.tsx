@@ -25,6 +25,7 @@ import CreateRoutes from './create';
 import MyTransferScreen from '../../views/my/transfer';
 import MytransferAccountsScreen from '../../views/my/transfer/accounts';
 import MyTransferLogsScreen from '../../views/my/transfer/logs';
+import MyAssetsScreen from '../../views/my/assets';
 
 const MyRoutes: TypeStackValue = [
   {
@@ -40,6 +41,10 @@ const MyRoutes: TypeStackValue = [
     ),
     component: MyScreen,
     screens: [
+      {
+        name: 'MyAssets', // 资产
+        component: MyAssetsScreen,
+      },
       {
         name: 'recharge', // 充值
         component: MyRechargeScreen,

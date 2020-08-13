@@ -214,9 +214,6 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
     };
   }, [showType]);
 
-  useEffect(() => {
-    console.log(viewShow, gotData);
-  }, [viewShow, gotData]);
   return (
     <View
       style={[

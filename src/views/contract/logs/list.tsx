@@ -7,7 +7,7 @@ import {
 } from '../../../config/theme';
 import {
   TypePlanEntrustementLog, TypeGeneralEntrustemntLog, TypeStopOrderLog, TypeHistoryLog,
-} from '../_index/type';
+} from '../index/type';
 
 // 普通委托
 export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog}> = ({ data }) => {
@@ -133,9 +133,13 @@ export const ComContractIndexListHistory: FC<{data: TypeHistoryLog}> = ({ data }
         </View>
       </View>
       {/* 详情 */}
-      <View style={style.listInfo}>
-        <Text style={[style.listInfoText, { width: '100%' }]}>手续费&nbsp;{data.serviceFee}</Text>
-        <Text style={[style.listInfoText, { width: '100%' }]}>成交时间&nbsp;{data.successTime}</Text>
+      <View style={[
+        style.listInfo,
+      ]}>
+        <View style={{ width: '80%' }}>
+          <Text style={[style.listInfoText, { width: '100%' }]}>手续费&nbsp;{data.serviceFee}</Text>
+          <Text style={[style.listInfoText, { width: '100%' }]}>成交时间&nbsp;{data.successTime}</Text>
+        </View>
       </View>
     </View>
   );
@@ -221,8 +225,6 @@ export const ComContractIndexListOrderLog: FC<{data: TypeStopOrderLog}> = ({ dat
           {data.type === 0 ? '开空' : '开多'}
           &nbsp;&nbsp;
           {data.coinType}
-          &nbsp;&nbsp;
-          {data.leverType}X
         </Text>
         <Text style={[
           style.listTopTime,
@@ -245,7 +247,7 @@ export const ComContractIndexListOrderLog: FC<{data: TypeStopOrderLog}> = ({ dat
           style.listCenterInnerCenter,
         ]}>
           <Text style={[style.listCenterValue]}>
-            {data.isSuccess ? data.doPrice : ([data.doPrice, '市价'][data.orderType])}
+            {data.doPrice}
           </Text>
           <Text style={style.listCenterDesc}>执行价格</Text>
         </View>
@@ -262,9 +264,7 @@ export const ComContractIndexListOrderLog: FC<{data: TypeStopOrderLog}> = ({ dat
       {/* 详情 */}
       <View style={style.listInfo}>
         <Text style={style.listInfoText}>方式&nbsp;{['限价', '市价'][data.orderType]}</Text>
-        <Text style={style.listInfoText}>数量&nbsp;{data.number}</Text>
         <Text style={[style.listInfoText, { width: '100%' }]}>设置时间&nbsp;{data.startTime}</Text>
-        <Text style={[style.listInfoText, { width: '100%' }]}>{['撤销', '执行'][typeNumber]}时间&nbsp;{data.stopTime}</Text>
       </View>
     </View>
   );
@@ -383,6 +383,7 @@ const style = StyleSheet.create({
     paddingTop: 5,
     borderBottomWidth: 1,
     borderBottomColor: defaultThemeBgColor,
+    position: 'relative',
   },
   listInfoText: {
     width: '50%',

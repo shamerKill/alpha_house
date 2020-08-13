@@ -12,8 +12,8 @@ import ajax from '../../../data/fetch';
 
 const MyRecommendScreen: FC = () => {
   const topBtn = [
-    { text: '推荐链接', link: '', id: 1 },
-    { text: '推荐列表', link: '', id: 2 },
+    { text: '邀请链接', link: '', id: 1 },
+    { text: '邀请人列表', link: '', id: 2 },
   ];
   // 头部状态
   const [select, setSelect] = useState(1);

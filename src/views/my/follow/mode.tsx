@@ -28,7 +28,6 @@ const MyFollowModeScreen: FC = () => {
   const { params: { id: userId, name } } = useRoute<RouteProp<{followMode: {id: string|number, name: string}}, 'followMode'>>();
   const navigation = useNavigation();
   const goToWithLogin = useGoToWithLogin();
-  console.log(userId);
   const descArr = (min: number, max: number, coinType: string) => ([
     `例如您设置跟单金额 x ${coinType}，不论交易员下单多少本金，您的下单本金均为 x ${coinType}。单次最低跟单金额为 ${min} ${coinType}。`,
     '单日累计跟随本金为跟单金额的整数倍',

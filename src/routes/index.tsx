@@ -86,6 +86,7 @@ const RoutesBase: FC = () => {
         <Statc.Screen
           options={{
             headerShown: false,
+            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           }}
           name="Home"
           component={TabScreen} />

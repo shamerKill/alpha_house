@@ -99,7 +99,6 @@ const MyRechargeScreen: FC = () => {
   useEffect(() => {
     if (!coinName) return;
     setLoading(true);
-    console.log(`/v1/recharge/get_coin?symbol=${coinName}`);
     ajax.get(`/v1/recharge/get_coin?symbol=${coinName}`).then(data => {
       console.log(data);
       if (data.status === 200) {

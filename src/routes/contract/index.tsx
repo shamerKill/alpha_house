@@ -6,6 +6,7 @@ import ContractOrderCloseScreen from '../../views/contract/order_close';
 import ContractWillCloseScreen from '../../views/contract/will_close';
 import ContractLogsAllScreen from '../../views/contract/logs';
 import ContractIndexScreen from '../../views/contract/index/index';
+import ContractLogsShareScreen from '../../views/contract/index/share';
 
 const ContractRoutes: TypeStackValue = [
   {
@@ -32,6 +33,10 @@ const ContractRoutes: TypeStackValue = [
       {
         name: 'ContractLogs',
         component: ContractLogsAllScreen,
+      },
+      {
+        name: 'ContractLogsShare',
+        component: ContractLogsShareScreen,
       },
     ],
   },

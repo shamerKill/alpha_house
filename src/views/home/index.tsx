@@ -79,12 +79,14 @@ const HomeScreenHead: FC = () => {
 
 // banner
 const HomeScreenBanner: FC = () => {
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   const [bannerState, dispatchBannerState] = useGetDispatch<InState['imageState']['banner']>('imageState', 'banner');
   // 轮播图
   const [banner, setBanner] = useState<InState['imageState']['banner']>(bannerState);
   // 读秒
   const swiperTime = 4;
   useEffect(() => {
+    if (routePage !== 'Home') return;
     ajax.get<{address: string; id: number; link: string;}[]>('/v1/index/rotation').then(data => {
       if (data.status === 200) {
         if (data.data) {
@@ -103,7 +105,7 @@ const HomeScreenBanner: FC = () => {
     }).catch(err => {
       console.log(err);
     });
-  }, []);
+  }, [routePage]);
   return (
     <View style={homeStyle.banner}>
       {
@@ -558,7 +560,9 @@ const HomeScreenMarket: FC = () => {
                     <TouchableNativeFeedback
                       key={item.id}
                       onPress={() => gotoPage(item.coin)}>
-                      <HomeScreenMarketLine {...item} />
+                      <View>
+                        <HomeScreenMarketLine {...item} />
+                      </View>
                     </TouchableNativeFeedback>
                   )) }
                 </View>
@@ -580,7 +584,13 @@ const HomeScreenMarket: FC = () => {
             marketType === 1 && (
               <View>
                 { coinMarketRange.map(item => (
-                  <HomeScreenMarketLine key={item.id} {...item} />
+                  <TouchableNativeFeedback
+                    key={item.id}
+                    onPress={() => gotoPage(item.coin)}>
+                    <View>
+                      <HomeScreenMarketLine {...item} />
+                    </View>
+                  </TouchableNativeFeedback>
                 )) }
               </View>
             )

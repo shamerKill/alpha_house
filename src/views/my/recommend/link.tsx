@@ -1,6 +1,6 @@
 import React, { FC, useRef } from 'react';
 import {
-  View, Text, ImageSourcePropType, Dimensions, ImageURISource, TouchableNativeFeedback,
+  View, Text, ImageSourcePropType, Dimensions, ImageURISource, TouchableNativeFeedback, Platform, PermissionsAndroid,
 } from 'react-native';
 import CameraRoll from '@react-native-community/cameraroll';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -29,7 +29,7 @@ const MyRecommendLinkScreen: FC<{input: TypeMyRecommendLink}> = ({ input }) => {
         type: 'success',
       });
     },
-    downloadCode: () => {
+    downloadCode: async () => {
       const { uri } = input.pic as ImageURISource;
       if (!uri) {
         showMessage({
@@ -69,6 +69,17 @@ const MyRecommendLinkScreen: FC<{input: TypeMyRecommendLink}> = ({ input }) => {
           });
         }
       };
+      if (Platform.OS === 'android') {
+        try {
+          const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
+          if (granted !== 'granted') {
+            errFunc('Permission denied');
+            return;
+          }
+        } catch (err) {
+          errFunc('Permission denied');
+        }
+      }
       RNFS.downloadFile({
         fromUrl: uri,
         toFile,

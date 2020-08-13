@@ -89,12 +89,19 @@ const MyScreen: FC = () => {
     ajax.post('/userinfo', {}).then(data => {
       if (data.status === 200) {
         if (data.data.auth_status) setSubmitType(data.data.auth_status);
+        let spareAccount = '';
+        if (userInfo.accountType === 'phone') {
+          spareAccount = data.data.email;
+        } else {
+          spareAccount = data.data.mobile;
+        }
         dispatchUserInfo({
           type: ActionsType.CHANGE_USER_INFO,
           data: {
             avatar: getHeadImage()[Number(data.data.headimg)],
             id: `${data.data.unique_id}`,
             assets: data.data.goldbtc,
+            spareAccount,
           },
         });
         setUserHead(getHeadImage()[Number(data.data.headimg)]);
@@ -254,7 +261,7 @@ const MyScreen: FC = () => {
         {/* 个人资产 */}
         <View style={{ paddingLeft: 20, paddingRight: 20 }}>
 
-          <TouchableNativeFeedback onPress={() => goToWithLogin('transferAccounts')}>
+          <TouchableNativeFeedback onPress={() => goToWithLogin('MyAssets')}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ fontSize: 16, color: '#7b85b2' }}>
                 总折合资产

@@ -1,6 +1,6 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useState } from 'react';
 import { ListItem } from 'react-native-elements';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import ComLayoutHead from '../../../components/layout/head';
 import ComLine from '../../../components/line';
 import useGetDispatch from '../../../data/redux/dispatch';
@@ -12,10 +12,15 @@ const MySafeScreen: FC = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
 
-  useEffect(() => {
-    if (userInfo.accountType === 'email') setEmail(userInfo.account);
-    else setPhone(userInfo.account);
-  }, []);
+  useFocusEffect(() => {
+    if (userInfo.accountType === 'email') {
+      setEmail(userInfo.account);
+      setPhone(userInfo.spareAccount);
+    } else {
+      setPhone(userInfo.account);
+      setEmail(userInfo.spareAccount);
+    }
+  });
   return (
     <ComLayoutHead title="安全中心">
       <ComLine />
@@ -35,37 +40,39 @@ const MySafeScreen: FC = () => {
         title="修改交易密码"
         chevron />
       <ComLine />
-      {
-        userInfo.accountType === 'phone' && (
-          <ListItem
-            // onPress={() => navigation.navigate('bindAccount', { state: 'phone' })}
-            onPress={() => {}}
-            containerStyle={{
-              height: 50,
-            }}
-            title="绑定手机号"
-            rightSubtitle={
+      <ListItem
+        onPress={() => {
+          if (!phone) navigation.navigate('bindAccount', { state: 'phone' });
+        }}
+        containerStyle={{
+          height: 50,
+        }}
+        title="绑定手机号"
+        rightSubtitle={
           phone || '未绑定'
         }
-            bottomDivider
-            chevron />
-        )
-      }
-      {
-        userInfo.accountType === 'email' && (
-          <ListItem
-            // onPress={() => navigation.navigate('bindAccount', { state: 'email' })}
-            onPress={() => {}}
-            containerStyle={{
-              height: 50,
-            }}
-            rightSubtitle={
+        rightSubtitleStyle={{
+          width: 200,
+          textAlign: 'right',
+        }}
+        bottomDivider
+        chevron />
+      <ListItem
+        onPress={() => {
+          if (!email) navigation.navigate('bindAccount', { state: 'email' });
+        }}
+        containerStyle={{
+          height: 50,
+        }}
+        rightSubtitle={
           email || '未绑定'
         }
-            title="绑定邮箱"
-            chevron />
-        )
-      }
+        rightSubtitleStyle={{
+          width: 200,
+          textAlign: 'right',
+        }}
+        title="绑定邮箱"
+        chevron />
     </ComLayoutHead>
   );
 };

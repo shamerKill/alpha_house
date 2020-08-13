@@ -149,7 +149,7 @@ export class Fetch {
 
   // 判断uri方法
   static checkUri(uri: string) {
-    if (!/^\/contract/.test(uri)) {
+    if (!/^\/contract/.test(uri) && !/^\/coin/.test(uri)) {
       return `/user/api${uri}`;
     }
     return uri;
@@ -176,6 +176,7 @@ export class Fetch {
 }
 
 const ajax = new Fetch({
-  baseURI: 'https://serve.alfaex.pro',
+  baseURI: 'https://testapi.alfaex.pro',
+  // baseURI: 'https://serve.alfaex.pro',
 });
 export default ajax;

@@ -102,3 +102,15 @@ export type TypeStopOrderLog = {
   stopType: 0|1; // 止盈1还是止损0
   orderType: 0|1; // 限价0/市价1
 };
+// 委托记录
+export type TypeOrderList = {
+  id: string|number; // 订单id
+  type: 0|1; // 买入0/卖出1
+  status: 0|1|2|3; // 未成交0/已撤销1/部分成交2/完全成交3
+  willPrice: string; // 委托价格
+  willValue: string; // 委托数量
+  doPrice: string; // 成交均价
+  doValue: string; // 成交数量
+  time: string; // 时间
+  fee?: string; // 手续费
+};

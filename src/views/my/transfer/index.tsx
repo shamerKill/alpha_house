@@ -46,7 +46,6 @@ const MyTransferScreen: FC = () => {
     },
     // 选择账户类型
     selectAccountType: (type: 'to'|'from') => {
-      console.log(type);
       navigation.navigate('transferAccounts');
     },
     // 反划转户管道
