@@ -336,8 +336,6 @@ const ContractContentView: FC<{
   changePageLeverType,
   canCloseOrderValue,
 }) => {
-  // console.log(coinType); // 币种类型
-  // console.log(selectType); // 合约类型
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   const [prevRoutePage] = useGetDispatch<InState['pageRouteState']['prevPageRoute']>('pageRouteState', 'prevPageRoute');
   const [userIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');

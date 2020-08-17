@@ -106,7 +106,7 @@ export type TypeStopOrderLog = {
 export type TypeOrderList = {
   id: string|number; // 订单id
   type: 0|1; // 买入0/卖出1
-  status: 0|1|2|3; // 未成交0/已撤销1/部分成交2/完全成交3
+  status: 0|1|2|3|4; // 未成交0/已撤销1/部分成交2/完全成交3/历史委托内成交4
   willPrice: string; // 委托价格
   willValue: string; // 委托数量
   doPrice: string; // 成交均价

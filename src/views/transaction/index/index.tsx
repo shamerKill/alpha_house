@@ -17,7 +17,7 @@ import {
 } from '../../../config/theme';
 import { useGoToWithLogin } from '../../../tools/routeTools';
 import { modalOutBg } from '../../../components/modal/outBg';
-import { numberToFormatString } from '../../../tools/number';
+import { numberToFormatString, numberOtherLength, numberToFixed } from '../../../tools/number';
 import showComAlert from '../../../components/modal/alert';
 import ajax from '../../../data/fetch';
 import { TypeOrderList } from './type';
@@ -431,7 +431,7 @@ const OrderListView: FC<{
               fontWeight: 'bold',
               paddingBottom: 5,
               paddingTop: 5,
-              color: [themeRed, themeGreen][data.type],
+              color: [themeGreen, themeRed][data.type],
             }}>
             {['买入', '卖出'][data.type]}
           </Text>
@@ -464,13 +464,13 @@ const OrderListView: FC<{
                 fontSize: 14,
               }}
               onPress={() => {
-                backOrder && backOrder(data.id);
+                if (backOrder) backOrder(data.id);
               }}
               title="撤销" />
           ) : (
             <Text style={{ color: themeGray, fontSize: 12 }}>
               {
-                ['未成交', '已撤销', '部分成交', '完全成交'][data.status]
+                ['未成交', '已撤销', '部分成交', '完全成交', '完全成交'][data.status]
               }
             </Text>
           )
@@ -483,7 +483,7 @@ const OrderListView: FC<{
         paddingBottom: 10,
       }}>
         {
-          data.status === 0 || data.status === 1 ? (
+          data.status === 0 || data.status === 1 || data.status === 4 ? (
             <View style={{
               width: '50%',
               paddingBottom: 10,
@@ -502,7 +502,7 @@ const OrderListView: FC<{
           )
         }
         {
-          data.status === 0 || data.status === 1 ? (
+          data.status === 0 || data.status === 1 || data.status === 4 ? (
             <View style={{
               width: '50%',
               paddingBottom: 10,
@@ -521,7 +521,7 @@ const OrderListView: FC<{
           )
         }
         {
-          data.status === 0 || data.status === 1 ? (
+          data.status === 0 || data.status === 1 || data.status === 4 ? (
             <View style={{
               width: '50%',
               paddingBottom: 10,
@@ -597,6 +597,11 @@ const ContractUSDTScreen: FC = () => {
   // 底部记录选项卡
   const [logSelectTab, setLogSelectTab] = useState(0);
   const logSelectTabRef = useRef(logSelectTab);
+
+  // 最小下单数
+  const [minValue, setMinValue] = useState(0);
+  // 最小价格波动
+  const [minPrice, setMinPrice] = useState(0);
   useEffect(() => {
     logSelectTabRef.current = logSelectTab;
   }, [logSelectTab]);
@@ -623,6 +628,9 @@ const ContractUSDTScreen: FC = () => {
   // 获取用户信息判断
   const getUserInfoMem = useRef(0);
 
+  // 请求记录数据判断
+  const getLogMem = useRef(0);
+
   const addEvent = {
     // 获取当前用户信息
     fetchUserInfo: (nowCoinType: string) => {
@@ -632,7 +640,11 @@ const ContractUSDTScreen: FC = () => {
       ajax.get(`/coin/api/v1/coin/get_coin_balance?symbol=${nowCoinType.replace('USDT', '')}`).then(data => {
         if (memData === getUserInfoMem.current) {
           if (data.status === 200) {
-            setAssetsCoin(`${data.data}`);
+            setAssetsCoin(`${data.data.balance}`);
+            if (data.data.info) {
+              setMinValue(parseFloat(data.data.info.min_num));
+              setMinPrice(parseFloat(data.data.info.min_price));
+            }
           }
         }
       }).catch(err => {
@@ -641,7 +653,7 @@ const ContractUSDTScreen: FC = () => {
       ajax.get('/coin/api/v1/coin/get_coin_balance?symbol=USDT').then(data => {
         if (memData === getUserInfoMem.current) {
           if (data.status === 200) {
-            setAssetsUsdt(`${parseFloat(parseFloat(data.data).toFixed(2))}`);
+            setAssetsUsdt(`${numberToFixed(parseFloat(data.data.balance), 2)}`);
           }
         }
       }).catch(err => {
@@ -663,8 +675,10 @@ const ContractUSDTScreen: FC = () => {
           return newState;
         });
       }
+      getLogMem.current += 1;
+      const memData = getLogMem.current;
       ajax.get(`/coin/api/v1/coin/hold_log?symbol=${nowCoinType.replace('USDT', '')}&base=USDT`).then(data => {
-        if (data.status === 200 && data.data && data.data.length) {
+        if (data.status === 200 && data.data && memData === getLogMem.current) {
           const result: TypeOrderList[] = data.data.map((item: any) => {
             return {
               id: item.id,
@@ -685,10 +699,13 @@ const ContractUSDTScreen: FC = () => {
           setCoinListInfo(state => {
             let newState = [...state];
             newState = newState.map(item => {
-              return {
-                ...item,
-                positionOrders: result,
-              };
+              if (item.symbol === nowCoinType) {
+                return {
+                  ...item,
+                  positionOrders: result,
+                };
+              }
+              return item;
             });
             return newState;
           });
@@ -712,8 +729,10 @@ const ContractUSDTScreen: FC = () => {
           return newState;
         });
       }
+      getLogMem.current += 1;
+      const memData = getLogMem.current;
       ajax.get(`/coin/api/v1/coin/deal_log?symbol=${nowCoinType.replace('USDT', '')}&base=USDT&page=1`).then(data => {
-        if (data.status === 200 && data.data && data.data.length) {
+        if (data.status === 200 && data.data && memData === getLogMem.current) {
           const result: TypeOrderList[] = data.data.map((item: any) => {
             return {
               id: item.entrust_id,
@@ -757,15 +776,17 @@ const ContractUSDTScreen: FC = () => {
           return newState;
         });
       }
+      getLogMem.current += 1;
+      const memData = getLogMem.current;
       ajax.get(`/coin/api/v1/coin/trust_log?symbol=${nowCoinType.replace('USDT', '')}&base=USDT`).then(data => {
-        if (data.status === 200 && data.data && data.data.length) {
+        if (data.status === 200 && data.data && memData === getLogMem.current) {
           const result: TypeOrderList[] = data.data.map((item: any) => {
             return {
               id: item.id,
               type: item.type === 'BUY' ? 0 : 1,
               status: (() => {
                 if (item.status === 1) return 0;
-                if (item.status === 2) return 3;
+                if (item.status === 2) return 4;
                 if (item.status === 4) return 1;
                 return 2;
               })(),
@@ -886,37 +907,37 @@ const ContractUSDTScreen: FC = () => {
     },
     // 订单提交弹窗0买入，1卖出
     submitVerfiy: (type: 0|1) => {
-      // if (!userIsLogin) {
-      //   showMessage({
-      //     position: 'bottom',
-      //     type: 'warning',
-      //     message: '尚未登录',
-      //   });
-      //   return;
-      // }
-      // if (noUserInfo) {
-      //   showMessage({
-      //     position: 'bottom',
-      //     type: 'warning',
-      //     message: '尚未充值',
-      //   });
-      //   return;
-      // }
-      // // 订单提示
-      // 检查数量
-      let changeValue = parseFloat(fixedValue);
-      // 如果是百分比
-      if (/%$/.test(fixedValue)) {
-        // 如果是买
-        if (type === 0) {
-          if (fixedValue === '100%') changeValue = parseFloat(assetsUsdt);
-          else changeValue = (changeValue / 100) * parseFloat(assetsUsdt);
-        } else if (type === 1) {
-          if (fixedValue === '100%') changeValue = parseFloat(assetsCoin);
-          else changeValue = (changeValue / 100) * parseFloat(assetsCoin);
+      if (!userIsLogin) {
+        showMessage({
+          position: 'bottom',
+          type: 'warning',
+          message: '尚未登录',
+        });
+        return;
+      }
+      // 判断价格
+      if (!isMarketPrice) {
+        if (numberOtherLength(parseFloat(fixedPrice)) > numberOtherLength(minPrice)) {
+          showMessage({
+            position: 'bottom',
+            type: 'warning',
+            message: `价格最小单位为${minPrice}`,
+          });
+          return;
         }
       }
-      if (Number.isNaN(changeValue)) {
+      // 币的保留小数
+      const coinSplitLength = numberOtherLength(minValue);
+      // 检查数量
+      // 币的数量
+      let changeValueCoin = parseFloat(fixedValue);
+      // usdt的数量
+      let changeValueUSDT = 0;
+      // 当前价格
+      let nowPrice = parseFloat(fixedPrice);
+      // 是否是限价
+      if (isMarketPrice) nowPrice = parseFloat(nowCoinInfo.newPirce);
+      if (Number.isNaN(changeValueCoin)) {
         showMessage({
           position: 'bottom',
           message: '输入数量有误，请检查',
@@ -924,28 +945,59 @@ const ContractUSDTScreen: FC = () => {
         });
         return;
       }
-      if (changeValue === 0) {
+      if (Number.isNaN(nowPrice)) {
         showMessage({
           position: 'bottom',
-          message: `您未持有${['USDT', coinType.replace('USDT', '')][type]}，如仍要交易，请前往资产划转`,
+          message: '输入价格有误，请检查',
           type: 'warning',
         });
         return;
       }
-      // 价格检查
-      if (!isMarketPrice) {
-        // 如果不是市价，判断价格
-        if (Number.isNaN(parseFloat(fixedPrice)) || parseFloat(fixedPrice) === 0) {
-          showMessage({
-            position: 'bottom',
-            message: '输入价格有误，请检查',
-            type: 'warning',
-          });
-          return;
+      // 如果是买入
+      if (type === 0) {
+        // 判断是否有百分比
+        if (/%$/.test(fixedValue)) {
+          if (fixedValue === '100%') changeValueUSDT = parseFloat(assetsUsdt);
+          else changeValueUSDT = parseFloat(numberToFixed(((parseFloat(fixedValue) / 100) * parseFloat(assetsUsdt)), 2));
+          changeValueCoin = parseFloat(numberToFixed((changeValueUSDT / nowPrice), coinSplitLength));
+        } else {
+          changeValueCoin = parseFloat(fixedValue);
+          changeValueUSDT = parseFloat(numberToFixed((changeValueCoin * nowPrice), 2));
+        }
+      // 如果是卖出
+      } else if (type === 1) {
+        // 判断是否有百分比
+        if (/%$/.test(fixedValue)) {
+          if (fixedValue === '100%') changeValueCoin = parseFloat(numberToFixed(parseFloat(assetsCoin), coinSplitLength));
+          else changeValueCoin = parseFloat(numberToFixed(((parseFloat(fixedValue) / 100) * parseFloat(assetsCoin)), coinSplitLength));
+          changeValueUSDT = parseFloat(numberToFixed((changeValueCoin * nowPrice), 2));
+        } else {
+          changeValueCoin = parseFloat(fixedValue);
+          changeValueUSDT = parseFloat(numberToFixed((changeValueCoin * nowPrice), 2));
         }
       }
-      addEvent.submitAlert(type, changeValue.toString()).then(data => {
-        if (data) addEvent.submitOrder(type, changeValue.toString());
+      if (Number.isNaN(changeValueCoin) || Number.isNaN(changeValueUSDT)) {
+        showMessage({
+          position: 'bottom',
+          message: '输入数量有误，请检查',
+          type: 'warning',
+        });
+        return;
+      }
+      // 判断资产
+      if (
+        (type === 0 && parseFloat(assetsUsdt) < changeValueUSDT)
+        || (type === 1 && parseFloat(assetsCoin) < changeValueCoin)
+      ) {
+        showMessage({
+          position: 'bottom',
+          message: `您持有${['USDT', coinType.replace('USDT', '')][type]}数量不足，如仍要交易，请前往资产划转`,
+          type: 'warning',
+        });
+        return;
+      }
+      addEvent.submitAlert(type, changeValueUSDT.toString()).then(data => {
+        if (data) addEvent.submitOrder(type, changeValueCoin.toString(), changeValueUSDT.toString());
       });
     },
     // 订单提示
@@ -983,11 +1035,8 @@ const ContractUSDTScreen: FC = () => {
       });
     },
     // 提交订单0买入，1卖出
-    submitOrder: (type: 0|1, changeValue: string) => {
+    submitOrder: (type: 0|1, changeValue: string, changeValueUSDT: string) => {
       if (loading) return;
-      if (type === 0) {
-        changeValue = (parseFloat(changeValue) / parseFloat(fixedPrice)).toFixed(8);
-      }
       setLoading(true);
       ajax.post('/coin/api/v1/coin/trade', {
         base: 'USDT',
@@ -995,7 +1044,8 @@ const ContractUSDTScreen: FC = () => {
         num: parseFloat(changeValue),
         side: ['BUY', 'SELL'][type],
         type: ['LIMIT', 'MARKET'][Number(isMarketPrice)],
-        price: parseFloat(fixedPrice),
+        num_market: (isMarketPrice && type === 0) ? changeValueUSDT : 0,
+        price: isMarketPrice ? nowCoinInfo.newPirce : parseFloat(fixedPrice),
       }).then(data => {
         if (data.status !== 200) {
           showMessage({
@@ -1114,7 +1164,7 @@ const ContractUSDTScreen: FC = () => {
   useEffect(() => {
     if (!userInfo.token) return;
     const ticker = 'cash.market.ALL.account';
-    const tickerImg = `${ticker}.${userInfo.token}`
+    const tickerImg = `${ticker}.${userInfo.token}`;
     const socketListener = () => {
       if (logSelectTabRef.current === 0) addEvent.fetchPostionsOrders(coinTypeRef.current);
       else if (logSelectTabRef.current === 1) addEvent.fetchEntrustOrders(coinTypeRef.current);
@@ -1267,7 +1317,7 @@ const ContractUSDTScreen: FC = () => {
                     value={fixedValue}
                     onChange={e => setFixedValue(e.nativeEvent.text)}
                     onFocus={() => addEvent.fixedValueFocus()}
-                    placeholder={`数量(${coinType.replace('USDT', '')})`}
+                    placeholder={`数量(${coinType.replace('USDT', '')})(最小:${minValue})`}
                     ref={fixedValueRef} />
                 </View>
                 {/* 滚动条 */}
@@ -1349,9 +1399,9 @@ const ContractUSDTScreen: FC = () => {
           {
             logSelectTab === 0
             && (
-              nowCoinInfo.positionOrders.map(item => (
+              nowCoinInfo.positionOrders.map((item, index) => (
                 <OrderListView
-                  key={item.id}
+                  key={`${item.id}${index}position`}
                   data={item}
                   backOrder={addEvent.backOrder}
                   coinType={coinType} />
@@ -1362,9 +1412,9 @@ const ContractUSDTScreen: FC = () => {
           {
             logSelectTab === 1
             && (
-              nowCoinInfo.entrustOrders.map(item => (
+              nowCoinInfo.entrustOrders.map((item, index) => (
                 <OrderListView
-                  key={item.id}
+                  key={`${item.id}${index}entrust`}
                   data={item}
                   coinType={coinType} />
               ))
@@ -1374,9 +1424,9 @@ const ContractUSDTScreen: FC = () => {
           {
             logSelectTab === 2
             && (
-              nowCoinInfo.historyOrders.map(item => (
+              nowCoinInfo.historyOrders.map((item, index) => (
                 <OrderListView
-                  key={item.id}
+                  key={`${item.id}${index}history`}
                   data={item}
                   backOrder={addEvent.backOrder}
                   coinType={coinType} />

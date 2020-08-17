@@ -125,7 +125,7 @@ const MyWithdrawScreen: FC = () => {
     // 获取交易密码后发送
     postSend: (pass: string) => {
       ajax.post('/v1/withdraw/action', {
-        symbol: coinName,
+        symbol: coinName.replace(/\(.*?\)/, ''),
         to: address,
         pwd: pass,
         num,
@@ -164,7 +164,7 @@ const MyWithdrawScreen: FC = () => {
     },
     // 获取页面信息
     getPageInfo: (coin: string = '') => {
-      ajax.get(`/v1/withdraw/view?symbol=${coin}`).then(data => {
+      ajax.get(`/v1/withdraw/view?symbol=${coin.replace(/\(.*?\)/, '')}`).then(data => {
         if (data.status === 200) {
           if (coinList.length === 0) {
             setCoinList(data.data.coin.map((item: string) => ({ name: item, coin: { uri: '' } })));
@@ -175,6 +175,8 @@ const MyWithdrawScreen: FC = () => {
             setCanWithDraw(data.data.config.frequency > data.data.today_num);
             if (data.data.pwdStatus === 1) {
               setHasPass(false);
+            } else {
+              setHasPass(true);
             }
           }
         }
@@ -192,6 +194,7 @@ const MyWithdrawScreen: FC = () => {
     if (coinList[0]) setCoinName(coinList[0].name);
   }, [coinList]);
   useEffect(() => {
+    if (!coinName) return;
     addEvent.getPageInfo(coinName);
   }, [coinName]);
   useEffect(() => {

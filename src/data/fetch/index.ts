@@ -176,7 +176,7 @@ export class Fetch {
 }
 
 const ajax = new Fetch({
-  baseURI: 'https://testapi.alfaex.pro',
-  // baseURI: 'https://serve.alfaex.pro',
+  // baseURI: 'https://testapi.alfaex.pro',
+  baseURI: 'https://serve.alfaex.pro',
 });
 export default ajax;

@@ -41,6 +41,21 @@ export const biNumberToSymbol = (value: number|string): string => {
   return data.toString();
 };
 
+// 计算小数点后位数
+export const numberOtherLength = (value: number): number => {
+  if (Number.isNaN(value)) return 0;
+  const data = value.toString();
+  const point = data.split('.')[1];
+  if (!point) return 0;
+  return point.length;
+};
+
+// 数字向下取余
+export const numberToFixed = (value: number, fix: number): string => {
+  const count = Math.floor(value * 10 ** fix);
+  return `${count / 10 ** fix}`;
+};
+
 export default {
   positive: positiveNumber,
 };

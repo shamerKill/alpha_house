@@ -9,22 +9,27 @@ import LinearGradient from 'react-native-linear-gradient';
 import Clipboard from '@react-native-community/clipboard';
 import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
-import { defaultThemeColor, themeWhite, themeGray } from '../../../config/theme';
+import {
+  defaultThemeColor, themeWhite, themeGray, themeRed,
+} from '../../../config/theme';
 import showSelector from '../../../components/modal/selector';
 import ajax from '../../../data/fetch';
 
 const MyRechargeScreen: FC = () => {
   const navigation = useNavigation();
-  const descArr = [
-    '1、该地址仅接受ERC20协议,请勿往该地址转入非USDT资产，包括其相关联资产，否则您的资产将无法找回。',
-    '2、最小充值金额：100 USDT，小于该金额的充值将无法上账且无法退回。',
-    '3、您充值至上述地址后，需要整个网络节点的确认，6次网络确认后到账，12次后方可提币，我们将以短信形式通知您到账情况',
-  ];
+  const descArr = (coin: string) => {
+    return [
+      `1、该地址仅接受${coin},请勿往该地址转入非${coin}资产，包括其相关联资产，否则您的资产将无法找回。`,
+      // '2、最小充值金额：100 USDT，小于该金额的充值将无法上账且无法退回。',
+      // '2、您充值至上述地址后，需要整个网络节点的确认，6次网络确认后到账，12次后方可提币，我们将以短信形式通知您到账情况',
+    ];
+  };
   const [loading, setLoading] = useState(false);
   const [coinName, setCoinName] = useState('');
   // const [coinIcon, setCoinIcon] = useState<ImageSourcePropType>(0);
   const [qrcode, setQrcode] = useState<ImageSourcePropType>(0);
   const [address, setAddress] = useState('');
+  const [tag, setTag] = useState('');
   const [coinList, setCoinList] = useState<{name: string; icon: ImageSourcePropType}[]>([
     // { name: 'BTC', icon: require('../../../assets/images/coin/BTC.png') },
     // { name: 'USDT', icon: require('../../../assets/images/coin/BTC.png') },
@@ -36,15 +41,13 @@ const MyRechargeScreen: FC = () => {
       Clipboard.setString(value);
       showMessage({
         position: 'bottom',
-        message: '',
-        description: '充值地址复制成功',
+        message: '复制成功',
         type: 'success',
       });
     } else {
       showMessage({
         position: 'bottom',
-        message: '',
-        description: '数据加载中，请等待',
+        message: '数据加载中，请等待',
         type: 'warning',
       });
     }
@@ -75,7 +78,6 @@ const MyRechargeScreen: FC = () => {
   useEffect(() => {
     ajax.get('/v1/recharge/coin_list').then(data => {
       if (data.status === 200) {
-        console.log(data);
         setCoinList(data?.data?.list?.map((item: any) => {
           return {
             name: item,
@@ -100,12 +102,12 @@ const MyRechargeScreen: FC = () => {
     if (!coinName) return;
     setLoading(true);
     ajax.get(`/v1/recharge/get_coin?symbol=${coinName}`).then(data => {
-      console.log(data);
       if (data.status === 200) {
         setAddress(data.data.address);
         setQrcode({
           uri: data.data.link,
         });
+        setTag(data.data.tag || '');
       } else {
         showMessage({
           position: 'bottom',
@@ -210,10 +212,52 @@ const MyRechargeScreen: FC = () => {
         </View>
       </TouchableNativeFeedback>
 
+
+      {/* tag */}
+      {
+        tag !== '' && (
+          <TouchableNativeFeedback onPress={() => copyAddress(tag)}>
+            <View style={{
+              backgroundColor: themeWhite,
+              margin: 10,
+              borderRadius: 5,
+              paddingTop: 15,
+              paddingBottom: 15,
+              paddingLeft: 20,
+              paddingRight: 20,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}>
+              <Text
+                numberOfLines={1}
+                style={{
+                  width: '70%',
+                  fontSize: 16,
+                }}>
+                { tag }
+              </Text>
+              <Text style={{ color: defaultThemeColor, fontSize: 16 }}>复制tag</Text>
+            </View>
+          </TouchableNativeFeedback>
+        )
+      }
+      {
+        tag !== '' && (
+          <Text style={{
+            paddingLeft: 10,
+            color: themeRed,
+            paddingTop: 10,
+            fontWeight: 'bold',
+          }}>
+            Tag和地址同时使用才能充值{coinName}到ALFA
+          </Text>
+        )
+      }
+
       {/* 更多说明 */}
       <View style={{ padding: 10 }}>
         {
-          descArr.map((item, index) => (
+          descArr(coinName).map((item, index) => (
             <Text
               key={index}
               style={{

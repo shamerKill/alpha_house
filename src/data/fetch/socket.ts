@@ -41,6 +41,9 @@ export class SocketClass {
   // 重连次数
   private linkNum: number = 0;
 
+  // 重连倒计时
+  private linkAgainTimer: NodeJS.Timeout| null = null;
+
   // 添加请求
   private saveSendReq = (value: string) => {
     if (!this.nowSendReq.includes(value)) {
@@ -77,6 +80,8 @@ export class SocketClass {
     this.isOpen = false;
     // 创建socket
     try {
+      this.socket?.close();
+      this.socket = null;
       this.socket = new WebSocket(this.options.baseURI);
     } catch (err) {
       this.socketErrorMessage = err.message;
@@ -107,11 +112,11 @@ export class SocketClass {
 
   // 开启失败
   private onError: WebSocket['onerror'] = (err) => {
+    console.log(err);
     this.isOpen = false;
     this.isError = true;
     // 重新开启
     console.log('Socket Error');
-    console.log(this.nowSendReq);
     this.socketErrorMessage = err.type;
   };
 
@@ -123,19 +128,21 @@ export class SocketClass {
     // 执行心跳
     this.pingPong();
     this.linkNum = 0;
+    if (this.linkAgainTimer) {
+      clearTimeout(this.linkAgainTimer);
+    }
   };
 
   // 关闭
   private onClose: WebSocket['onclose'] = () => {
     console.log('Socket Close');
-    console.log(this.nowSendReq);
     // 断线重连
     this.isOpen = false;
     if (this.nowSendReq.length) {
       if (++this.linkNum < this.linkAgain) {
-        setTimeout(() => {
+        this.linkAgainTimer = setTimeout(() => {
           this.sendMessageAgain();
-        }, 1000);
+        }, 3000);
       }
     }
     // 清除定时器
@@ -158,6 +165,12 @@ export class SocketClass {
       }
     });
   };
+
+  // 重置重连次数
+  resetLinkNum(): this {
+    this.linkNum = 0;
+    return this;
+  }
 
   // 链接
   createConnect(): Promise<void> {
@@ -213,6 +226,7 @@ export class SocketClass {
 
   // 重新发送所有请求
   sendMessageAgain(): Promise<void>|undefined {
+    if (!this.getSocket) return undefined;
     return this.getSocket().then(ws => {
       if (this.nowSendReq?.length) {
         this.nowSendReq.forEach((value) => {
@@ -366,12 +380,12 @@ export class SocketClass {
 }
 
 export const marketSocket = new SocketClass({
-  baseURI: 'wss://testapi.alfaex.pro/contract/ws/market',
-  // baseURI: 'wss://serve.alfaex.pro/contract/ws/market',
+  // baseURI: 'wss://testapi.alfaex.pro/contract/ws/market',
+  baseURI: 'wss://serve.alfaex.pro/contract/ws/market',
 });
 export const CoinToCoinSocket = new SocketClass({
-  // baseURI: 'wss://serve.alfaex.pro/cash/ws/market',
-  baseURI: 'wss://testapi.alfaex.pro/cash/ws/market',
+  baseURI: 'wss://serve.alfaex.pro/cash/ws/market',
+  // baseURI: 'wss://testapi.alfaex.pro/cash/ws/market',
 });
 
 type Socket = SocketClass;

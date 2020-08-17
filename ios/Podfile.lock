@@ -245,6 +245,8 @@ PODS:
     - React
   - react-native-cameraroll (1.7.1):
     - React
+  - react-native-netinfo (5.9.6):
+    - React
   - react-native-safe-area-context (1.0.0):
     - React
   - react-native-splash-screen (3.2.0):
@@ -397,6 +399,7 @@ DEPENDENCIES:
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector`)
   - react-native-camera (from `../node_modules/react-native-camera`)
   - "react-native-cameraroll (from `../node_modules/@react-native-community/cameraroll`)"
+  - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-splash-screen (from `../node_modules/react-native-splash-screen`)
   - react-native-update (from `../node_modules/react-native-update`)
@@ -478,6 +481,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-camera"
   react-native-cameraroll:
     :path: "../node_modules/@react-native-community/cameraroll"
+  react-native-netinfo:
+    :path: "../node_modules/@react-native-community/netinfo"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-splash-screen:
@@ -562,6 +567,7 @@ SPEC CHECKSUMS:
   React-jsinspector: 512e560d0e985d0e8c479a54a4e5c147a9c83493
   react-native-camera: 9e3d60336e221d62e5b72adf551ca31ff74a94b5
   react-native-cameraroll: 2ade403f581b171b65d07ab02a3f77030c10eed0
+  react-native-netinfo: d2c312fa4b151214e1d5c8456ddb5f28ff24a576
   react-native-safe-area-context: 5f3e081f937ab7c44c179d551f332fa494cfcf8f
   react-native-splash-screen: 200d11d188e2e78cea3ad319964f6142b6384865
   react-native-update: d48e8c63983f687ab123c83f12764a6071e0e77a

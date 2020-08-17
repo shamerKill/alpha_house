@@ -160,6 +160,8 @@ const ContractRightValueView: FC<{
   // 最新指数价格
   const [newPrice, setNewPrice] = useState(defalutPrice);
   const [prevNewPrice, setPrevNewPrice] = useState('--');
+  // 指数价
+  const [markPrice, setMarkPrice] = useState('--');
   // 涨1还是跌0
   const [direction, setDirection] = useState<0|1>(0);
 
@@ -213,6 +215,8 @@ const ContractRightValueView: FC<{
     ]);
     // 获取深度
     const tickerImg = `gold.market.${coinType.replace('/', '')}.depth`;
+    // 获取指数价
+    const tickerImgMark = `gold.market.${coinType.replace('/', '')}.markPrice`;
     const socketListener = (message: any) => {
       if (message?.buy && message?.sell) {
         if (message.buy.length < 6 || message.sell.length < 6) return;
@@ -229,12 +233,23 @@ const ContractRightValueView: FC<{
         setSellData(allData);
       }
     };
+    const socketListenerMark = (message: any) => {
+      const price = parseFloat(message.price);
+      if (price < 10) {
+        setMarkPrice(`${parseFloat(price.toFixed(4))}`);
+      } else {
+        setMarkPrice(`${parseFloat(price.toFixed(2))}`);
+      }
+    };
     if (routePage === routeName) {
       marketSocket.getSocket().then(ws => {
         socket.current = ws;
         ws.addListener(socketListener, tickerImg);
         ws.send(tickerImg, 'req');
         ws.send(tickerImg, 'sub');
+        ws.addListener(socketListenerMark, tickerImgMark);
+        ws.send(tickerImgMark, 'req');
+        ws.send(tickerImgMark, 'sub');
         subSocket.current = false;
       }).catch(err => {
         console.log(err);
@@ -244,6 +259,8 @@ const ContractRightValueView: FC<{
         subSocket.current = true;
         socket.current.send(tickerImg, 'unsub');
         socket.current.removeListener(socketListener);
+        socket.current.send(tickerImgMark, 'unsub');
+        socket.current.removeListener(socketListenerMark);
       }
     }
     // eslint-disable-next-line consistent-return
@@ -293,7 +310,7 @@ const ContractRightValueView: FC<{
           </Text>
           {/* &#8776;&yen;{((parseFloat(newPrice) || 0) * USDTToRMB).toFixed(2)} */}
         </Text>
-        <Text style={style.contentIndexDesc}>最新指数&nbsp;{newPrice}</Text>
+        <Text style={style.contentIndexDesc}>最新指数&nbsp;{markPrice}</Text>
       </View>
       <View style={style.contentListView}>
         {

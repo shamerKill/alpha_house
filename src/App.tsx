@@ -1,9 +1,10 @@
 import React, {
-  FC, useEffect, useCallback, useRef,
+  FC, useEffect, useCallback, useRef, useState,
 } from 'react';
 import SplashScreen from 'react-native-splash-screen';
 import { View, AppState, AppStateStatus } from 'react-native';
 import FlashMessage, { showMessage } from 'react-native-flash-message';
+import NetInfo from '@react-native-community/netinfo';
 // import KeyboardSpacer from 'react-native-keyboard-spacer';
 import DataScreen from './data';
 import ComModalOutBg from './components/modal/outBg';
@@ -15,9 +16,11 @@ import { marketSocket, CoinToCoinSocket } from './data/fetch/socket';
 
 const App: FC = () => {
   const fristIn = useRef(true);
+  const [upNetState, setUpNetState] = useState('');
+
   const closeSplash = useCallback(() => {
     // 关闭启动图
-    Promise.all([CoinToCoinSocket.successConnect(), marketSocket.successConnect()]).then(() => {
+    Promise.all([CoinToCoinSocket.resetLinkNum().successConnect(), marketSocket.resetLinkNum().successConnect()]).then(() => {
     }).catch(() => {
       showMessage({
         position: 'bottom',
@@ -38,9 +41,15 @@ const App: FC = () => {
         SplashScreen.show();
       }
       Promise.all([
-        marketSocket.sendMessageAgain(),
-        CoinToCoinSocket.sendMessageAgain(),
-      ]).finally(() => {
+        marketSocket.resetLinkNum().sendMessageAgain(),
+        CoinToCoinSocket.resetLinkNum().sendMessageAgain(),
+      ]).catch(() => {
+        showMessage({
+          position: 'bottom',
+          message: '请检查您的网络',
+          type: 'warning',
+        });
+      }).finally(() => {
         setTimeout(SplashScreen.hide, 500);
       });
     } else {
@@ -53,7 +62,20 @@ const App: FC = () => {
     closeSplash();
     AppState.removeEventListener('change', listenerApp);
     AppState.addEventListener('change', listenerApp);
+    // 监听网络更改
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (upNetState !== state.type) {
+        setUpNetState(state.type);
+      }
+      if (state.isConnected) {
+        // 如果网络更改，重新处理
+        marketSocket.resetLinkNum().sendMessageAgain();
+        CoinToCoinSocket.resetLinkNum().sendMessageAgain();
+      }
+    });
     return () => {
+      // Unsubscribe
+      unsubscribe();
       AppState.removeEventListener('change', listenerApp);
     };
   }, []);
