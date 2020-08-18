@@ -1,4 +1,5 @@
 import onlyData from '../../tools/onlyId';
+import ajax from '.';
 
 export class SocketClass {
   // 传入配置
@@ -64,6 +65,7 @@ export class SocketClass {
   private onMessageList: {
     id: string;
     func: ((data: string) => any)[];
+    changeTime: number;
   }[] = [];
 
   constructor(
@@ -112,6 +114,7 @@ export class SocketClass {
 
   // 开启失败
   private onError: WebSocket['onerror'] = (err) => {
+    ajax.get(`/v1/socket_msg?msg=${JSON.stringify(err)}`);
     console.log(err);
     this.isOpen = false;
     this.isError = true;
@@ -159,10 +162,20 @@ export class SocketClass {
     } catch (e) {
       data = event.data;
     }
-    this.onMessageList.forEach(item => {
+    // 获取当前时间
+    const nowTime = SocketClass.getNowTime();
+    this.onMessageList = this.onMessageList.map(item => {
+      let time = item.changeTime;
       if (data.ch === item.id && item.func) {
-        item.func.forEach(func => func(data));
+        if (item.changeTime < nowTime) {
+          time = nowTime;
+          item.func.forEach(func => func(data));
+        }
       }
+      return {
+        ...item,
+        changeTime: time,
+      };
     });
   };
 
@@ -316,12 +329,14 @@ export class SocketClass {
           {
             id,
             func: hasTipFuncs,
+            changeTime: 0,
           },
         );
       } else {
         this.onMessageList.push({
           id,
           func: [func],
+          changeTime: 0,
         });
       }
       // 返回函数句柄
@@ -377,6 +392,11 @@ export class SocketClass {
     else result = '';
     return result;
   }
+
+  // 获取当前时间
+  static getNowTime = (): number => {
+    return Math.floor(new Date().getTime() / 500);
+  };
 }
 
 export const marketSocket = new SocketClass({

@@ -67,7 +67,7 @@ export class Fetch {
         },
       );
       const resultJson = await result.json();
-      if (resultJson.status === 2000) {
+      if (token && resultJson.status === 2000) {
         Fetch.noLogin();
       }
       return resultJson;
@@ -118,7 +118,7 @@ export class Fetch {
         req,
       );
       const resultJson = await result.json();
-      if (resultJson.status === 2000) Fetch.noLogin();
+      if (token && resultJson.status === 2000) Fetch.noLogin();
       if (options?.setToken) {
         this.token = resultJson.data;
         rootStore.dispatch({
