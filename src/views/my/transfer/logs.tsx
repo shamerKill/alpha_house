@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useState } from 'react';
 import {
   View, Text, Image, StyleSheet, TouchableNativeFeedback,
 } from 'react-native';
@@ -12,7 +12,7 @@ import showSelector from '../../../components/modal/selector';
 const MyTransferLogsScreen: FC = () => {
   // 币种
   const [coinType, setCoinType] = useState('USDT');
-  const [listData, setListData] = useState<{
+  const [listData] = useState<{
     title: string;
     value: string;
     time: string;
@@ -36,31 +36,6 @@ const MyTransferLogsScreen: FC = () => {
     },
   };
 
-  useEffect(() => {
-    setListData([
-      {
-        title: '充值提现-USDT合约', value: '1000.00', time: '2018-03-25  08:57:25', id: 1,
-      },
-      {
-        title: '充值提现-USDT合约', value: '1000.00', time: '2018-03-25  08:57:25', id: 2,
-      },
-      {
-        title: '充值提现-USDT合约', value: '1000.00', time: '2018-03-25  08:57:25', id: 3,
-      },
-      {
-        title: '充值提现-USDT合约', value: '1000.00', time: '2018-03-25  08:57:25', id: 4,
-      },
-      {
-        title: '充值提现-USDT合约', value: '1000.00', time: '2018-03-25  08:57:25', id: 5,
-      },
-      {
-        title: '充值提现-USDT合约', value: '1000.00', time: '2018-03-25  08:57:25', id: 6,
-      },
-      {
-        title: '充值提现-USDT合约', value: '1000.00', time: '2018-03-25  08:57:25', id: 7,
-      },
-    ]);
-  }, []);
   return (
     <ComLayoutHead
       title="划转记录"

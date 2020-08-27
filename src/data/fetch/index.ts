@@ -42,7 +42,6 @@ export class Fetch {
     return this.baseURI;
   }
 
-
   // get方法
   async get<T = any>(
     uri: string, // 请求路径
@@ -177,6 +176,7 @@ export class Fetch {
 
 const ajax = new Fetch({
   // baseURI: 'https://testapi.alfaex.pro',
+  // baseURI: 'http://192.168.3.17:3004',
   baseURI: 'https://serve.alfaex.pro',
 });
 export default ajax;

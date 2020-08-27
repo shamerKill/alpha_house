@@ -59,7 +59,7 @@ const MyFollowUserDetails: FC = () => {
     { title: '累计收益', key: 'totalProfit' },
     { title: '交易胜率', key: 'lastThreeProfit' },
     { title: '交易天数', key: 'totalDays' },
-    { title: '交易笔数', key: 'totalLength' },
+    { title: '成交笔数', key: 'totalLength' },
     { title: '累计跟随人数', key: 'totalPerson' },
   ];
   // 用户订单信息

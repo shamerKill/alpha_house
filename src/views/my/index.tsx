@@ -12,6 +12,7 @@ import ajax from '../../data/fetch';
 import getHeadImage from '../../tools/getHeagImg';
 import useGetDispatch from '../../data/redux/dispatch';
 import { InState, ActionsType } from '../../data/redux/state';
+import { encryptionAccount } from '../../tools/string';
 
 
 const MyScreen: FC = () => {
@@ -168,7 +169,7 @@ const MyScreen: FC = () => {
             paddingLeft: 10,
             fontSize: 20,
           }}>
-            {userPhone}
+            {encryptionAccount(userPhone)}
           </Text>
           <View
             style={{

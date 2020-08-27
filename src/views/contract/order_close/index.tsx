@@ -40,7 +40,18 @@ const ContractOrderCloseScreen: FC = () => {
     // 检查止盈/止损单
     verifyForm: () => {
       if (loading) return;
+      const start = parseFloat(startPrice);
+      const dop = parseFloat(doPrice);
+      if (Math.abs(start - dop) > start * 0.3) {
+        showMessage({
+          position: 'bottom',
+          type: 'warning',
+          message: '设置止盈止损时，执行价和触发价上下不超过30%，否则影响市场交易深度',
+        });
+        return;
+      }
       // 判断预计是否正确
+      console.log(willChangePriceNum);
       if (willChangePriceNum > 0) {
         // 预计正确，继续提交
         addEvent.submiOrder();
@@ -118,8 +129,8 @@ const ContractOrderCloseScreen: FC = () => {
         setWillChangePriceNum(Math.abs(changeValue));
         setWillChangePrice(Math.abs(changeValue).toFixed(2));
       } else {
-        setWillChangePrice('--');
-        setWillChangePriceNum(0);
+        setWillChangePrice(`-${Math.abs(changeValue).toFixed(2)}`);
+        setWillChangePriceNum(Math.abs(changeValue));
       }
     }
   }, [doPrice, orderParams.openPrice, orderParams.value, orderParams.willType, startPrice]);

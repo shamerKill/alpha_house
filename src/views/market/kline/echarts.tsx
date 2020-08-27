@@ -143,6 +143,7 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
     };
     let useData: TypeKlineValue[] = [];
     const tickerImg = `gold.market.${coinType}.kline.${timeType}`;
+    // eslint-disable-next-line max-len
     const tickerReqStart = `{"req":"gold.market.${coinType}.kline.${timeType}","create_time":"${getStartTime(getTimeValueStart).startTime}","end_time":"${endTime}","limit":"${getTimeValueStart}"}`;
     const tickerReqMore = `{"req":"gold.market.${coinType}.kline.${timeType}","create_time":"${getStartTime().startTime}","end_time":"${endTime}","limit":"${getTimeValueMore}"}`;
     const socketListener = (message: any) => {
@@ -213,7 +214,7 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
       clearInterval(viewShowTimer.current);
     };
   }, [showType]);
-  
+
   return (
     <View
       style={[

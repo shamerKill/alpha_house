@@ -157,7 +157,7 @@ const ContractRightValueView: FC<{
   const [buyData, setBuyData] = useState<(TypeSellBuyList&{ratio?:string})[]>([]);
   // 卖
   const [sellData, setSellData] = useState<(TypeSellBuyList&{ratio?:string})[]>([]);
-  // 最新指数价格
+  // 最新价格
   const [newPrice, setNewPrice] = useState(defalutPrice);
   const [prevNewPrice, setPrevNewPrice] = useState('--');
   // 指数价
@@ -165,9 +165,13 @@ const ContractRightValueView: FC<{
   // 涨1还是跌0
   const [direction, setDirection] = useState<0|1>(0);
 
-  // 更改右侧显示指数数据
+  // 更改右侧显示最新数据
   ContractRightValueView.prototype.setNewPrice = (price: string) => {
     setNewPrice(price);
+  };
+  // 更改右侧指数价
+  ContractRightValueView.prototype.setNewRiskPrice = (price: string) => {
+    setMarkPrice(price);
   };
 
   const addEvent = {
@@ -215,8 +219,6 @@ const ContractRightValueView: FC<{
     ]);
     // 获取深度
     const tickerImg = `gold.market.${coinType.replace('/', '')}.depth`;
-    // 获取指数价
-    const tickerImgMark = `gold.market.${coinType.replace('/', '')}.markPrice`;
     const socketListener = (message: any) => {
       if (message?.buy && message?.sell) {
         if (message.buy.length < 6 || message.sell.length < 6) return;
@@ -233,23 +235,12 @@ const ContractRightValueView: FC<{
         setSellData(allData);
       }
     };
-    const socketListenerMark = (message: any) => {
-      const price = parseFloat(message.price);
-      if (price < 10) {
-        setMarkPrice(`${parseFloat(price.toFixed(4))}`);
-      } else {
-        setMarkPrice(`${parseFloat(price.toFixed(2))}`);
-      }
-    };
     if (routePage === routeName) {
       marketSocket.getSocket().then(ws => {
         socket.current = ws;
         ws.addListener(socketListener, tickerImg);
         ws.send(tickerImg, 'req');
         ws.send(tickerImg, 'sub');
-        ws.addListener(socketListenerMark, tickerImgMark);
-        ws.send(tickerImgMark, 'req');
-        ws.send(tickerImgMark, 'sub');
         subSocket.current = false;
       }).catch(err => {
         console.log(err);
@@ -259,8 +250,6 @@ const ContractRightValueView: FC<{
         subSocket.current = true;
         socket.current.send(tickerImg, 'unsub');
         socket.current.removeListener(socketListener);
-        socket.current.send(tickerImgMark, 'unsub');
-        socket.current.removeListener(socketListenerMark);
       }
     }
     // eslint-disable-next-line consistent-return
@@ -428,7 +417,10 @@ const ComContractIndexListPosition: FC<{
   data: TypePositionData,
   leverType: string;
   newPrice: string;
-}> = ({ data, leverType, newPrice }) => {
+  changeProfitValue: (data: string) => void;
+}> = ({
+  data, newPrice, changeProfitValue,
+}) => {
   // 获取是否有止盈止损的提示框
   const showStopAlert = useRef(true);
 
@@ -534,7 +526,7 @@ const ComContractIndexListPosition: FC<{
       const fm: {[key: string]: any} = {};
       fm.price = 10;
       fm.num = data.allValue;
-      fm.lever = Number(leverType);
+      fm.lever = Number(data.leverType);
       fm.symbol = data.coinType.replace('USDT', '');
       fm.side = ['BUY', 'SELL'][data.type];
       fm.price_type = 2;
@@ -561,6 +553,12 @@ const ComContractIndexListPosition: FC<{
     },
   };
 
+  // 计算占用保证金
+  useEffect(() => {
+    const result = (parseFloat(newPrice) * parseFloat(data.allValue)) / parseFloat(data.leverType);
+    setStateUseBond(`${parseFloat(result.toFixed(4))}`);
+  }, [newPrice, data.leverType]);
+
   // 根据最新指数价计算未实现盈亏
   useEffect(() => {
     let ratio = 0;
@@ -569,23 +567,21 @@ const ComContractIndexListPosition: FC<{
       const result = (parseFloat(data.price) - parseFloat(newPrice)) * parseFloat(data.allValue);
       setProfitValue(`${parseFloat(result.toFixed(4))}`);
       // 计算收益率
-      ratio = Math.floor(parseFloat((result / parseFloat(data.useBond)).toFixed(4)) * 10000) / 100;
+      ratio = Math.floor(parseFloat((result / parseFloat(stateUseBond)).toFixed(4)) * 10000) / 100;
     } else if (data.type === 1) {
       // 多单
       const result = (parseFloat(newPrice) - parseFloat(data.price)) * parseFloat(data.allValue);
       setProfitValue(`${parseFloat(result.toFixed(4))}`);
       // 计算收益率
-      ratio = Math.floor(parseFloat((result / parseFloat(data.useBond)).toFixed(4)) * 10000) / 100;
+      ratio = Math.floor(parseFloat((result / parseFloat(stateUseBond)).toFixed(4)) * 10000) / 100;
     }
     if (ratio === Infinity) ratio = 0;
     setProfitRatio(`${ratio}%`);
-  }, [newPrice]);
+  }, [newPrice, stateUseBond]);
 
-  // 计算占用保证金
   useEffect(() => {
-    const result = (parseFloat(newPrice) * parseFloat(data.allValue)) / parseFloat(leverType);
-    setStateUseBond(`${parseFloat(result.toFixed(4))}`);
-  }, [newPrice, leverType]);
+    changeProfitValue(profitValue);
+  }, [profitValue]);
 
   return (
     <View style={style.listView}>
@@ -601,7 +597,7 @@ const ComContractIndexListPosition: FC<{
           &nbsp;&nbsp;
           {data.coinType}
           &nbsp;&nbsp;
-          {leverType}X
+          {data.leverType}X
         </Text>
         <ComFormButton
           style={{
@@ -985,6 +981,7 @@ const ComContractIndexListOrder: FC<{data: TypeStopOrder, spliceOrder: () => voi
 type TypeAllCoinInfo = {
   symbol: string; // 币种信息
   newPirce: string; // 指数价格
+  riskPrice: string; // 指数价格
   ratio: string; // 涨幅
   lever: string; // 杠杆倍数
   openMinValue: string; // 最小开仓数量
@@ -1067,6 +1064,7 @@ const ContractUSDTScreen: FC = () => {
   const defaultCoinListInfo = useRef<TypeAllCoinInfo>({
     symbol: '', // 币种信息
     newPirce: '', // 指数价格
+    riskPrice: '', // 指数价格
     ratio: '', // 涨幅
     lever: '', // 杠杆倍数
     openMinValue: '', // 最小开仓数量
@@ -1137,49 +1135,53 @@ const ContractUSDTScreen: FC = () => {
     },
     // 获取持仓数据
     fetchPostionsOrders: (nowCoinType: string) => {
-      ajax.get(`/contract/api/v1/bian/holdhourse_log?symbol=${nowCoinType.replace('USDT', '')}`).then(data => {
+      ajax.get('/contract/api/v1/bian/holdhourse_log').then(data => {
+        let result: TypePositionData[] = [];
+        // 多单数量
+        let buyNum = '0';
+        // 空单数量
+        let sellNum = '0';
         if (data.status === 200 && nowCoinType === coinTypeRef.current) {
-          // 多单数量
-          let buyNum = '0';
-          // 空单数量
-          let sellNum = '0';
-          const result: TypePositionData[] = data?.data?.list?.map((item: any) => {
-            if (item.type === '1') {
-              buyNum = item.surplus_coin_num;
-            } else {
-              sellNum = item.surplus_coin_num;
+          result = data?.data?.list?.map((item: any) => {
+            const itemCoinRisk = data?.data?.risk.filter((risk: any) => risk.symbol === `${item.symbol}USDT`);
+            if (`${item.symbol}USDT` === nowCoinType) {
+              if (item.type === '1') {
+                buyNum = item.surplus_coin_num;
+              } else {
+                sellNum = item.surplus_coin_num;
+              }
             }
             return {
               id: item.id,
               type: Number(item.type === '1') as TypePositionData['type'],
-              coinType: nowCoinType,
-              leverType: nowCoinInfo.lever,
+              coinType: `${item.symbol}USDT`,
+              leverType: itemCoinRisk[0].leverage,
               price: item.price,
-              profitValue: data.data.risk[Number(item.type === '2')].unrealizedProfit,
+              profitValue: itemCoinRisk[Number(item.type === '2')].unrealizedProfit,
               profitRatio: `${
-                ((data.data.risk[Number(item.type === '2')].unrealizedProfit / parseFloat(data.data.risk[Number(item.type === '2')].initialMargin)) * 100).toFixed(2)
+                ((itemCoinRisk[Number(item.type === '2')].unrealizedProfit / parseFloat(itemCoinRisk[Number(item.type === '2')].initialMargin)) * 100).toFixed(2)
               }%`,
               allValue: item.surplus_coin_num,
-              useBond: parseFloat(data.data.risk[Number(item.type === '2')].initialMargin).toFixed(4),
+              useBond: parseFloat(itemCoinRisk[Number(item.type === '2')].initialMargin).toFixed(4),
               willBoomPrice: '计算中...',
               time: item.create_time,
             };
           }) || [];
-          // 赋值数据
-          setCoinListInfo(state => {
-            const newState = state.map(item => {
-              const res = { ...item };
-              if (res.symbol === nowCoinType) {
-                res.positionOrders = result;
-                res.positionBuyNum = buyNum;
-                res.positionSellNum = sellNum;
-              }
-              return res;
-            });
-            // 更改预估强平价
-            return addEvent.computBoomPrice(newState);
-          });
         }
+        // 赋值数据
+        setCoinListInfo(state => {
+          const newState = state.map(item => {
+            const res = { ...item };
+            if (res.symbol === nowCoinType) {
+              res.positionOrders = result;
+              res.positionBuyNum = buyNum;
+              res.positionSellNum = sellNum;
+            }
+            return res;
+          });
+          // 更改预估强平价
+          return addEvent.computBoomPrice(newState);
+        });
       }).catch(err => {
         console.log(err);
       });
@@ -1187,8 +1189,9 @@ const ContractUSDTScreen: FC = () => {
     // 获取普通委托数据
     fetchEntrustOrders: (nowCoinType: string) => {
       ajax.get(`/contract/api/v1/bian/entrust_log?symbol=${nowCoinType.replace('USDT', '')}`).then(data => {
+        let result: TypeGeneralEntrustemnt[] = [];
         if (data.status === 200 && nowCoinType === coinTypeRef.current) {
-          const result: TypeGeneralEntrustemnt[] = data?.data?.map((item: any) => {
+          result = data?.data?.map((item: any) => {
             return {
               id: item.binance_id,
               // eslint-disable-next-line no-nested-ternary
@@ -1203,17 +1206,17 @@ const ContractUSDTScreen: FC = () => {
               time: item.create_time,
             };
           }) || [];
-          // 赋值数据
-          setCoinListInfo(state => (
-            state.map(item => {
-              const res = { ...item };
-              if (res.symbol === nowCoinType) {
-                res.entrustOrders = result;
-              }
-              return res;
-            })
-          ));
         }
+        // 赋值数据
+        setCoinListInfo(state => (
+          state.map(item => {
+            const res = { ...item };
+            if (res.symbol === nowCoinType) {
+              res.entrustOrders = result;
+            }
+            return res;
+          })
+        ));
       }).catch(err => {
         console.log(err);
       });
@@ -1221,8 +1224,9 @@ const ContractUSDTScreen: FC = () => {
     // 获取止盈止损数据
     fetchStopOrders: (nowCoinType: string) => {
       ajax.get(`/contract/api/v2/order/profitLossOnline?symbol=${nowCoinType.replace('USDT', '')}`).then(data => {
+        let result: TypeStopOrder[] = [];
         if (data.status === 200 && data.data) {
-          const result: TypeStopOrder[] = data.data.map((item: any) => {
+          result = data.data.map((item: any) => {
             return {
               id: item.id,
               type: item.direction === '平多' ? 1 : 0,
@@ -1237,17 +1241,17 @@ const ContractUSDTScreen: FC = () => {
               doTime: '--',
             };
           });
-          // 赋值数据
-          setCoinListInfo(state => (
-            state.map(item => {
-              const res = { ...item };
-              if (res.symbol === nowCoinType) {
-                res.stopOrders = result;
-              }
-              return res;
-            })
-          ));
         }
+        // 赋值数据
+        setCoinListInfo(state => (
+          state.map(item => {
+            const res = { ...item };
+            if (res.symbol === nowCoinType) {
+              res.stopOrders = result;
+            }
+            return res;
+          })
+        ));
       }).catch(err => {
         console.log(err);
       });
@@ -1265,7 +1269,7 @@ const ContractUSDTScreen: FC = () => {
         coinType: coin,
       });
     },
-    // 根数指数价格处理币种价格和涨幅数据
+    // 根数最新价格处理币种价格和涨幅数据
     setCoinInfo: (res: {price: string; ratio: string; symbol: string;}[]) => {
       // 如果当前没有币种数据，切换页面
       if (coinTypeRef.current === '') {
@@ -1286,6 +1290,19 @@ const ContractUSDTScreen: FC = () => {
           newPirce: res[index].price,
           ratio: res[index].ratio,
         }));
+      });
+    },
+    // 处理指数价
+    setRiskCoinInfo: (res: {[key: string]: string}) => {
+      setCoinListInfo((state) => {
+        if (state.length === 0) {
+          return state;
+        }
+        return state.map((item) => {
+          const result = { ...item };
+          result.riskPrice = res[item.symbol];
+          return result;
+        });
       });
     },
     // 将币种数据转化为左侧列表可用数据
@@ -1680,11 +1697,14 @@ const ContractUSDTScreen: FC = () => {
   };
 
   // 进入页面获取数据
+  // 获取最新价格
   // 获取指数价格
   const stopScoket = useRef(false);
   useEffect(() => {
     let newPriceSocketRef: SocketClass|null = null;
     const newPirceMark = 'gold.market.ALL.ticker';
+    // 获取指数价
+    const tickerImgMark = 'gold.market.all.markPrice';
     const newPirceMarkListener = (message: any) => {
       const resultData: {
         [key: string]: {
@@ -1705,15 +1725,25 @@ const ContractUSDTScreen: FC = () => {
       });
       addEvent.setCoinInfo(result);
     };
+    const tickerSocketListenerMark = (message: any) => {
+      addEvent.setRiskCoinInfo(message.data);
+    };
     if (routePage === routeName) {
       stopScoket.current = true;
       // 页面切换的时候更新数据
       fristGetFetch.current = true;
+      addEvent.fetchEntrustOrders(coinType);
+      addEvent.fetchUserInfo();
+      addEvent.fetchPostionsOrders(coinType);
+      addEvent.fetchStopOrders(coinType);
       marketSocket.getSocket().then(ws => {
         newPriceSocketRef = ws;
         ws.addListener(newPirceMarkListener, newPirceMark);
         ws.send(newPirceMark, 'req');
         ws.send(newPirceMark, 'sub');
+        ws.addListener(tickerSocketListenerMark, tickerImgMark);
+        ws.send(tickerImgMark, 'req');
+        ws.send(tickerImgMark, 'sub');
       }).catch(err => {
         console.log(err);
       });
@@ -1723,6 +1753,8 @@ const ContractUSDTScreen: FC = () => {
         stopScoket.current = false;
         newPriceSocketRef?.send(newPirceMark, 'unsub');
         newPriceSocketRef?.removeListener(newPirceMarkListener);
+        newPriceSocketRef?.send(tickerImgMark, 'unsub');
+        newPriceSocketRef?.removeListener(tickerSocketListenerMark);
       }
     };
   }, [routePage]);
@@ -1742,6 +1774,7 @@ const ContractUSDTScreen: FC = () => {
     setNowCoinInfo(nowCoin[0]);
     // 更改最新指数价
     ContractRightValueView.prototype.setNewPrice(nowCoin[0].newPirce);
+    ContractRightValueView.prototype.setNewRiskPrice(nowCoin[0].riskPrice);
   }, [coinType, coinListInfo]);
 
   // 第一次获取币种列表之后获取数据
@@ -1878,28 +1911,35 @@ const ContractUSDTScreen: FC = () => {
 
   // 计算风险度
   useEffect(() => {
-    let riskLv = 0;
+    let allUseBond = 0;
     coinListInfo.forEach(coin => {
       coin.positionOrders.forEach(order => {
-        if (order.type === 1) {
-          // 开多
-          const riskLvNew = parseFloat(order.willBoomPrice) / parseFloat(coin.newPirce);
-          if (riskLvNew > riskLv) riskLv = riskLvNew;
-        } else {
-          // 开空
-          const riskLvNew = parseFloat(coin.newPirce) / parseFloat(order.willBoomPrice);
-          if (riskLvNew > riskLv) riskLv = riskLvNew;
-        }
+        allUseBond += parseFloat(order.useBond);
       });
     });
-    // 风险度数据太大，进行5次方计算
-    setRiskLever(`${(riskLv ** 5 * 100).toFixed(2)}%`);
+    setRiskLever(`${(allUseBond / parseFloat(canUseAssets)).toFixed(2)}%`);
   }, [coinListInfo]);
 
   // 计算可用资产
   useEffect(() => {
     // TODO: 计算可用/当前资产
   }, [coinListInfo]);
+
+  // 计算风险度
+  useEffect(() => {
+    // 所有未实现盈亏
+    let allNoChange = 0;
+    // 计算维持保证金
+    const fixedValueArray = nowCoinInfo.positionOrders.map(item => {
+      allNoChange += parseFloat(item.profitValue);
+      const { riskPrice } = coinListInfo.filter(coin => coin.symbol === item.coinType)[0];
+      return parseFloat(item.allValue) * parseFloat(riskPrice) * addEvent.getFollowRatio(item.coinType, parseFloat(item.allValue))[0];
+    });
+    if (fixedValueArray.length) {
+      const ratio = Math.floor((fixedValueArray.reduce((a, b) => (a + b)) / (parseFloat(userAllAssets) - allNoChange)) * 10000) / 100;
+      setRiskLever(`${ratio}%`);
+    }
+  }, [nowCoinInfo.positionOrders, canUseAssets, coinListInfo]);
 
   return (
     <View style={style.pageView}>
@@ -2260,12 +2300,29 @@ const ContractUSDTScreen: FC = () => {
         {
           logSelectTab === 0
           && (
-            nowCoinInfo.positionOrders.map(item => (
+            nowCoinInfo.positionOrders.map((item, index) => (
               <ComContractIndexListPosition
                 key={item.id}
                 leverType={nowCoinInfo.lever}
-                newPrice={nowCoinInfo.newPirce}
-                data={item} />
+                newPrice={coinListInfo.filter(coin => coin.symbol === item.coinType)[0].riskPrice}
+                data={item}
+                // 更改未实现盈亏
+                changeProfitValue={
+                  (data: string) => {
+                    setNowCoinInfo(state => ({
+                      ...state,
+                      positionOrders: state.positionOrders.map((order, i) => {
+                        if (index === i) {
+                          return {
+                            ...order,
+                            profitValue: data,
+                          };
+                        }
+                        return order;
+                      }),
+                    }));
+                  }
+                } />
             ))
           )
         }

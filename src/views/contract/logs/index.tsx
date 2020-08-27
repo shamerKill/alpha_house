@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect } from 'react';
 import {
-  View, StyleSheet, ScrollView,
+  View, StyleSheet, ScrollView, NativeSyntheticEvent, NativeScrollEvent,
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import ComLayoutHead from '../../../components/layout/head';
@@ -41,28 +41,45 @@ const ContractLogsAllScreen: FC = () => {
   // const [planementData, setPlanementData] = useState<TypePlanEntrustementLog[]>([]);
   // 止盈止损列表
   const [orderData, setOrderData] = useState<TypeStopOrderLog[]>([]);
+  // 不同记录的页数
+  const [pageList, setPageList] = useState<[number, number, number]>([1, 1, 1]);
+  const [canLoad, setCanLoad] = useState<[boolean, boolean, boolean]>([true, true, true]);
 
-  // const addEvent = {
-  //   selectType: () => {
-  //     const close = showSelector({
-  //       title: '全部类型',
-  //       data: selectArr,
-  //       selected: selectArr[selectType[selectStatus]],
-  //       onPress: (value) => {
-  //         if (typeof value !== 'string') return;
-  //         const selectIndex = selectArr.indexOf(value);
-  //         if (selectArr.indexOf(value) === selectType[selectStatus]) return;
-  //         setSelectType(state => state.map((item, index) => (index === selectStatus ? selectIndex : item)));
-  //         close();
-  //       },
-  //     });
-  //   },
-  // };
+  const onMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y; //滑动距离
+    const contentSizeHeight = event.nativeEvent.contentSize.height; //scrollView contentSize高度
+    const oriageScrollHeight = event.nativeEvent.layoutMeasurement.height; //scrollView高度
+    if (offsetY + oriageScrollHeight >= contentSizeHeight) {
+      if (canLoad[selectStatus]) {
+        setPageList(state => {
+          const result: typeof pageList = [...state];
+          result[selectStatus]++;
+          return result;
+        });
+      }
+    } else if (offsetY + oriageScrollHeight <= 1) {
+      //这个是没有数据了然后给了false  得时候还在往上拉
+    } else if (offsetY === 0) {
+      //这个地方是下拉刷新，意思是到顶了还在指行，可以在这个地方进行处理需要刷新得数据
+    }
+  };
 
   // 获取止盈止损
-  useEffect(() => {
-    ajax.get(`/contract/api/v2/order/profitLossLog?symbol=${route.params.coin.replace('USDT', '')}`).then(data => {
+  const getWillOrder = (page: number, coin: string) => {
+    setCanLoad(state => [
+      state[0],
+      state[1],
+      false,
+    ]);
+    ajax.get(`/contract/api/v2/order/profitLossLog?symbol=${coin.replace('USDT', '')}&page=${page}`).then(data => {
       if (data.status === 200 && data.data) {
+        if (data?.data.length) {
+          setCanLoad(state => [
+            state[0],
+            state[1],
+            true,
+          ]);
+        }
         const result: TypeStopOrderLog[] = data.data.map((item: any) => {
           return {
             id: item.id,
@@ -78,53 +95,97 @@ const ContractLogsAllScreen: FC = () => {
             doTime: '--',
           };
         });
-        setOrderData(result);
+        setOrderData(state => (
+          [...state].concat(result)
+        ));
       }
     }).catch(err => {
       console.log(err);
     });
-  }, [route.params.coin]);
+  };
+  // 获取历史委托
+  const getHistoryOrder = (page: number, coin: string) => {
+    setCanLoad(state => [
+      state[0],
+      false,
+      state[2],
+    ]);
+    ajax.get(`/contract/api/v1/bian/dealorder_log?symbol=${coin.replace('USDT', '')}&page=${page}`).then(data => {
+      if (data.status === 200) {
+        if (data?.data.length) {
+          setCanLoad(state => [
+            state[0],
+            true,
+            state[2],
+          ]);
+        }
+        setHistoryLogsData(state => (
+          [...state].concat(data?.data?.map((item: any) => ({
+            id: item.id,
+            // eslint-disable-next-line no-nested-ternary
+            type: item.direction - 1,
+            coinType,
+            successPrice: item.price,
+            successNumber: item.num,
+            successTime: item.update_time || item.create_time,
+            serviceFee: item.fee,
+            changeValue: item.profit,
+          })) || [])
+        ));
+      }
+    }).catch(err => {
+      console.log(err);
+    });
+  };
+
+  // 获取普通委托
+  const getNowOrder = (page: number, coin: string) => {
+    setCanLoad(state => [
+      false,
+      state[1],
+      state[2],
+    ]);
+    ajax.get(`/contract/api/v1/bian/allorder_log?symbol=${coin.replace('USDT', '')}&page=${page}`).then(data => {
+      if (data.status === 200) {
+        if (data?.data.length) {
+          setCanLoad(state => [
+            true,
+            state[1],
+            state[2],
+          ]);
+        }
+        setGeneralEntrustementData(state => (
+          [...state].concat(data?.data?.map((item: any) => ({
+            id: item.id,
+            // eslint-disable-next-line no-nested-ternary
+            type: item.type === '1' ? (item.sell_buy === '1' ? 1 : 2) : (item.sell_buy === '1' ? 3 : 0),
+            coinType,
+            leverType: item.lever,
+            willPrice: item.price || '市价',
+            needNumber: item.coin_num,
+            successNumber: item.deal_coin_num,
+            status: item.status - 1,
+            startTime: item.create_time,
+            stopTime: item.back_time === '' ? item.create_time : item.back_time,
+            changeValue: item.profit_per,
+            orderType: item.price_type - 1,
+          })) || [])
+        ));
+      }
+    }).catch(err => {
+      console.log(err);
+    });
+  };
 
   useEffect(() => {
-    ajax.get(`/contract/api/v1/bian/dealorder_log?symbol=${coinType.replace('USDT', '')}`).then(data => {
-      if (data.status === 200) {
-        setHistoryLogsData(data?.data?.map((item: any, index: number) => ({
-          id: index,
-          // eslint-disable-next-line no-nested-ternary
-          type: item.direction - 1,
-          coinType,
-          successPrice: item.price,
-          successNumber: item.num,
-          successTime: item.update_time || item.create_time,
-          serviceFee: item.fee,
-          changeValue: item.profit,
-        })) || []);
-      }
-    }).catch(err => {
-      console.log(err);
-    });
-    ajax.get(`/contract/api/v1/bian/allorder_log?symbol=${coinType.replace('USDT', '')}`).then(data => {
-      if (data.status === 200) {
-        setGeneralEntrustementData(data?.data?.map((item: any) => ({
-          id: item.id,
-          // eslint-disable-next-line no-nested-ternary
-          type: item.type === '1' ? (item.sell_buy === '1' ? 1 : 2) : (item.sell_buy === '1' ? 3 : 0),
-          coinType,
-          leverType: item.lever,
-          willPrice: item.price || '市价',
-          needNumber: item.coin_num,
-          successNumber: item.deal_coin_num,
-          status: item.status - 1,
-          startTime: item.create_time,
-          stopTime: item.back_time === '' ? item.create_time : item.back_time,
-          changeValue: item.profit_per,
-          orderType: item.price_type - 1,
-        })) || []);
-      }
-    }).catch(err => {
-      console.log(err);
-    });
-  }, [route.params.coin]);
+    if (selectStatus === 0 && canLoad[0]) {
+      getNowOrder(pageList[0], route.params.coin);
+    } else if (selectStatus === 1 && canLoad[1]) {
+      getHistoryOrder(pageList[1], route.params.coin);
+    } else if (selectStatus === 2 && canLoad[2]) {
+      getWillOrder(pageList[2], route.params.coin);
+    }
+  }, [route.params.coin, selectStatus, pageList]);
 
   return (
     <ComLayoutHead
@@ -151,7 +212,7 @@ const ContractLogsAllScreen: FC = () => {
       <ComLine />
       {
         selectStatus === 0 && (
-          <ScrollView style={style.scrollViewContent}>
+          <ScrollView onMomentumScrollEnd={onMomentumScrollEnd} style={style.scrollViewContent}>
             {
               generalEntrustementData.map(item => (
                 <ComContractIndexListGeneralLog
@@ -164,7 +225,7 @@ const ContractLogsAllScreen: FC = () => {
       }
       {
         selectStatus === 1 && (
-          <ScrollView style={style.scrollViewContent}>
+          <ScrollView onMomentumScrollEnd={onMomentumScrollEnd} style={style.scrollViewContent}>
             {
               historyLogsData.map(item => (
                 <ComContractIndexListHistory
@@ -177,7 +238,7 @@ const ContractLogsAllScreen: FC = () => {
       }
       {
         selectStatus === 2 && (
-          <ScrollView style={style.scrollViewContent}>
+          <ScrollView onMomentumScrollEnd={onMomentumScrollEnd} style={style.scrollViewContent}>
             {
               orderData.map(item => (
                 <ComContractIndexListOrderLog

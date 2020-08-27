@@ -19,7 +19,7 @@ export const themeRed = '#f65449';
 // 绿色
 export const themeGreen = '#32b28f';
 // 深蓝色
-export const themeMoreBlue = '#241e59';
+export const themeMoreBlue = '#141f31';
 // 蓝色
 export const themeBlue = '#7373f7';
 

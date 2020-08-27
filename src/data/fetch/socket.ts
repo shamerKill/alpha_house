@@ -1,5 +1,8 @@
+import { getUniqueId } from 'react-native-device-info';
 import onlyData from '../../tools/onlyId';
 import ajax from '.';
+import rootStore from '../store';
+import formatTime from '../../tools/time';
 
 export class SocketClass {
   // 传入配置
@@ -25,7 +28,7 @@ export class SocketClass {
   private sendList: {data: any, type?: 'sub'|'unsub'|'req'}[] = [];
 
   // 接受数据数组是否有值，如果没值，启动判断心跳包执行次数后关闭链接,单位s
-  private checkPingPongLinkTime: number = 20;
+  private checkPingPongLinkTime: number = 2;
 
   // 心跳包倒计时
   private pingPongTime: NodeJS.Timeout| null = null;
@@ -113,14 +116,22 @@ export class SocketClass {
   };
 
   // 开启失败
-  private onError: WebSocket['onerror'] = (err) => {
-    ajax.get(`/v1/socket_msg?msg=${JSON.stringify(err)}`);
+  private onError: WebSocket['onerror'] = (err: any) => {
     console.log(err);
     this.isOpen = false;
     this.isError = true;
     // 重新开启
     console.log('Socket Error');
-    this.socketErrorMessage = err.type;
+    this.socketErrorMessage = err.message;
+    // 错误之后，进行处理
+    const message = `
+      err(${err.message})
+      ---time(${formatTime()})
+      ---${rootStore.getState().userState.userInfo.account}
+      ---req(${JSON.stringify(this.nowSendReq)})
+      ---linkNum(${this.linkNum})
+      ---dever(${getUniqueId()})`;
+    ajax.get(`/v1/socket_msg?msg=${message}`);
   };
 
   // 开启成功
@@ -187,7 +198,9 @@ export class SocketClass {
 
   // 链接
   createConnect(): Promise<void> {
-    this.createSocket();
+    if (this.socket?.readyState !== WebSocket.CONNECTING) {
+      this.createSocket();
+    }
     return new Promise((resolve, reject) => {
       const timer = setInterval(() => {
         if (this.socket?.readyState === WebSocket.OPEN) {
