@@ -544,10 +544,10 @@ const MarketKlineScreen: FC = () => {
           onTouchEnd={() => addEvent.scrollTouchEnd()}>
           {/* 数据内容 */}
           <MarketKlineInfo />
-          <ComLine color={getThemeOpacity(themeGreen, 0.1)} />
+          <ComLine color={getThemeOpacity(themeGray, 0.1)} />
           {/* 图表 */}
           <MarketKlineHtml style={{ height: 430 }} />
-          <ComLine color={getThemeOpacity(themeGreen, 0.1)} />
+          <ComLine color={getThemeOpacity(themeGray, 0.1)} />
           {/* 列表 */}
           <MarketKlineBottom />
         </ScrollView>

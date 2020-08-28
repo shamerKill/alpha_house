@@ -505,21 +505,21 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
     grid: [
       {
         left: 0,
-        top: '0%',
+        top: '5%',
         right: '10%',
-        height: '65%',
+        height: '60%',
       },
       {
         left: 0,
-        top: '65%',
+        top: '70%',
         right: '10%',
-        height: '15%',
+        height: '10%',
       },
       {
         left: 0,
-        top: '80%',
+        top: '85%',
         right: '10%',
-        height: '15%',
+        height: '10%',
       },
     ],
     xAxis: [
