@@ -6,6 +6,9 @@ import HomeNewsList from '../../views/home/news_list';
 import HomeNewsDetails from '../../views/home/news_detail';
 import HomeHelpList from '../../views/home/help_list';
 import HomeHelpDetails from '../../views/home/help_details';
+import HomeFundDetail from '../../views/home/fund/fund_detail';
+import HomeFundSubmit from '../../views/home/fund/fund_submit';
+import HomeFundLogs from '../../views/home/fund/fund_logs';
 
 const HomeRoutes: TypeStackValue = [
   {
@@ -36,6 +39,18 @@ const HomeRoutes: TypeStackValue = [
       // 帮助中心详情
       name: 'HomeHelpDetails',
       component: HomeHelpDetails,
+    }, {
+      // 基金详情
+      name: 'HomeFundDetail',
+      component: HomeFundDetail,
+    }, {
+      // 基金提交
+      name: 'HomeFundSubmit',
+      component: HomeFundSubmit,
+    }, {
+      // 基金提交
+      name: 'HomeFundLogs',
+      component: HomeFundLogs,
     }],
   },
 ];

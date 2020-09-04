@@ -4,7 +4,7 @@ export const isPhone = (phone: string): boolean => {
 };
 // 验证邮箱
 export const isEmail = (email: string): boolean => {
-  return /^([a-zA-Z]|[0-9])(\w|-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/.test(email);
+  return /^([a-zA-Z]|[0-9])(\w|-|_)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/.test(email);
 };
 // 验证密码
 export const isPass = (pass: string): boolean => {

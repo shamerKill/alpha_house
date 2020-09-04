@@ -10,6 +10,7 @@ import {
   defaultThemeSmallColor, themeTextGray, defaultThemeColor, defaultThemeBgColor, themeGray,
 } from '../../../config/theme';
 import ajax from '../../../data/fetch';
+import { encryptionAccount } from '../../../tools/string';
 
 export type TypeMyRecommendList = {
   searchFunc?: (search: string) => void;
@@ -73,7 +74,7 @@ const MyRecommendListScreen: FC = () => {
           if (data.data.data && data.data.data.length) {
             const result: TypeMyRecommendList['listArr'] = data.data.data.map((item: any) => {
               return {
-                upAccount: item.data.mobile || item.data.email,
+                upAccount: encryptionAccount(item.data.mobile || item.data.email),
                 time: item.data.create_time.split(' ')[0],
                 status: item.data.realname_status === '4', // true已实名，false未实名
                 selfChildren: item.relation === '直推', // true直推，false间推
@@ -184,15 +185,18 @@ const MyRecommendListScreen: FC = () => {
           paddingBottom: 10,
         }}>
           {
-            ['推荐账户', '注册日期', '实名状态', '推荐关系'].map((item, index) => (
+            ['登录账户', '注册日期', '实名状态', '邀请关系'].map((item, index) => (
               <Text
                 key={index}
-                style={{
-                  flex: 2,
-                  textAlign: 'center',
-                  color: themeGray,
-                  fontSize: 15,
-                }}>
+                style={[
+                  {
+                    flex: 2,
+                    textAlign: 'center',
+                    color: themeGray,
+                    fontSize: 15,
+                  },
+                  item === '登录账户' && { flex: 3 },
+                ]}>
                 {item}
               </Text>
             ))
@@ -215,10 +219,14 @@ const MyRecommendListScreen: FC = () => {
                     paddingTop: 10,
                     paddingBottom: 10,
                   }}>
-                  <Text style={listStyle.list}>{item.upAccount}</Text>
+                  <Text style={[
+                    listStyle.list,
+                    { flex: 3 },
+                  ]}>{item.upAccount}
+                  </Text>
                   <Text style={listStyle.list}>{item.time}</Text>
                   <Text style={listStyle.list}>{item.status ? '已实名' : '未实名'}</Text>
-                  <Text style={listStyle.list}>{item.selfChildren ? '直推' : '间推'}</Text>
+                  <Text style={listStyle.list}>{item.selfChildren ? '直接' : '社区'}</Text>
                 </View>
               );
             })

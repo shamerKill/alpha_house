@@ -19,6 +19,7 @@ export type TypePositionData = {
   useBond: string; // 占用保证金
   willBoomPrice: string; // 预估强评价
   useBondRatio: string; // 维持保证金率
+  time: string; // 订单时间
   // 没有止盈止损
   // stopWinValue: string; // 止盈手数
   // stopLowValue: string; // 止损手数
@@ -57,7 +58,7 @@ export type TypePlanEntrustement = {
 // 止盈止损数据类型
 export type TypeStopOrder = {
   id: string|number; // 订单ID
-  type: 0|1; // 开空0，开多1
+  type: 0|1; // 平空0，平多1
   coinType: string; // 交易对
   leverType: string; // 杠杆倍数
   startPrice: string; // 触发价格
@@ -89,7 +90,7 @@ export type TypeGeneralEntrustemntLog = {
 // 历史成交记录数据类型
 export type TypeHistoryLog = {
   id: string|number; // 订单id
-  type: 0|1, // 买入0｜卖出1
+  type: 0|1|2|3, // 开多0｜开空1｜平多2｜平空3
   coinType: string; // 交易对
   successPrice: string; // 成交价格
   successNumber: string; // 成交数量
@@ -117,10 +118,8 @@ export type TypeStopOrderLog = {
   id: string|number; // 订单ID
   type: 0|1; // 开空0，开多1
   coinType: string; // 交易对
-  leverType: string; // 杠杆倍数
   startPrice: string; // 触发价格
   doPrice: string; // 执行价格
-  number: number; // 数量
   isSuccess: boolean; // 成交true/撤销false
   startTime: string; // 开始时间
   stopTime: string; // 停止时间

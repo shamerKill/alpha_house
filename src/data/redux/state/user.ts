@@ -12,6 +12,7 @@ export const defaultUserInfoState: TypeUserInfo = {
   avatar: { uri: '' }, // 用户头像数据
   account: '', // 用户账号
   accountType: 'email', // 用户账号类型
+  spareAccount: '', // 备用账号
   upUserCode: '', // 上级邀请码
   token: '', // 登录凭证
   id: '', // 用户编号

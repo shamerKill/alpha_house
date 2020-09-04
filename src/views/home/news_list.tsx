@@ -102,7 +102,7 @@ const HomeNewsList: FC = () => {
   useEffect(() => {
     ajax.get('/v1/article/article_list?types=1').then(data => {
       if (data.status === 200 && data.data) {
-        const result: InState['listState']['newsList'] = Object.values(data.data).map((item: any) => ({
+        const result: InState['listState']['newsList'] = Object.values(data.data).reverse().map((item: any) => ({
           readed: item.isRead,
           title: item.list.title,
           time: item.list.create_time,

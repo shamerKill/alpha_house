@@ -19,19 +19,41 @@ export const numberToFormatString = (value: number|string): string => {
   const Y = 10 ** 8;
   if (value > Y) return `${parseFloat((data / Y).toFixed(2)).toString()}亿`;
   // M
-  const M = 10 ** 6;
-  if (value > M) return `${parseFloat((data / M).toFixed(2)).toString()}M`;
+  const M = 10 ** 5;
+  if (value > M) return `${parseFloat((data / M).toFixed(2)).toString()}万`;
   // K
   const K = 10 ** 3;
-  if (value > K) return `${parseFloat((data / K).toFixed(2)).toString()}K`;
+  if (value > K) return `${parseFloat((data / K).toFixed(2)).toString()}千`;
   return data.toString();
 };
 export const biNumberToSymbol = (value: number|string): string => {
-  const val = typeof value === 'number' ? value : parseFloat(value);
-  let result = `${val}`;
-  if (val % 10000 > 10) result = `${(val / 10000).toFixed(2)}W`;
-  if (val % 1000000 > 10) result = `${(val / 1000000).toFixed(2)}M`;
-  return result;
+  let data = value;
+  if (typeof data === 'string') data = parseFloat(data) || 0;
+  // 亿
+  const Y = 10 ** 8;
+  if (value >= Y) return `${parseFloat((data / Y).toFixed(2)).toString()}亿`;
+  // M
+  const M = 10 ** 4;
+  if (value >= M) return `${parseFloat((data / M).toFixed(2)).toString()}万`;
+  // K
+  const K = 10 ** 3;
+  if (value >= K) return `${parseFloat((data / K).toFixed(2)).toString()}千`;
+  return data.toString();
+};
+
+// 计算小数点后位数
+export const numberOtherLength = (value: number): number => {
+  if (Number.isNaN(value)) return 0;
+  const data = value.toString();
+  const point = data.split('.')[1];
+  if (!point) return 0;
+  return point.length;
+};
+
+// 数字向下取余
+export const numberToFixed = (value: number, fix: number): string => {
+  const count = Math.floor(value * 10 ** fix);
+  return `${count / 10 ** fix}`;
 };
 
 export default {

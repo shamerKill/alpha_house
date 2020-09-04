@@ -1,23 +1,25 @@
 import React, { FC, useState, useEffect } from 'react';
-import {
-  View, ImageSourcePropType, StyleSheet,
-} from 'react-native';
+import { View, ImageSourcePropType, StyleSheet } from 'react-native';
 import { Image, Text } from 'react-native-elements';
 import ComLayoutHead from '../../../components/layout/head';
 import ComFormButton from '../../../components/form/button';
-import { themeWhite, defaultThemeColor, themeGray } from '../../../config/theme';
+import {
+  themeWhite,
+  defaultThemeColor,
+  themeGray,
+} from '../../../config/theme';
 import ComLine from '../../../components/line';
 import { useGoToWithLogin } from '../../../tools/routeTools';
 import ajax from '../../../data/fetch';
 import getHeadImage from '../../../tools/getHeagImg';
 
 interface InFollowLi {
-  head: ImageSourcePropType, // 头像
+  head: ImageSourcePropType; // 头像
   name: string; // 名称
   totalProfit: string; // 累计收益率
   lastThreeWeek: string; // 近3周收益
   totalPerson: number; // 总人数
-  id: number|string; // 用户ID
+  id: number | string; // 用户ID
 }
 
 const MyFollowListScreen: FC = () => {
@@ -31,42 +33,46 @@ const MyFollowListScreen: FC = () => {
   };
 
   useEffect(() => {
-    ajax.get('/v1/track/list').then(data => {
-      if (data.status === 200) {
-        const result: InFollowLi[] = Object.values(data.data).map((item: any) => {
-          return {
-            head: getHeadImage()[item.headimg || 0],
-            name: item.nickname,
-            totalProfit: item.track_profit,
-            lastThreeWeek: Math.floor((item.track_success_per) * 10000) / 100,
-            totalPerson: item.track_num,
-            id: item.id,
-          };
-        });
-        setListData(result);
-      }
-    }).catch(err => console.log(err));
+    ajax
+      .get('/v1/track/list')
+      .then((data) => {
+        if (data.status === 200) {
+          const result: InFollowLi[] = Object.values(data.data).map(
+            (item: any) => {
+              return {
+                head: getHeadImage()[item.headimg || 0],
+                name: item.nickname,
+                totalProfit: `${(item.track_profit * 10).toFixed(2)}%`,
+                lastThreeWeek: `${Math.floor(item.track_success_per * 10000)
+                  / 100}`,
+                totalPerson: item.track_num,
+                id: item.id,
+              };
+            },
+          );
+          setListData(result);
+        }
+      })
+      .catch((err) => console.log(err));
   }, []);
   return (
-    <ComLayoutHead
-      title="跟单">
+    <ComLayoutHead title="跟单">
       <ComLine />
       <View>
-        {
-          listData.map(item => (
-            <FollowLi
-              key={item.id}
-              withPeopleFunc={addEvent.withThePeople}
-              {...item} />
-          ))
-        }
+        {listData.map((item) => (
+          <FollowLi
+            key={item.id}
+            withPeopleFunc={addEvent.withThePeople}
+            {...item} />
+        ))}
       </View>
     </ComLayoutHead>
   );
 };
 
-
-const FollowLi: FC<InFollowLi&{withPeopleFunc: (id: InFollowLi['id']) => void;}> = ({
+const FollowLi: FC<
+InFollowLi & { withPeopleFunc: (id: InFollowLi['id']) => void }
+> = ({
   head,
   name,
   totalProfit,
@@ -80,14 +86,9 @@ const FollowLi: FC<InFollowLi&{withPeopleFunc: (id: InFollowLi['id']) => void;}>
       {/* 个人信息 */}
       <View style={style.userInfo}>
         {/* 头像 */}
-        <Image
-          resizeMode="stretch"
-          containerStyle={style.head}
-          source={head} />
+        <Image resizeMode="stretch" containerStyle={style.head} source={head} />
         {/* 名字 */}
-        <Text style={style.userName}>
-          { name }
-        </Text>
+        <Text style={style.userName}>{name}</Text>
       </View>
       {/* 跟单按钮 */}
       <ComFormButton
@@ -99,16 +100,26 @@ const FollowLi: FC<InFollowLi&{withPeopleFunc: (id: InFollowLi['id']) => void;}>
       {/* 数据 */}
       <View style={style.valueView}>
         <View style={style.valueTextView}>
-          <Text style={[style.valueText, style.valueTextLeft]}>{totalProfit}</Text>
+          <Text style={[style.valueText, style.valueTextLeft]}>
+            {totalProfit}
+          </Text>
           <Text style={[style.valueTextDesc]}>累计收益率</Text>
         </View>
         <View style={style.valueTextView}>
-          <Text style={[style.valueText, style.valueTextCenter]}>{lastThreeWeek}%</Text>
-          <Text style={[style.valueTextDesc, style.valueTextCenter]}>交易胜率</Text>
+          <Text style={[style.valueText, style.valueTextCenter]}>
+            {lastThreeWeek}%
+          </Text>
+          <Text style={[style.valueTextDesc, style.valueTextCenter]}>
+            交易胜率
+          </Text>
         </View>
         <View style={style.valueTextView}>
-          <Text style={[style.valueText, style.valueTextRight]}>{totalPerson}</Text>
-          <Text style={[style.valueTextDesc, style.valueTextRight]}>累计跟随人数</Text>
+          <Text style={[style.valueText, style.valueTextRight]}>
+            {totalPerson}
+          </Text>
+          <Text style={[style.valueTextDesc, style.valueTextRight]}>
+            累计跟随人数
+          </Text>
         </View>
       </View>
     </View>

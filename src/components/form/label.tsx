@@ -13,6 +13,7 @@ const ComFormLabel: FC<{
   password?: true;
   // 验证码
   getCode?: (data: any) => void;
+  canGetCode?: boolean;
   codeTimer?: number;
   closeCode?: {clearTimer:() => void};
 }> = ({
@@ -24,6 +25,7 @@ const ComFormLabel: FC<{
   placeholder,
   password,
   disabled,
+  canGetCode,
   getCode,
   codeTimer = 61,
 }) => {
@@ -31,6 +33,7 @@ const ComFormLabel: FC<{
   let timer = useRef(setTimeout(() => {}, 0));
   const [codeState, setCodeState] = useState(codeTimer);
   const startTimer = () => {
+    if (canGetCode === false) return;
     setCodeState(codeTimer - 1);
     timer.current = setInterval(() => {
       setCodeState(state => {

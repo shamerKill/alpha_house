@@ -176,8 +176,18 @@ const ComContractIndexListPosition: FC<{data: TypePositionData, leverType: strin
         ]}>
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;占用保证金&nbsp;{data.useBond}USDT
         </Text>
-        <Text style={style.listInfoText}>预估强评价&nbsp;{data.willBoomPrice}</Text>
-        {/* <Text style={style.listInfoText}>维持保证金率&nbsp;{data.useBondRatio}</Text> */}
+        <Text style={[
+          style.listInfoText,
+          { width: '33%' },
+        ]}>
+          预估强平价&nbsp;{data.willBoomPrice}
+        </Text>
+        <Text style={[
+          style.listInfoText,
+          { width: '66%', textAlign: 'left' },
+        ]}>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;开仓时间&nbsp;{data.time}
+        </Text>
       </View>
       {/* 按钮 */}
       <View style={style.listBtns}>
@@ -560,10 +570,13 @@ const ComContractIndexBottom: FC<{
                 leverType: lever,
                 price: item.price,
                 profitValue: data.data.risk[Number(item.type === '2')].unrealizedProfit,
-                profitRatio: `${((data.data.risk[Number(item.type === '2')].unrealizedProfit / (item.price * item.coin_num)) * 100).toFixed(2)}%`,
+                profitRatio: `${
+                  ((data.data.risk[Number(item.type === '2')].unrealizedProfit / parseFloat(data.data.risk[Number(item.type === '2')].initialMargin)) * 100).toFixed(2)
+                }%`,
                 allValue: item.surplus_coin_num,
                 useBond: parseFloat(data.data.risk[Number(item.type === '2')].initialMargin).toFixed(4),
                 willBoomPrice: item.flat_price,
+                time: item.create_time,
               };
             }) || []);
           }

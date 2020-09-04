@@ -2,5 +2,5 @@
   "eslint.nodePath": "../node_modules/",
   "eslint.codeActionsOnSave.mode": "all",
   "deno.enable": false,
-  "java.configuration.updateBuildConfiguration": "disabled"
+  "java.configuration.updateBuildConfiguration": "disabled",
 }

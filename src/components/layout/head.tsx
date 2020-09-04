@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, ReactElement } from 'react';
 import {
   View, StyleProp, ViewStyle, TextProps, TouchableNativeFeedback, Image, ScrollViewProps, Dimensions,
 } from 'react-native';
@@ -24,6 +24,7 @@ interface InLayoutHeadProps {
   onScroll?: ScrollViewProps['onScroll'],
   rightComponent?: HeaderSubComponent,
   leftComponent?: HeaderSubComponent,
+  bottomCompoent?: ReactElement;
   line?: true;
   onMomentumScrollEnd?: ScrollViewProps['onMomentumScrollEnd'];
   // 页面是否定位
@@ -49,6 +50,7 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
   onMomentumScrollEnd,
   position,
   positionTop,
+  bottomCompoent,
 }) => {
   const navigation = useNavigation();
   // 获取页面高度
@@ -161,8 +163,10 @@ const ComLayoutHead: FC<InLayoutHeadProps> = ({
               </ScrollView>
             )
         }
+        {
+          bottomCompoent
+        }
       </View>
-
     </View>
   );
 };

@@ -1,13 +1,24 @@
 import React, { FC, useState, useEffect } from 'react';
 import {
-  View, ImageSourcePropType, StyleSheet, Image as StaticImage,
+  View,
+  ImageSourcePropType,
+  StyleSheet,
+  Image as StaticImage,
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { Image, Text } from 'react-native-elements';
 import { ScrollView } from 'react-native-gesture-handler';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import {
-  themeWhite, defaultThemeColor, themeGray, themeTextGray, themeBlack, themeGreen, themeRed, defaultThemeBgColor,
+  themeWhite,
+  defaultThemeColor,
+  themeGray,
+  themeTextGray,
+  themeBlack,
+  themeGreen,
+  themeRed,
+  defaultThemeBgColor,
 } from '../../../config/theme';
 import ComLine from '../../../components/line';
 import ComFormButton from '../../../components/form/button';
@@ -16,7 +27,8 @@ import ajax from '../../../data/fetch';
 import getHeadImage from '../../../tools/getHeagImg';
 
 type TypeUserInfo = {
-  head: ImageSourcePropType, // 头像
+  head: ImageSourcePropType // 头像
+  ;
   name: string; // 名称
   time: string; // 时间
   site: string; // 地址
@@ -31,7 +43,7 @@ type TypeUserValue = {
   willWinProfit: string; // 预计分成比例
 };
 type TypeLogList = {
-  type: 0|1; // 买跌/买涨
+  type: 0 | 1; // 买跌/买涨
   win: boolean; // 盈亏
   coinType: string; // 币种类型
   multiple: string; // 开的倍数
@@ -45,7 +57,12 @@ type TypeLogList = {
 };
 
 const MyFollowUserDetails: FC = () => {
-  const { params: { id: userId } } = useRoute<RouteProp<{followUserDetails: {id: string|number}}, 'followUserDetails'>>();
+  const { params: { id: userId } } = useRoute<
+  RouteProp<
+  { followUserDetails: { id: string | number } },
+  'followUserDetails'
+  >
+  >();
   const goToWithLogin = useGoToWithLogin();
   // 用户信息
   const [userInfo, setUserInfo] = useState<TypeUserInfo>();
@@ -58,7 +75,7 @@ const MyFollowUserDetails: FC = () => {
     { title: '累计收益', key: 'totalProfit' },
     { title: '交易胜率', key: 'lastThreeProfit' },
     { title: '交易天数', key: 'totalDays' },
-    { title: '交易笔数', key: 'totalLength' },
+    { title: '成交笔数', key: 'totalLength' },
     { title: '累计跟随人数', key: 'totalPerson' },
   ];
   // 用户订单信息
@@ -66,14 +83,21 @@ const MyFollowUserDetails: FC = () => {
 
   const addEvent = {
     withPerson: () => {
-      if (!userInfo?.name) return;
+      if (!userInfo?.name) {
+        showMessage({
+          position: 'bottom',
+          message: '抱歉，当前大佬未完善个人资料，无法进行跟随',
+          type: 'info',
+        });
+        return;
+      }
       goToWithLogin('followMode', { id: userId, name: userInfo?.name });
     },
   };
 
   // 获取数据
   useEffect(() => {
-    ajax.get(`/v1/track/detail?trackID=${userId}`).then(data => {
+    ajax.get(`/v1/track/detail?trackID=${userId}`).then((data) => {
       if (data.status === 200) {
         const userData = data.data.userInfo;
         setUserInfo({
@@ -84,8 +108,9 @@ const MyFollowUserDetails: FC = () => {
           desc: userData.description,
         });
         setUserProfit({
-          totalProfit: `${userData.track_profit}%`,
-          lastThreeProfit: `${Math.floor(userData.track_success_per * 10000) / 100}%`,
+          totalProfit: `${userData.track_profit}`,
+          lastThreeProfit: `${Math.floor(userData.track_success_per * 10000)
+            / 100}%`,
           totalDays: data.data.track_day,
           totalLength: userData.order_num,
           totalPerson: userData.track_num,
@@ -94,21 +119,24 @@ const MyFollowUserDetails: FC = () => {
         const result = data.data.orderList.map((item: any) => {
           return {
             type: Number(item.type === '1'),
-            win: item.profit_per >= 0,
+            win: item.already_profit >= 0,
             coinType: item.symbol,
             multiple: `${item.lever}x`,
             openPrice: item.price,
             closePrice: item.deal_price,
-            profit: `${item.profit_per}%`,
+            profit: `${item.already_profit}`,
             openTime: item.create_time,
             closeTime: item.update_time,
             orderId: item.id,
-            orderType: ['', '持仓中', '已平仓', '部分平仓', '全部平仓', '部分平仓'][Number(item.status)],
+            orderType:
+              ['', '持仓中', '已平仓', '部分平仓', '全部平仓', '部分平仓'][Number(item.status)],
           };
         });
         setLogList(result);
       }
-    }).catch(err => { console.log(err); });
+    }).catch((err) => {
+      console.log(err);
+    });
   }, []);
   return (
     <ComLayoutHead
@@ -142,36 +170,37 @@ const MyFollowUserDetails: FC = () => {
         <ComLine />
         {/* 收益率 */}
         <View style={style.profitView}>
-          {
-            userProfitList.map((item, index) => (
-              <View
-                key={item.key}
-                style={style.profitListView}>
-                <Text
-                  style={[
-                    style.profitListViewValue,
-                    index % 3 === 1 && style.profitListViewTextCenter,
-                    index % 3 === 2 && style.profitListViewTextRight,
-                    (index === 0
-                      && Boolean(userProfit?.[item.key])
-                      && (parseFloat(userProfit?.[item.key] as string) > 0
-                        ? style.textGreen : style.textRed)),
-                  ]}>
-                  {userProfit?.[item.key]}
-                </Text>
-                <Text
-                  style={[
-                    style.profitListViewText,
-                    index % 3 === 1 && style.profitListViewTextCenter,
-                    index % 3 === 2 && style.profitListViewTextRight,
-                  ]}>
-                  {item.title}
-                </Text>
-              </View>
-            ))
-          }
+          {userProfitList.map((item, index) => (
+            <View
+              key={item.key}
+              style={style.profitListView}>
+              <Text
+                style={[
+                  style.profitListViewValue,
+                  index % 3 === 1 && style.profitListViewTextCenter,
+                  index % 3 === 2 && style.profitListViewTextRight,
+                  (index === 0
+                    && Boolean(userProfit?.[item.key])
+                    && (parseFloat(userProfit?.[item.key] as string) > 0
+                      ? style.textGreen
+                      : style.textRed)),
+                ]}>
+                {userProfit?.[item.key]}
+              </Text>
+              <Text
+                style={[
+                  style.profitListViewText,
+                  index % 3 === 1 && style.profitListViewTextCenter,
+                  index % 3 === 2 && style.profitListViewTextRight,
+                ]}>
+                {item.title}
+              </Text>
+            </View>
+          ))}
           <View style={style.profitTips}>
-            <Text style={style.profitTipsText}>跟单利润分成比例：{userProfit?.willWinProfit}</Text>
+            <Text style={style.profitTipsText}>
+              跟单利润分成比例：{userProfit?.willWinProfit}
+            </Text>
             <StaticImage
               resizeMode="contain"
               style={style.profitTipsIcon}
@@ -185,86 +214,86 @@ const MyFollowUserDetails: FC = () => {
             <Text style={style.storyLogsViewTitleleft}>历史持仓</Text>
             <Text style={style.storyLogsViewTitleRight}>仅最近50条数据</Text>
           </View>
-          {
-            logList.map(item => (
-              <View
-                key={item.orderId}
-                style={style.storyLogsBox}>
-                {/* 上边 */}
-                <View style={style.storyLogsBoxTop}>
-                  {/* 左边 */}
-                  <View style={style.storyLogsBoxTopLeft}>
-                    <View style={style.storyLogsBoxTopLeftTitle}>
-                      <Text style={[
-                        style.storyLogsBoxTopLeftType,
-                        item.type ? style.textGreen : style.textRed,
-                      ]}>
-                        {item.type ? '买涨' : '买跌'}
-                      </Text>
-                      <Text style={style.storyLogsBoxTopLeftInfo}>
-                        <Text>{item.coinType}</Text>
-                        <Text style={style.storyLogsBoxTopLeftSmall}>/USDT</Text>
-                        {/* <Text>&nbsp;&nbsp;{item.multiple}</Text> */}
-                      </Text>
-                    </View>
-                    <View style={style.storyLogsBoxTopPrice}>
-                      <View style={style.storyLogsBoxTopPriceList}>
-                        <Text style={style.storyLogsBoxTopPriceNum}>
-                          {item.openPrice}
-                        </Text>
-                        <Text style={style.storyLogsBoxTopPriceDesc}>
-                          开仓价
-                        </Text>
-                      </View>
-                      <View style={style.storyLogsBoxTopPriceList}>
-                        <Text style={style.storyLogsBoxTopPriceNum}>
-                          {item.closePrice}
-                        </Text>
-                        <Text style={style.storyLogsBoxTopPriceDesc}>
-                          平仓价
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                  {/* 右边 */}
-                  <View style={style.storyLogsBoxTopRight}>
+          {logList.map((item) => (
+            <View
+              key={item.orderId}
+              style={style.storyLogsBox}>
+              {/* 上边 */}
+              <View style={style.storyLogsBoxTop}>
+                {/* 左边 */}
+                <View style={style.storyLogsBoxTopLeft}>
+                  <View style={style.storyLogsBoxTopLeftTitle}>
                     <Text style={[
-                      style.storyLogsBoxTopRightTextProfit,
-                      parseFloat(item.profit) > 0 ? style.textGreen : style.textRed,
+                      style.storyLogsBoxTopLeftType,
+                      item.type ? style.textGreen : style.textRed,
                     ]}>
-                      {item.profit}
+                      {item.type ? '买涨' : '买跌'}
                     </Text>
-                    <Text style={style.storyLogsBoxTopRightTextDesc}>
-                      收益率
+                    <Text style={style.storyLogsBoxTopLeftInfo}>
+                      <Text>{item.coinType}</Text>
+                      <Text style={style.storyLogsBoxTopLeftSmall}>/USDT</Text>
+                      {/* <Text>&nbsp;&nbsp;{item.multiple}</Text> */}
                     </Text>
+                  </View>
+                  <View style={style.storyLogsBoxTopPrice}>
+                    <View style={style.storyLogsBoxTopPriceList}>
+                      <Text style={style.storyLogsBoxTopPriceNum}>
+                        {item.openPrice}
+                      </Text>
+                      <Text style={style.storyLogsBoxTopPriceDesc}>
+                        开仓价
+                      </Text>
+                    </View>
+                    <View style={style.storyLogsBoxTopPriceList}>
+                      <Text style={style.storyLogsBoxTopPriceNum}>
+                        {item.closePrice}
+                      </Text>
+                      <Text style={style.storyLogsBoxTopPriceDesc}>
+                        平仓价
+                      </Text>
+                    </View>
                   </View>
                 </View>
-                {/* 更多信息 */}
-                <View style={style.storyLogsBoxBottom}>
-                  <View style={style.storyLogsBoxBottomView}>
-                    <Text style={style.storyLogsBoxBottomText}>
-                      开仓时间:{item.openTime}
-                    </Text>
-                    <Text style={style.storyLogsBoxBottomText}>
-                      平仓时间:{item.closeTime}
-                    </Text>
-                  </View>
-                  <View style={style.storyLogsBoxBottomView}>
-                    <Text style={style.storyLogsBoxBottomText}>
-                      订单号:{item.orderId}
-                    </Text>
-                    <Text style={[
-                      style.storyLogsBoxBottomText,
-                      item.orderType === '持仓中' && { color: themeGreen },
-                      item.orderType === '部分平仓' && { color: themeRed },
-                    ]}>
-                      订单类型:{item.orderType}
-                    </Text>
-                  </View>
+                {/* 右边 */}
+                <View style={style.storyLogsBoxTopRight}>
+                  <Text style={[
+                    style.storyLogsBoxTopRightTextProfit,
+                    parseFloat(item.profit) > 0
+                      ? style.textGreen
+                      : style.textRed,
+                  ]}>
+                    {item.profit}
+                  </Text>
+                  <Text style={style.storyLogsBoxTopRightTextDesc}>
+                    盈亏
+                  </Text>
                 </View>
               </View>
-            ))
-          }
+              {/* 更多信息 */}
+              <View style={style.storyLogsBoxBottom}>
+                <View style={style.storyLogsBoxBottomView}>
+                  <Text style={style.storyLogsBoxBottomText}>
+                    开仓时间:{item.openTime}
+                  </Text>
+                  <Text style={style.storyLogsBoxBottomText}>
+                    平仓时间:{item.closeTime}
+                  </Text>
+                </View>
+                <View style={style.storyLogsBoxBottomView}>
+                  <Text style={style.storyLogsBoxBottomText}>
+                    订单号:{item.orderId}
+                  </Text>
+                  <Text style={[
+                    style.storyLogsBoxBottomText,
+                    item.orderType === '持仓中' && { color: themeGreen },
+                    item.orderType === '部分平仓' && { color: themeRed },
+                  ]}>
+                    订单类型:{item.orderType}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ))}
         </View>
       </ScrollView>
       <View
@@ -455,7 +484,7 @@ const style = StyleSheet.create({
   },
   storyLogsBoxTopRightTextProfit: {
     textAlign: 'right',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
     paddingTop: 10,
   },

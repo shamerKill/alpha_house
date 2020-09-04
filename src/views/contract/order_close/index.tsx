@@ -4,49 +4,136 @@ import {
 } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { TextInput } from 'react-native-gesture-handler';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import ComFormButton from '../../../components/form/button';
 import {
-  defaultThemeBgColor, getThemeOpacity, themeWhite, themeGray, defaultThemeColor, themeTextGray, themeBlack,
+  defaultThemeBgColor, getThemeOpacity, themeWhite, themeGray, defaultThemeColor, themeTextGray,
 } from '../../../config/theme';
+import ajax from '../../../data/fetch';
 
 const ContractOrderCloseScreen: FC = () => {
   const navigation = useNavigation();
-  let { params: { id: orderId } } = useRoute<RouteProp<{orderClose: { id: string|number }}, 'orderClose'>>();
-  if (typeof orderId === 'number') orderId = orderId.toString();
+  type TypeOrderCloseParams = {
+    id: string|number, // 订单ID
+    coinType: string; // 币种名称
+    type: 0|1; // 空单0，多单1
+    willType: 0|1; // 止损0，止盈1
+    openPrice: string; // 持仓均价
+    value: string; // 持仓数量
+  };
+  const { params: orderParams } = useRoute<RouteProp<{orderClose: TypeOrderCloseParams}, 'orderClose'>>();
 
-  // 订单数据
-  const [orderInfo, setOrderInfo] = useState<{
-    coinType: string; // 交易对
-    orderType?: 0|1; // 多单1，空单0
-    stopType?: 0|1; // 止盈1，止损0
-    number: number; // 可平手数
-  }>({
-    coinType: '--',
-    number: 0,
-  });
   // 是否是市价
-  const [isMarketPrice, setIsMarketPrice] = useState(false);
+  // const [isMarketPrice, setIsMarketPrice] = useState(false);
   // 触发价格
   const [startPrice, setStartPrice] = useState('');
   // 执行价格
   const [doPrice, setDoPrice] = useState('');
-  // 数量
-  const [doValue, setDoValue] = useState('');
-  // 按触发价格
+  // 按触发价格计算
+  const [willChangePriceNum, setWillChangePriceNum] = useState(0);
   const [willChangePrice, setWillChangePrice] = useState('--');
 
-  useEffect(() => {
-    setTimeout(() => {
-      setOrderInfo({
-        coinType: 'BTC/USDT永续',
-        orderType: 0,
-        stopType: 1,
-        number: 12,
+  const [loading, setLoading] = useState(false);
+
+  const addEvent = {
+    // 检查止盈/止损单
+    verifyForm: () => {
+      if (loading) return;
+      const start = parseFloat(startPrice);
+      const dop = parseFloat(doPrice);
+      if (Math.abs(start - dop) > start * 0.3) {
+        showMessage({
+          position: 'bottom',
+          type: 'warning',
+          message: '设置止盈止损时，执行价和触发价上下不超过30%，否则影响市场交易深度',
+        });
+        return;
+      }
+      // 判断预计是否正确
+      console.log(willChangePriceNum);
+      if (willChangePriceNum > 0) {
+        // 预计正确，继续提交
+        addEvent.submiOrder();
+      } else {
+        showMessage({
+          position: 'bottom',
+          type: 'warning',
+          message: '触发价/执行价输入有误，请检查',
+        });
+      }
+    },
+    // 提交
+    submiOrder: () => {
+      setLoading(true);
+      ajax.post('/contract/api/v2/order/setProfitLoss', {
+        price: startPrice,
+        price_action: doPrice,
+        types: ['止损', '止盈'][orderParams.willType],
+        orderId: orderParams.id,
+      }).then(data => {
+        if (data.status === 200) {
+          showMessage({
+            position: 'bottom',
+            type: 'success',
+            message: data.message,
+          });
+          navigation.goBack();
+        } else {
+          showMessage({
+            position: 'bottom',
+            type: 'warning',
+            message: data.message,
+          });
+        }
+      }).catch(err => {
+        console.log(err);
+      }).finally(() => {
+        setLoading(false);
       });
-      setWillChangePrice('+123');
-    }, 1000);
-  }, []);
+    },
+  };
+
+
+  // 更新触发价格
+  useEffect(() => {
+    const doPriceNum = parseFloat(doPrice);
+    const openPriceNum = parseFloat(orderParams.openPrice);
+    const valueNum = parseFloat(orderParams.value) || 1;
+    // 如果是市价
+    // if (isMarketPrice) {
+    //   doPriceNum = parseFloat(startPrice);
+    // }
+    // 获取更改价格
+    const changeValue = (
+      // 多单/空单
+      orderParams.type === 1 ? (doPriceNum - openPriceNum) : (openPriceNum - doPriceNum)
+    ) * valueNum;
+    if (Number.isNaN(changeValue)) {
+      setWillChangePrice('--');
+      return;
+    }
+    // 如果是止盈
+    if (orderParams.willType === 1) {
+      if (changeValue > 0) {
+        setWillChangePriceNum(changeValue);
+        setWillChangePrice(changeValue.toFixed(2));
+      } else {
+        setWillChangePrice('--');
+        setWillChangePriceNum(0);
+      }
+    }
+    // 如果是止损
+    if (orderParams.willType === 0) {
+      if (changeValue < 0) {
+        setWillChangePriceNum(Math.abs(changeValue));
+        setWillChangePrice(Math.abs(changeValue).toFixed(2));
+      } else {
+        setWillChangePrice(`-${Math.abs(changeValue).toFixed(2)}`);
+        setWillChangePriceNum(Math.abs(changeValue));
+      }
+    }
+  }, [doPrice, orderParams.openPrice, orderParams.value, orderParams.willType, startPrice]);
 
   return (
     <ComLayoutHead
@@ -55,12 +142,12 @@ const ContractOrderCloseScreen: FC = () => {
       <View style={style.boxView}>
         <View style={style.titleView}>
           <Text style={style.titleText}>
-            {orderInfo.coinType}
-            {orderInfo.orderType === 0 && '空单'}
-            {orderInfo.orderType === 1 && '多单'}
+            {orderParams.coinType.replace('USDT', '/USDT')}
+            {orderParams.type === 0 && '空单'}
+            {orderParams.type === 1 && '多单'}
             &nbsp;&nbsp;
-            {orderInfo.stopType === 0 && '止损'}
-            {orderInfo.stopType === 1 && '止盈'}
+            {orderParams.willType === 0 && '止损'}
+            {orderParams.willType === 1 && '止盈'}
           </Text>
           <TouchableNativeFeedback onPress={() => navigation.goBack()}>
             <View style={style.titleCloseView}>
@@ -98,7 +185,7 @@ const ContractOrderCloseScreen: FC = () => {
             <View style={style.inputViewInBox}>
               <View style={style.inputBtnViewLeftInner}>
                 <Text style={style.inputLabel}>执行价格</Text>
-                {
+                {/* {
                   isMarketPrice
                     ? (<Text style={style.inputLabelMore}>以市价执行</Text>)
                     : (
@@ -111,7 +198,15 @@ const ContractOrderCloseScreen: FC = () => {
                         value={doPrice}
                         onChange={e => setDoPrice(e.nativeEvent.text)} />
                     )
-                }
+                } */}
+                <TextInput
+                  style={[
+                    style.inputInput,
+                  ]}
+                  keyboardType="number-pad"
+                  placeholder="请输入执行价格"
+                  value={doPrice}
+                  onChange={e => setDoPrice(e.nativeEvent.text)} />
               </View>
             </View>
             <View style={style.inputBgView}>
@@ -121,7 +216,7 @@ const ContractOrderCloseScreen: FC = () => {
                 source={require('../../../assets/images/pic/btn_bg_shadow.png')} />
             </View>
           </View>
-          <View style={[
+          {/* <View style={[
             style.inputView,
             style.inputBtnViewRight,
           ]}>
@@ -142,47 +237,21 @@ const ContractOrderCloseScreen: FC = () => {
                 resizeMode="stretch"
                 source={require('../../../assets/images/pic/btn_bg_shadow.png')} />
             </View>
-          </View>
+          </View> */}
         </View>
-        <View style={style.inputView}>
-          <View style={style.inputViewInBox}>
-            <Text style={style.inputLabel}>数量</Text>
-            <TextInput
-              style={style.inputInput}
-              keyboardType="number-pad"
-              placeholder={`可平手数${orderInfo.number}`}
-              value={doValue}
-              onChange={e => setDoValue(e.nativeEvent.text)} />
-            <Text style={style.inputDesc}>手</Text>
-          </View>
-          <View style={style.inputBgView}>
-            <Image
-              style={style.inputBgImage}
-              resizeMode="stretch"
-              source={require('../../../assets/images/pic/btn_bg_shadow.png')} />
-          </View>
-        </View>
-        {/* 百分比选择 */}
-        <View style={style.btnsListBox}>
-          {
-          ['20', '40', '60', '80', '100'].map(item => (
-            <TouchableNativeFeedback key={item}>
-              <View style={style.btnsListBtn}>
-                <Text style={style.btnsListText}>
-                  {item}%
-                </Text>
-              </View>
-            </TouchableNativeFeedback>
-          ))
-        }
-        </View>
+        {/* 开仓价 */}
+        <Text style={style.moreText}>订单开仓价：{orderParams.openPrice}USDT</Text>
+        <Text style={style.moreText}>持仓数量：{orderParams.value}{orderParams.coinType.replace('USDT', '')}</Text>
         {/* 触发价格 */}
-        <Text style={style.moreText}>按触发价格将：{willChangePrice}USDT</Text>
+        <Text style={style.moreText}>按触发价格将预计{['损失', '盈利'][orderParams.willType]}：{willChangePrice}USDT</Text>
         <ComFormButton
           containerStyle={{
             width: '100%',
+            marginTop: 20,
           }}
-          title="确定" />
+          title="确定"
+          onPress={() => addEvent.verifyForm()}
+          loading={loading} />
       </View>
     </ComLayoutHead>
   );
@@ -251,7 +320,6 @@ const style = StyleSheet.create({
   },
   inputBtnView: {
     flexDirection: 'row',
-    paddingRight: 11,
     paddingLeft: 2,
   },
   inputBtnViewLeft: {
@@ -303,7 +371,7 @@ const style = StyleSheet.create({
   moreText: {
     fontSize: 12,
     color: themeTextGray,
-    marginBottom: 30,
+    lineHeight: 20,
   },
 });
 

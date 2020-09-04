@@ -1,5 +1,5 @@
 function formatTime(format: string = 'YYYY-MM-DD hh:mm:ss', time?: number): string {
-  const newTime = new Date(time || 0);
+  const newTime = time ? new Date(time) : new Date();
   // 那些显示
   const showTimetype: {[key: string]: number} = {
     YYYY: newTime.getFullYear(),

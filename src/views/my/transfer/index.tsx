@@ -45,8 +45,8 @@ const MyTransferScreen: FC = () => {
       });
     },
     // 选择账户类型
-    selectAccountType: (type: 'to'|'from') => {
-      console.log(type);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    selectAccountType: (_type: 'to'|'from') => {
       navigation.navigate('transferAccounts');
     },
     // 反划转户管道

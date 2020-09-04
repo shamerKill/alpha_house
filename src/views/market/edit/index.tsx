@@ -122,6 +122,12 @@ const MarketEdit: FC = () => {
                   type: 'warning',
                 });
               }
+            }).catch(() => {
+              showMessage({
+                position: 'bottom',
+                message: '网络有误，删除失败',
+                type: 'success',
+              });
             });
             close();
           },

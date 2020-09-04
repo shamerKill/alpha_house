@@ -1,5 +1,5 @@
 import React, {
-  FC, useState, useEffect, useRef,
+  FC, useState, useEffect,
 } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { Text } from 'react-native-elements';
@@ -19,7 +19,7 @@ import ajax from '../../../data/fetch';
 
 const AccountSetPassScreen: FC = () => {
   const navigation = useNavigation();
-  const loading = useRef(false);
+  const [loading, setLoading] = useState(false);
 
   type paramsData = { account: string; accountType: 'email'|'phone'; upUserCode: string; verifyCode: string; };
   const route = useRoute<RouteProp<{setPass: { type: 'register' | 'forget', data?: paramsData}}, 'setPass'>>();
@@ -38,7 +38,7 @@ const AccountSetPassScreen: FC = () => {
     },
     // 验证
     verfiy: () => {
-      if (loading.current) return;
+      if (loading) return;
       const result = isPass(pass);
       if (!result) {
         showMessage({
@@ -91,7 +91,7 @@ const AccountSetPassScreen: FC = () => {
       reqBody.InviteCode = params.upUserCode;
       reqBody.Code = params.verifyCode;
       // 请求
-      loading.current = true;
+      setLoading(true);
       ajax.post<string>('/v1/power/sign_up', reqBody, { setToken: true }).then(data => {
         if (data.status === 200) {
           addEvent.submit();
@@ -126,11 +126,10 @@ const AccountSetPassScreen: FC = () => {
           type: 'warning',
         });
       }).finally(() => {
-        loading.current = false;
+        setLoading(false);
       });
     },
     submitForget: () => {
-      console.log(route.params.data);
       if (!route.params.data) {
         showMessage({
           position: 'bottom',
@@ -146,7 +145,7 @@ const AccountSetPassScreen: FC = () => {
       reqBody.Password = pass;
       reqBody.RePassword = rePass;
       reqBody.Code = params.verifyCode;
-      loading.current = true;
+      setLoading(true);
       ajax.post<string>('/v1/power/edit_pass', reqBody, { setToken: true }).then(data => {
         if (data.status === 200) {
           showMessage({
@@ -175,7 +174,7 @@ const AccountSetPassScreen: FC = () => {
           type: 'warning',
         });
       }).finally(() => {
-        loading.current = false;
+        setLoading(false);
       });
     },
     // 提交
@@ -216,6 +215,7 @@ const AccountSetPassScreen: FC = () => {
       </View>
       <ComFormButton
         containerStyle={style.submitBtn}
+        loading={loading}
         onPress={() => addEvent.verfiy()}
         title="完成" />
       <View style={style.bgImageView}>

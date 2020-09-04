@@ -51,7 +51,7 @@ const MyFollowManageLiView: FC<InMyFollowManageLiView & {onPress: () => void;}> 
           </View>
           <View style={style.listMiddleBoxIn}>
             <Text style={[style.listMiddleBoxValue, { color: defaultThemeColor }]}>{withProfit}</Text>
-            <Text style={style.listMiddleBoxDesc}>跟单收益({coinType})</Text>
+            <Text style={style.listMiddleBoxDesc}>跟单收益(USDT)</Text>
           </View>
         </View>
         <View style={style.listDesc}>
@@ -94,12 +94,12 @@ const MyFollowManageListScreen: FC = () => {
     ajax.get('/v1/track/own_list').then(data => {
       if (data.status) {
         setOrderTotal(data.data.orderNum);
-        setOrderWin(`${data.data.profitNum}%`);
+        setOrderWin(`${parseFloat(data.data.profitNum).toFixed(2)}`);
         const result = data.data?.list?.map((item: any) => ({
           head: getHeadImage()[Number(item.headimg) || 0],
           name: item.nickname,
           withMoney: item.item.cumulative_num,
-          withProfit: `${item.item.cumulative_profit}%`,
+          withProfit: `${item.item.cumulative_profit}`,
           isClose: item.item.is_documentary === '2',
           orderMoney: item.item.num,
           dayMoney: item.item.num_day,

@@ -1,11 +1,12 @@
 import React from 'react';
 import TypeStackValue from '../stackType';
 import ComIconBotton from '../../components/icon/bottom';
-import ContractScreen from '../../views/contract/index';
+// import ContractScreen from '../../views/contract/index';
 import ContractOrderCloseScreen from '../../views/contract/order_close';
 import ContractWillCloseScreen from '../../views/contract/will_close';
 import ContractLogsAllScreen from '../../views/contract/logs';
-import ContractAllPositionScreen from '../../views/contract/position';
+import ContractIndexScreen from '../../views/contract/index/index';
+import ContractLogsShareScreen from '../../views/contract/index/share';
 
 const ContractRoutes: TypeStackValue = [
   {
@@ -14,12 +15,11 @@ const ContractRoutes: TypeStackValue = [
     icon: ({ focused }) => (
       <ComIconBotton
         focused={focused}
-        image={
-          focused ? require('../../assets/images/icons/contract_focuse.png')
-            : require('../../assets/images/icons/contract_none.png')
-        } />
+        image={focused
+          ? require('../../assets/images/icons/contract_focuse.png')
+          : require('../../assets/images/icons/contract_none.png')} />
     ),
-    component: ContractScreen,
+    component: ContractIndexScreen,
     screens: [
       {
         name: 'ContractOrderClose',
@@ -34,8 +34,8 @@ const ContractRoutes: TypeStackValue = [
         component: ContractLogsAllScreen,
       },
       {
-        name: 'ContractAllPosition',
-        component: ContractAllPositionScreen,
+        name: 'ContractLogsShare',
+        component: ContractLogsShareScreen,
       },
     ],
   },

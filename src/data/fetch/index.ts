@@ -1,5 +1,7 @@
+import { showMessage } from 'react-native-flash-message';
 import { ActionsType } from '../redux/state/index';
 import rootStore from '../store';
+import { defaultUserInfoState } from '../redux/state/user';
 
 interface TypeClassFetchFuncOptions {
   token?: string;
@@ -40,7 +42,6 @@ export class Fetch {
     return this.baseURI;
   }
 
-
   // get方法
   async get<T = any>(
     uri: string, // 请求路径
@@ -65,6 +66,9 @@ export class Fetch {
         },
       );
       const resultJson = await result.json();
+      if (token && resultJson.status === 2000) {
+        Fetch.noLogin();
+      }
       return resultJson;
     } catch (err) {
       return {
@@ -113,6 +117,7 @@ export class Fetch {
         req,
       );
       const resultJson = await result.json();
+      if (token && resultJson.status === 2000) Fetch.noLogin();
       if (options?.setToken) {
         this.token = resultJson.data;
         rootStore.dispatch({
@@ -143,16 +148,35 @@ export class Fetch {
 
   // 判断uri方法
   static checkUri(uri: string) {
-    if (!/^\/contract/.test(uri)) {
+    if (!/^\/contract/.test(uri) && !/^\/coin/.test(uri)) {
       return `/user/api${uri}`;
     }
     return uri;
-    // return uri.replace(/^\/(contract|user)\/api/, '');
+  }
+
+  // 统一处理未登录状态
+  static noLogin() {
+    rootStore.dispatch({
+      type: ActionsType.CHANGE_USER_INFO,
+      data: {
+        ...defaultUserInfoState,
+      },
+    });
+    rootStore.dispatch({
+      type: ActionsType.CHANGE_USER_LOGIN,
+      data: false,
+    });
+    showMessage({
+      position: 'bottom',
+      message: '登录状态已失效,请重新登录',
+      type: 'warning',
+    });
   }
 }
 
 const ajax = new Fetch({
-  // baseURI: 'http://192.168.3.17:3004',
+  // baseURI: 'https://testapi.alfaex.pro',
+  // baseURI: 'http://192.168.3.10:3001',
   baseURI: 'https://serve.alfaex.pro',
 });
 export default ajax;

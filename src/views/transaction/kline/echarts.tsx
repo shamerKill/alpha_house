@@ -2,7 +2,7 @@ import React, {
   FC, useRef, useEffect, useState,
 } from 'react';
 import {
-  StyleProp, ViewStyle, View, StyleSheet, Platform, Text,
+  StyleProp, ViewStyle, View, StyleSheet, Platform, Text, ActivityIndicator,
 } from 'react-native';
 import WebView, { WebViewMessageEvent } from 'react-native-webview';
 import { EChartOption } from 'echarts';
@@ -14,8 +14,6 @@ import {
 import toString from '../../../tools/toStrting';
 import getOption, { TypeKlineValue, getOptionSerise, getOptionTitle } from './getOptions';
 // import mockData from './mock';
-import useGetDispatch from '../../../data/redux/dispatch';
-import { InState } from '../../../data/redux/state';
 import Socket, { CoinToCoinSocket } from '../../../data/fetch/socket';
 import formatTime from '../../../tools/time';
 
@@ -62,7 +60,6 @@ const ecahrtJs = `
 const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
   style: propStyle,
 }) => {
-  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   const route = useRoute<RouteProp<{markLine: { name: string }}, 'markLine'>>();
   const routeCoinType = route.params.name.split(' ')[0].replace('/', '');
   const webRef = useRef<WebView&{postMessage:(str: string) => void}>(null);
@@ -71,14 +68,13 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
   const viewShowTimer = useRef(setTimeout(() => {}, 0));
   const viewShowRef = useRef(false);
 
+
   const [viewShow, setViewShow] = useState(false);
   const [gotData, setGotData] = useState(false);
   const [showType, setShowType] = useState<'1m'|'5m'|'15m'|'1h'|'4h'|'1d'>('1m');
-
   const addEvent = {
     // 获取信息
     onMessage: (event: WebViewMessageEvent) => {
-      console.log(event.nativeEvent.data);
       // 如果是渲染完毕
       if (event.nativeEvent.data === 'renderClose') {
         setTimeout(() => setViewShow(true), 10);
@@ -89,6 +85,19 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
     onLoad: () => {
       // if (webRef.current) webRef.current.postMessage('');
     },
+    // 处理获取到的数据
+    dataSendToWeb: (inData: TypeKlineValue[]) => {
+      const newOptions: EChartOption = {
+        xAxis: [
+          { data: inData.map(item => item.time) },
+          { data: inData.map(item => item.time) },
+          { data: inData.map(item => item.time) },
+        ],
+        series: getOptionSerise(inData, parseFloat(inData[0].closeValue).toFixed(2).length),
+      };
+      newOptions.title = getOptionTitle(newOptions.series);
+      webRef.current?.postMessage(toString(newOptions));
+    },
   };
 
   // 开发刷新
@@ -98,34 +107,45 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
     }
   }, []);
   useEffect(() => {
-    const getTimeValue = 500;
+    setGotData(false);
+    let splitNum = 0;
+    const getTimeValueStart = 100;
+    const getTimeValueMore = 500;
     const timeType: typeof showType = showType;
     const coinType = routeCoinType;
     const endTime = new Date().getTime();
-    let startTime = 0;
-    let fmTimeStr = 'MM-DD';
-    if (timeType === '1m') {
-      startTime = endTime - 500 * 60 * 1000;
-      fmTimeStr = 'hh:mm';
-    } else if (timeType === '5m') {
-      startTime = endTime - 500 * 5 * 60 * 1000;
-      fmTimeStr = 'hh:mm';
-    } else if (timeType === '15m') {
-      startTime = endTime - 500 * 15 * 60 * 1000;
-      fmTimeStr = 'hh:mm';
-    } else if (timeType === '1h') {
-      startTime = endTime - 500 * 60 * 60 * 1000;
-      fmTimeStr = 'MM-DD hh';
-    } else if (timeType === '4h') {
-      startTime = endTime - 500 * 4 * 60 * 60 * 1000;
-      fmTimeStr = 'MM-DD hh';
-    } else if (timeType === '1d') {
-      startTime = endTime - 500 * 24 * 60 * 60 * 1000;
-      fmTimeStr = 'MM-DD';
-    }
-    const useData: TypeKlineValue[] = [];
+    const getStartTime = (length = getTimeValueMore) => {
+      let startTime = 0;
+      let fmTimeStr = 'MM-DD';
+      if (timeType === '1m') {
+        startTime = endTime - length * 60 * 1000;
+        fmTimeStr = 'hh:mm';
+      } else if (timeType === '5m') {
+        startTime = endTime - length * 5 * 60 * 1000;
+        fmTimeStr = 'hh:mm';
+      } else if (timeType === '15m') {
+        startTime = endTime - length * 15 * 60 * 1000;
+        fmTimeStr = 'hh:mm';
+      } else if (timeType === '1h') {
+        startTime = endTime - length * 60 * 60 * 1000;
+        fmTimeStr = 'MM-DD hh';
+      } else if (timeType === '4h') {
+        startTime = endTime - length * 4 * 60 * 60 * 1000;
+        fmTimeStr = 'MM-DD hh';
+      } else if (timeType === '1d') {
+        startTime = endTime - length * 24 * 60 * 60 * 1000;
+        fmTimeStr = 'MM-DD';
+      }
+      return {
+        startTime,
+        fmTimeStr,
+      };
+    };
+    let useData: TypeKlineValue[] = [];
     const tickerImg = `cash.market.${coinType}.kline.${timeType}`;
-    const tickerReq = `{"req":"gold.market.${coinType}.kline.${timeType}","create_time":"${startTime}","end_time":"${endTime}","limit":"${getTimeValue}"}`;
+    // eslint-disable-next-line max-len
+    const tickerReqStart = `{"req":"cash.market.${coinType}.kline.${timeType}","create_time":"${getStartTime(getTimeValueStart).startTime}","end_time":"${endTime}","limit":"${getTimeValueStart}"}`;
+    const tickerReqMore = `{"req":"cash.market.${coinType}.kline.${timeType}","create_time":"${getStartTime().startTime}","end_time":"${endTime}","limit":"${getTimeValueMore}"}`;
     const socketListener = (message: any) => {
       const resultData: {
         [key: string]: string;
@@ -134,9 +154,12 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
       }[] = message.Tick;
       if (Array.isArray(resultData)) {
         setGotData(true);
-        resultData.forEach((item: any) => {
-          useData.push({
-            time: formatTime(fmTimeStr, Number(item.create_unix)),
+        splitNum = resultData.length;
+        useData.splice(0, splitNum);
+        const splitDataArr: TypeKlineValue[] = [];
+        resultData.forEach((item) => {
+          splitDataArr.push({
+            time: formatTime(getStartTime().fmTimeStr, Number(item.create_unix)),
             maxValue: item.height,
             minValue: item.low,
             openValue: item.open,
@@ -145,12 +168,17 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
             create_unix: item.create_unix,
           });
         });
+        useData.splice(0, splitNum);
+        useData = [
+          ...splitDataArr,
+          ...useData,
+        ];
       } else {
         if (useData.length && resultData.create_unix === useData[useData.length - 1].create_unix) {
           useData.splice(-1, 1);
         }
         useData.push({
-          time: formatTime(fmTimeStr, Number(resultData.create_unix)),
+          time: formatTime(getStartTime().fmTimeStr, Number(resultData.create_unix)),
           maxValue: resultData.height,
           minValue: resultData.low,
           openValue: resultData.open,
@@ -159,51 +187,34 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
           create_unix: resultData.create_unix,
         });
       }
-      const newOptions: EChartOption = {
-        xAxis: [
-          { data: useData.map(item => item.time) },
-          { data: useData.map(item => item.time) },
-          { data: useData.map(item => item.time) },
-        ],
-        series: getOptionSerise(useData),
-      };
-      newOptions.title = getOptionTitle(newOptions.series);
-      webRef.current?.postMessage(toString(newOptions));
+      addEvent.dataSendToWeb(useData);
     };
-    let inter = setTimeout(() => {}, 1);
-    if (routePage === 'TranscationKline') {
-      inter = setInterval(() => {
-        if (viewShowRef.current) {
-          clearInterval(inter);
-          CoinToCoinSocket.getSocket().then(ws => {
-            socket.current = ws;
-            ws.addListener(socketListener, tickerImg);
-            ws.send(tickerReq);
-            ws.send(tickerImg, 'sub');
-            subSocket.current = false;
-          }).catch(err => {
-            console.log(err);
-          });
-        }
-      }, 100);
-    } else if (socket.current) {
-      if (!subSocket.current) {
-        subSocket.current = true;
-        socket.current.send(tickerImg, 'unsub');
-        socket.current.removeListener(socketListener);
+    const inter = setInterval(() => {
+      if (viewShowRef.current) {
         clearInterval(inter);
+        CoinToCoinSocket.getSocket().then(ws => {
+          socket.current = ws;
+          ws.addListener(socketListener, tickerImg);
+          ws.send(tickerReqStart);
+          ws.send(tickerReqMore);
+          ws.send(tickerImg, 'sub');
+          subSocket.current = false;
+        }).catch(err => {
+          console.log(err);
+        });
       }
-    }
+    }, 100);
     return () => {
       if (socket.current) {
         subSocket.current = true;
         socket.current.send(tickerImg, 'unsub');
-        socket.current.removeListener(tickerImg);
+        socket.current.removeListener(socketListener);
       }
-      clearInterval(viewShowTimer.current);
       clearInterval(inter);
+      clearInterval(viewShowTimer.current);
     };
-  }, []);
+  }, [showType]);
+
   return (
     <View
       style={[
@@ -285,7 +296,12 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
         javaScriptEnabled
         source={Platform.OS === 'ios' ? require('../../../assets/html/echarts.html') : { uri: 'file:///android_asset/html/echarts.html' }} />
       {
-        (!viewShow || !gotData) && <View style={style.webViewOver}><Text style={{ color: '#fff', textAlign: 'center' }}>加载中</Text></View>
+        (!viewShow || !gotData) && (
+          <View style={style.webViewOver}>
+            <Text style={{ color: '#fff', textAlign: 'center' }}>加载中&nbsp;&nbsp;</Text>
+            <ActivityIndicator color={themeWhite} />
+          </View>
+        )
       }
     </View>
   );
@@ -303,6 +319,9 @@ const style = StyleSheet.create({
     width: '100%',
     height: '100%',
     backgroundColor: themeMoreBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
   tebsView: {
     height: 30,

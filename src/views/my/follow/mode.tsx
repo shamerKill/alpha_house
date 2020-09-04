@@ -1,10 +1,15 @@
-import React, { FC, useState, useEffect, useRef } from 'react';
+import React, {
+  FC, useState, useEffect, useRef,
+} from 'react';
 import {
   View, StyleSheet, Image as StaticImage, TouchableNativeFeedback,
 } from 'react-native';
-import { useRoute, RouteProp, useNavigation, StackActions } from '@react-navigation/native';
+import {
+  useRoute, RouteProp, useNavigation, StackActions,
+} from '@react-navigation/native';
 import { Text } from 'react-native-elements';
 import { TextInput } from 'react-native-gesture-handler';
+import { showMessage } from 'react-native-flash-message';
 import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, themeGray, defaultThemeColor, defaultThemeBgColor,
@@ -12,7 +17,6 @@ import {
 import ComLine from '../../../components/line';
 import showSelector from '../../../components/modal/selector';
 import ComFormButton from '../../../components/form/button';
-import { showMessage } from 'react-native-flash-message';
 import { modalOutBg } from '../../../components/modal/outBg';
 import MyFollowAgreenmentOut from './follow_agreement';
 import showComAlert from '../../../components/modal/alert';
@@ -24,10 +28,9 @@ const MyFollowModeScreen: FC = () => {
   const { params: { id: userId, name } } = useRoute<RouteProp<{followMode: {id: string|number, name: string}}, 'followMode'>>();
   const navigation = useNavigation();
   const goToWithLogin = useGoToWithLogin();
-  console.log(userId);
   const descArr = (min: number, max: number, coinType: string) => ([
     `例如您设置跟单金额 x ${coinType}，不论交易员下单多少本金，您的下单本金均为 x ${coinType}。单次最低跟单金额为 ${min} ${coinType}。`,
-    `单日累计跟随本金为跟单金额的整数倍`,
+    '单日累计跟随本金为跟单金额的整数倍',
   ]);
   const coinDataArr = useRef<{id: number|string; symbol: string; num: number}[]>([]);
 
@@ -59,31 +62,32 @@ const MyFollowModeScreen: FC = () => {
         },
       });
     },
-    setValue: (setType: React.Dispatch<React.SetStateAction<string>>, value: string, type?: 'cut'|'add') => {
+    setValue: (setType: React.Dispatch<React.SetStateAction<string>>, value: string) => {
       setType(() => {
-        const resultString = value.match(/[\d|\.]/g)?.join('');
-        if (!resultString) return '0';
-        let result = parseFloat(resultString);
-        if (type) {
-          if (type === 'cut') (result > 1) && result--;
-          if (type === 'add') result++;
-          return result.toString();
-        }
-        return resultString;
+        // const resultString = value.match(/[\d|\.]/g)?.join('');
+        // if (!resultString) return '0';
+        // let result = parseFloat(resultString);
+        // if (type) {
+        //   if (type === 'cut') (result > 1) && result--;
+        //   if (type === 'add') result++;
+        //   return result.toString();
+        // }
+        return value;
       });
     },
     verfiy: () => {
-      let valueMessage =  '';
+      let valueMessage = '';
       if (parseFloat(dayMoney) < parseFloat(orderMoney)) valueMessage = '单日跟随本金小于单次跟单金额';
       if (parseFloat(orderMoney) < minValue) valueMessage = '单次跟随金额低于最低金额';
-      if (parseFloat(dayMoney) / parseFloat(orderMoney) % 1 !== 0) valueMessage = '单日累计跟随本金为跟单金额的整数倍';
+      if ((parseFloat(dayMoney) / parseFloat(orderMoney)) % 1 !== 0) valueMessage = '单日累计跟随本金为跟单金额的整数倍';
       if (valueMessage) {
-        return showMessage({
+        showMessage({
           position: 'bottom',
           message: '跟随失败',
           description: valueMessage,
           type: 'warning',
         });
+        return;
       }
       storage.get<number>('followAgreenType').then(data => {
         if (new Date().getTime() - data > 60 * 60 * 24) {
@@ -92,7 +96,7 @@ const MyFollowModeScreen: FC = () => {
         } else {
           addEvent.submit();
         }
-      }).catch(err => {
+      }).catch(() => {
         // 没有数据
         addEvent.showModel();
         storage.save('followAgreenType', new Date().getTime());
@@ -108,7 +112,7 @@ const MyFollowModeScreen: FC = () => {
           success={() => {
             modalOutBg.outBgsetShow(false);
             addEvent.submit();
-          }} />
+          }} />,
       );
     },
     submit: () => {
@@ -120,11 +124,13 @@ const MyFollowModeScreen: FC = () => {
         day_num: parseFloat(dayMoney),
       }).then(data => {
         if (data.status === 200) addEvent.submitSuccess();
-        else showMessage({
-          position: 'bottom',
-          message: data.message,
-          type: 'warning',
-        });
+        else {
+          showMessage({
+            position: 'bottom',
+            message: data.message,
+            type: 'warning',
+          });
+        }
       }).catch(err => console.log(err));
     },
     submitSuccess: () => {
@@ -143,16 +149,16 @@ const MyFollowModeScreen: FC = () => {
           text: '取消',
           onPress: () => {
             close();
-          }
+          },
         },
       });
-    }
+    },
   };
 
   useEffect(() => {
     ajax.get('/v1/track/edit_view?id=').then(data => {
       if (data.status === 200 && data.data.value) {
-        coinDataArr.current = Object.keys(data.data.value).map((coin, index) => ({
+        coinDataArr.current = Object.keys(data.data.value).map((coin) => ({
           id: coin,
           num: data.data.value[coin],
           symbol: coin,

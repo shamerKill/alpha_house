@@ -152,6 +152,8 @@ const MyRealnameScreen: FC = () => {
       const closeLoading = showComLoading('上传中');
       try {
         const beforeRemote = await addEvent.upLoadPic(baseBefore);
+        // 定时器
+        await new Promise(reslove => setTimeout(reslove, 2000));
         const afterRemote = await addEvent.upLoadPic(baseAfter);
         const result = await ajax.post('/v1/auth/action_auth', {
           // 正面

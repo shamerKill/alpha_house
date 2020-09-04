@@ -1,5 +1,5 @@
 import React, {
-  FC, useState, useEffect, useRef,
+  FC, useState, useEffect, useRef, useCallback,
 } from 'react';
 import {
   View, Text, Image, ImageSourcePropType, ScrollViewProps, Dimensions, Platform,
@@ -25,6 +25,7 @@ import Socket, { marketSocket, CoinToCoinSocket } from '../../data/fetch/socket'
 
 // 头部
 const HomeScreenHead: FC = () => {
+  const navitaion = useNavigation();
   const [userIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
   const searchImg = require('../../assets/images/icons/search.png');
   const commentsImg = require('../../assets/images/icons/comments.png');
@@ -36,11 +37,28 @@ const HomeScreenHead: FC = () => {
   const commentBtn = () => gotoWithLogin('HomeNewsList');
   return (
     <View style={homeStyle.homeHead}>
-      <Text style={homeStyle.homeHeadText}>
-        {
-          userIsLogin ? '欢迎来到ALFAEX' : '未登录'
-        }
-      </Text>
+      {
+        userIsLogin ? (
+          <Text style={homeStyle.homeHeadText}>
+            欢迎来到ALFAEX
+          </Text>
+        ) : (
+          <View style={{ flex: 1 }}>
+            <TouchableNativeFeedback onPress={() => {
+              navitaion.navigate('Login');
+            }}>
+              <Text style={{
+                fontWeight: 'bold',
+                fontSize: 20,
+                lineHeight: 40,
+                color: themeBlack,
+              }}>
+                未登录
+              </Text>
+            </TouchableNativeFeedback>
+          </View>
+        )
+      }
       <TouchableNativeFeedback
         onPress={searchBtn}>
         <Image
@@ -61,12 +79,14 @@ const HomeScreenHead: FC = () => {
 
 // banner
 const HomeScreenBanner: FC = () => {
+  const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
   const [bannerState, dispatchBannerState] = useGetDispatch<InState['imageState']['banner']>('imageState', 'banner');
   // 轮播图
   const [banner, setBanner] = useState<InState['imageState']['banner']>(bannerState);
   // 读秒
   const swiperTime = 4;
   useEffect(() => {
+    if (routePage !== 'Home') return;
     ajax.get<{address: string; id: number; link: string;}[]>('/v1/index/rotation').then(data => {
       if (data.status === 200) {
         if (data.data) {
@@ -85,7 +105,7 @@ const HomeScreenBanner: FC = () => {
     }).catch(err => {
       console.log(err);
     });
-  }, []);
+  }, [routePage]);
   return (
     <View style={homeStyle.banner}>
       {
@@ -175,23 +195,32 @@ const HomeScreenComment: FC = () => {
 // 横向行情列表
 type TypeHomeRowMarketValue = { keyV: string; price: string; range: string; type: string; };
 const HomeScreenRowMarketBlock: FC<{ value: TypeHomeRowMarketValue; }> = ({ value }) => {
+  const navigation = useNavigation();
+  const toContract = useCallback(() => {
+    const coinType = value.keyV.split(' ')[0].replace('/', '');
+    if (coinType) {
+      navigation.navigate('Contract', { contractType: 0, coinType });
+    }
+  }, []);
   return (
-    <View style={homeStyle.marketBlock}>
-      <Text style={homeStyle.marketBlockKey}>{value.keyV}</Text>
-      <Text style={{
-        ...homeStyle.marketBlockPrice,
-        color: positiveNumber(value.range) ? themeGreen : themeRed,
-      }}>
-        {value.price}
-      </Text>
-      <Text style={{
-        ...homeStyle.marketBlockRange,
-        color: positiveNumber(value.range) ? themeGreen : themeRed,
-      }}>
-        {value.range}
-      </Text>
-      <Text style={homeStyle.marketBlockType}>{value.type}</Text>
-    </View>
+    <TouchableNativeFeedback onPress={() => toContract()}>
+      <View style={homeStyle.marketBlock}>
+        <Text style={homeStyle.marketBlockKey}>{value.keyV}</Text>
+        <Text style={{
+          ...homeStyle.marketBlockPrice,
+          color: positiveNumber(value.range) ? themeGreen : themeRed,
+        }}>
+          {value.price}
+        </Text>
+        <Text style={{
+          ...homeStyle.marketBlockRange,
+          color: positiveNumber(value.range) ? themeGreen : themeRed,
+        }}>
+          {value.range}
+        </Text>
+        <Text style={homeStyle.marketBlockType}>{value.type}</Text>
+      </View>
+    </TouchableNativeFeedback>
   );
 };
 const HomeScreenRowMarket: FC = () => {
@@ -287,6 +316,7 @@ const HomeScreenRowMarket: FC = () => {
 type TypeHomeNavProp = {pic: ImageSourcePropType, link: string} | null;
 const HomeScreenNav: FC<{ adv: TypeHomeNavProp }> = ({ adv }) => {
   const navigation = useNavigation();
+  const gotoWith = useGoToWithLogin();
   const goTolink = (link: string) => {
     if (link) navigation.navigate(link);
     else {
@@ -310,7 +340,7 @@ const HomeScreenNav: FC<{ adv: TypeHomeNavProp }> = ({ adv }) => {
               source={require('../../assets/images/pic/btn_bg_shadow.png')} />
           </View>
         </TouchableNativeFeedback>
-        <TouchableNativeFeedback style={{ flex: 1 }}>
+        <TouchableNativeFeedback onPress={() => gotoWith('HomeFundDetail')} style={{ flex: 1 }}>
           <View style={homeStyle.navBtnView}>
             <Image style={homeStyle.navBtnImage} source={require('../../assets/images/icons/fund.png')} />
             <Text style={homeStyle.navBtnText}>基金</Text>
@@ -373,6 +403,7 @@ const HomeScreenMarketLine: FC<TypeHomeScreenMarketLine> = ({
 };
 const HomeScreenMarket: FC = () => {
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const navigation = useNavigation();
   const socket = useRef<Socket|null>(null);
   const subSocket = useRef(false);
 
@@ -442,6 +473,12 @@ const HomeScreenMarket: FC = () => {
       socket.current.removeListener(tickerImg);
     }
   }, [routePage]);
+
+
+  // 跳转页面
+  const gotoPage = useCallback((coin: string) => {
+    navigation.navigate('Transaction', { contractType: 0, coinType: `${coin}USDT` });
+  }, []);
   return (
     <View>
       {/* 头部 */}
@@ -521,7 +558,13 @@ const HomeScreenMarket: FC = () => {
                 style={{ flexDirection: 'row', height: screenHeight }}>
                 <View style={{ width: screenWidth }}>
                   { coinMarketU.map(item => (
-                    <HomeScreenMarketLine key={item.id} {...item} />
+                    <TouchableNativeFeedback
+                      key={item.id}
+                      onPress={() => gotoPage(item.coin)}>
+                      <View>
+                        <HomeScreenMarketLine {...item} />
+                      </View>
+                    </TouchableNativeFeedback>
                   )) }
                 </View>
                 {/* <View style={{ width: screenWidth }}>
@@ -542,7 +585,13 @@ const HomeScreenMarket: FC = () => {
             marketType === 1 && (
               <View>
                 { coinMarketRange.map(item => (
-                  <HomeScreenMarketLine key={item.id} {...item} />
+                  <TouchableNativeFeedback
+                    key={item.id}
+                    onPress={() => gotoPage(item.coin)}>
+                    <View>
+                      <HomeScreenMarketLine {...item} />
+                    </View>
+                  </TouchableNativeFeedback>
                 )) }
               </View>
             )
@@ -559,8 +608,8 @@ const HomeScreen: FC = () => {
   // 处理数据
   useEffect(() => {
     setNavAd({
-      pic: require('../../assets/images/memory/nav_1.png'),
-      link: '',
+      pic: require('../../assets/images/pic/home_nav.jpg'),
+      link: 'Contract',
     });
   }, []);
   return (

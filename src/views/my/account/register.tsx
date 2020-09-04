@@ -241,6 +241,7 @@ const RegisterScreen: FC = () => {
         <ComFormButton
           containerStyle={style.formButton}
           title="下一步"
+          loading={loading}
           onPress={() => addEvent.verfiyBeforeSend()} />
         <View style={style.formRegisterView}>
           <View style={style.formRegisterText}>

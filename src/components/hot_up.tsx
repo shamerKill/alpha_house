@@ -1,5 +1,6 @@
-import React, {
-  FC, useEffect,
+import {
+  FC,
+  useEffect,
 } from 'react';
 
 import {
@@ -21,7 +22,7 @@ import {
 
 import _updateConfig from '../../update.json';
 
-const CheckVersion: FC = () => {;
+const CheckVersion: FC = () => {
   const appKey = (_updateConfig as any)?.[Platform.OS]?.appKey;
   // 如果没有key，就返回
   if (!appKey) return null;
@@ -40,12 +41,28 @@ const CheckVersion: FC = () => {;
       }
       if (info.update) {
         // 有新的更新
-        Alert.alert('提示', '检查到新的版本需要下载更新\n'+ info.description?.split('\\n').join('\n'), [
-          {text: '更新', onPress: ()=>{addEvent.doUpdate(info)}},
-        ]);
+        Alert.alert(
+          '提示',
+          `检查到新的版本需要下载更新\n${info.description?.split('\\n').join('\n')}`,
+          [
+            {
+              text: '更新',
+              onPress: () => {
+                addEvent.doUpdate(info);
+              },
+            },
+          ],
+        );
       } else if (info.expired) {
         Alert.alert('提示', '您的应用版本已更新,请前往应用商店下载新的版本', [
-          {text: '确定', onPress: ()=>{info.downloadUrl && Linking.openURL(info.downloadUrl)}},
+          {
+            text: '确定',
+            onPress: () => {
+              if (info.downloadUrl) {
+                Linking.openURL(info.downloadUrl);
+              }
+            },
+          },
         ]);
       }
     },
@@ -55,18 +72,28 @@ const CheckVersion: FC = () => {;
         const hash = await downloadUpdate(info as UpdateAvailableResult);
         if (!hash) return;
         Alert.alert('提示', '下载完毕,请重启应用?', [
-          {text: '是', onPress: ()=>{switchVersion(hash);}},
-          {text: '否',},
-          {text: '下次启动时', onPress: ()=>{switchVersionLater(hash);}},
+          {
+            text: '是',
+            onPress: () => {
+              switchVersion(hash);
+            },
+          },
+          { text: '否' },
+          {
+            text: '下次启动时',
+            onPress: () => {
+              switchVersionLater(hash);
+            },
+          },
         ]);
-      } catch(err) {
+      } catch (err) {
         Alert.alert('提示', '更新失败.');
       }
     },
     // 检查是否是第一次进入
     checkFrist: () => {
       if (isFirstTime) markSuccess();
-    }
+    },
   };
 
   useEffect(() => {
@@ -75,6 +102,6 @@ const CheckVersion: FC = () => {;
   }, []);
 
   return null;
-}
+};
 
 export default CheckVersion;

@@ -17,7 +17,7 @@ import Socket, { CoinToCoinSocket } from '../../../data/fetch/socket';
 import { biNumberToSymbol } from '../../../tools/number';
 import formatTime from '../../../tools/time';
 
-const TranscationKline: FC = () => {
+const MarketKlineInfo: FC = () => {
   const socket = useRef<Socket|null>(null);
   const subSocket = useRef(false);
   const route = useRoute<RouteProp<{markLine: { name: string }}, 'markLine'>>();
@@ -42,16 +42,17 @@ const TranscationKline: FC = () => {
   useEffect(() => {
     const tickerImg = 'cash.market.ALL.ticker';
     const socketListener = (message: any) => {
-      const coinInfo = message.Tick[routeCoinType];
+      const coinInfo: any = Object.values(message.Tick).filter((item: any) => item.symbol === routeCoinType)[0];
+      if (!coinInfo) return;
       const close = parseFloat(coinInfo.close);
       const open = parseFloat(coinInfo.open);
       const range = Math.floor(((close - open) / open) * 10000) / 100;
       if (coinInfo) {
-        setPrice(coinInfo.close);
+        setPrice(`${parseFloat(coinInfo.close)}`);
         setPriceRMB(coinInfo.rmb_close);
         setChangeRatio(`${range || 0}%`);
-        setHeightPrice(coinInfo.height);
-        setLowPrice(coinInfo.low);
+        setHeightPrice(`${parseFloat(coinInfo.height)}`);
+        setLowPrice(`${parseFloat(coinInfo.low)}`);
         setDayValue(biNumberToSymbol(coinInfo.quo));
       }
     };
@@ -127,6 +128,7 @@ const MarketKlineDepthView: FC = () => {
   const route = useRoute<RouteProp<{markLine: { name: string }}, 'markLine'>>();
   const routeCoinType = route.params.name.split(' ')[0].replace('/', '');
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const [prevRoutePage] = useGetDispatch<InState['pageRouteState']['prevPageRoute']>('pageRouteState', 'prevPageRoute');
 
   // 买盘
   const [buyList, setBuyList] = useState<TypeList[]>([]);
@@ -163,14 +165,15 @@ const MarketKlineDepthView: FC = () => {
   useEffect(() => {
     const tickerImg = `cash.market.${routeCoinType}.depth`;
     const socketListener = (message: any) => {
+      if (message.buy.length < 10 || message.sell.length < 10) return;
       setBuyList(message.buy.map((item: any, index: number) => ({
-        price: item[0],
-        value: item[1],
+        price: `${parseFloat(item[0])}`,
+        value: `${parseFloat(item[1])}`,
         id: index + 1,
       })));
       setSellList(message.sell.map((item: any, index: number) => ({
-        price: item[0],
-        value: item[1],
+        price: `${parseFloat(item[0])}`,
+        value: `${parseFloat(item[1])}`,
         id: index + 1,
       })));
     };
@@ -184,20 +187,13 @@ const MarketKlineDepthView: FC = () => {
         console.log(err);
       });
     } else if (socket.current) {
-      if (!subSocket.current) {
+      if (!subSocket.current && routePage !== 'Transcation') {
         subSocket.current = true;
         socket.current.send(tickerImg, 'unsub');
         socket.current.removeListener(socketListener);
       }
     }
-    return () => {
-      if (socket.current) {
-        subSocket.current = true;
-        socket.current.send(tickerImg, 'unsub');
-        socket.current.removeListener(tickerImg);
-      }
-    };
-  }, [routePage]);
+  }, [routePage, prevRoutePage]);
 
   return (
     <View style={style.logsView}>
@@ -331,18 +327,18 @@ const MarketKlineLogsView: FC = () => {
         setLogsList(message.Tick.map((item: any) => {
           return {
             time: formatTime('hh:mm:ss', item.ts),
-            price: item.price,
+            price: `${parseFloat(item.price)}`,
             number: item.number,
             type: ({ buy: 0, sell: 1 } as any)[item.direction],
           };
-        }));
+        }).reverse());
       } else {
         setLogsList(state => {
           const result = [...state];
-          result.shift();
-          result.push({
+          result.pop();
+          result.unshift({
             time: formatTime('hh:mm:ss', message.Tick.ts),
-            price: message.Tick.price,
+            price: `${parseFloat(message.Tick.price)}`,
             number: message.Tick.number,
             type: ({ buy: 0, sell: 1 } as any)[message.Tick.direction],
           });
@@ -473,7 +469,7 @@ const MarketKlineBottom: FC = () => {
 };
 
 
-const TranscationKlineScreen: FC = () => {
+const MarketKlineScreen: FC = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<{marketLine: { name: string }}, 'marketLine'>>();
 
@@ -509,7 +505,6 @@ const TranscationKlineScreen: FC = () => {
       }
     },
   };
-
   return (
     <ComLayoutHead
       close
@@ -535,7 +530,7 @@ const TranscationKlineScreen: FC = () => {
                 resizeMode="contain"
                 style={style.headTitleIcon}
                 source={require('../../../assets/images/icons/show_left_white.png')} />
-              <Text style={style.headTitleText}>{route.params.name || ''}</Text>
+              <Text style={style.headTitleText}>{route.params.name || ''}现货</Text>
             </View>
           </TouchableNativeFeedback>
         </View>
@@ -548,28 +543,32 @@ const TranscationKlineScreen: FC = () => {
           onTouchMove={e => addEvent.scrollTouchMove(e.nativeEvent.pageX, e.nativeEvent.pageY)}
           onTouchEnd={() => addEvent.scrollTouchEnd()}>
           {/* 数据内容 */}
-          <TranscationKline />
-          <ComLine color={getThemeOpacity(themeGreen, 0.1)} />
+          <MarketKlineInfo />
+          <ComLine color={getThemeOpacity(themeGray, 0.1)} />
           {/* 图表 */}
           <MarketKlineHtml style={{ height: 430 }} />
-          <ComLine color={getThemeOpacity(themeGreen, 0.1)} />
+          <ComLine color={getThemeOpacity(themeGray, 0.1)} />
           {/* 列表 */}
           <MarketKlineBottom />
         </ScrollView>
         {/* 买入/卖出 */}
         <View style={style.bottomBtnsView}>
-          <View style={[
-            style.bottomBtn,
-            { backgroundColor: themeGreen },
-          ]}>
-            <Text style={style.bottomBtnText}>买入</Text>
-          </View>
-          <View style={[
-            style.bottomBtn,
-            { backgroundColor: themeRed },
-          ]}>
-            <Text style={style.bottomBtnText}>卖出</Text>
-          </View>
+          <TouchableNativeFeedback onPress={() => navigation.goBack()}>
+            <View style={[
+              style.bottomBtn,
+              { backgroundColor: themeGreen },
+            ]}>
+              <Text style={style.bottomBtnText}>买入</Text>
+            </View>
+          </TouchableNativeFeedback>
+          <TouchableNativeFeedback onPress={() => navigation.goBack()}>
+            <View style={[
+              style.bottomBtn,
+              { backgroundColor: themeRed },
+            ]}>
+              <Text style={style.bottomBtnText}>卖出</Text>
+            </View>
+          </TouchableNativeFeedback>
         </View>
       </SafeAreaView>
     </ComLayoutHead>
@@ -739,4 +738,4 @@ const style = StyleSheet.create({
   },
 });
 
-export default TranscationKlineScreen;
+export default MarketKlineScreen;

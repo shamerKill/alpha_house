@@ -1,30 +1,23 @@
-import React, { FC, useState } from 'react';
-import {
-  View, TouchableNativeFeedback, Text, StyleSheet, ScrollView,
-} from 'react-native';
-import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import React, { FC, useState, useRef } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
+import { TouchableNativeFeedback, ScrollView } from 'react-native-gesture-handler';
 import ComLayoutHead from '../../../components/layout/head';
 import {
   themeWhite, defaultThemeBgColor, themeGray, defaultThemeColor,
 } from '../../../config/theme';
-import ContractContentView from './com_content';
-import ComContractIndexBotton from './index_botton';
+import ContractUSDTScreen from './usdt';
 
-
-const ContractScreen: FC = () => {
+const ContractIndexScreenCopy: FC = () => {
   const navigation = useNavigation();
-  let { params: routeParams } = useRoute<RouteProp<{constract: { contractType: typeof selectType; coinType: string; }}, 'constract'>>();
+  let { params: routeParams } = useRoute<RouteProp<{constract: { contractType: 0|1|2; coinType: string; }}, 'constract'>>();
   if (!routeParams) routeParams = { contractType: 0, coinType: '' };
 
   // 合约类型 usdt合约0，币本位合约1，混合合约2
-  const [selectType, setSelectType] = useState<0|1|2>(0);
-  // 杠杆倍数
-  const [leverType, setLeverType] = useState('');
-  // 可平手数
-  const [canCloseOrderValue, setCanCloseOrderValue] = useState<{lang: string; sort: string;}>({ lang: '0', sort: '0' });
+  const [selectType, setSelectType] = useState(routeParams.contractType);
 
-  const addEvent = {
+  const addEvent = useRef({
     // 更改合约类型页面
     changeSelectType: ({ coinType = routeParams.coinType, contractType = routeParams.contractType }: { coinType?: string; contractType?: typeof selectType }) => {
       // FIXME: 没有比本位合约和混合合约
@@ -36,18 +29,18 @@ const ContractScreen: FC = () => {
         });
         return;
       }
+      if (contractType === selectType) return;
       setSelectType(contractType);
       navigation.navigate('Contract', { contractType, coinType });
     },
-  };
-
+  });
   return (
     <ComLayoutHead
       close
       overScroll
       scrollStyle={{ backgroundColor: themeWhite }}>
       <View style={style.headView}>
-        <TouchableNativeFeedback onPress={() => addEvent.changeSelectType({ contractType: 0 })}>
+        <TouchableNativeFeedback onPress={() => addEvent.current.changeSelectType({ contractType: 0 })}>
           <View style={style.headTouchView}>
             <Text style={[
               style.headTouchText,
@@ -61,7 +54,7 @@ const ContractScreen: FC = () => {
             }
           </View>
         </TouchableNativeFeedback>
-        <TouchableNativeFeedback onPress={() => addEvent.changeSelectType({ contractType: 1 })}>
+        <TouchableNativeFeedback onPress={() => addEvent.current.changeSelectType({ contractType: 1 })}>
           <View style={style.headTouchView}>
             <Text style={[
               style.headTouchText,
@@ -75,7 +68,7 @@ const ContractScreen: FC = () => {
             }
           </View>
         </TouchableNativeFeedback>
-        <TouchableNativeFeedback onPress={() => addEvent.changeSelectType({ contractType: 2 })}>
+        <TouchableNativeFeedback onPress={() => addEvent.current.changeSelectType({ contractType: 2 })}>
           <View style={style.headTouchView}>
             <Text style={[
               style.headTouchText,
@@ -91,16 +84,9 @@ const ContractScreen: FC = () => {
         </TouchableNativeFeedback>
       </View>
       <ScrollView style={style.contentScrollView}>
-        <ContractContentView
-          changeConTypeCallback={addEvent.changeSelectType}
-          selectType={selectType}
-          coinType={routeParams.coinType}
-          changePageLeverType={setLeverType}
-          canCloseOrderValue={canCloseOrderValue} />
-        <ComContractIndexBotton
-          selectType={selectType}
-          leverType={leverType}
-          setCanCloseOrderValue={setCanCloseOrderValue} />
+        {
+          selectType === 0 && <ContractUSDTScreen />
+        }
       </ScrollView>
     </ComLayoutHead>
   );
@@ -139,4 +125,4 @@ const style = StyleSheet.create({
   },
 });
 
-export default ContractScreen;
+export default ContractIndexScreenCopy;

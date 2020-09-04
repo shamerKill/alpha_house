@@ -165,6 +165,7 @@ const MarketKlineDepthView: FC = () => {
   useEffect(() => {
     const tickerImg = `gold.market.${routeCoinType}.depth`;
     const socketListener = (message: any) => {
+      if (message.buy.length < 10 || message.sell.length < 10) return;
       setBuyList(message.buy.map((item: any, index: number) => ({
         price: item[0],
         value: item[1],
@@ -544,10 +545,10 @@ const MarketKlineScreen: FC = () => {
           onTouchEnd={() => addEvent.scrollTouchEnd()}>
           {/* 数据内容 */}
           <MarketKlineInfo />
-          <ComLine color={getThemeOpacity(themeGreen, 0.1)} />
+          <ComLine color={getThemeOpacity(themeGray, 0.1)} />
           {/* 图表 */}
           <MarketKlineHtml style={{ height: 430 }} />
-          <ComLine color={getThemeOpacity(themeGreen, 0.1)} />
+          <ComLine color={getThemeOpacity(themeGray, 0.1)} />
           {/* 列表 */}
           <MarketKlineBottom />
         </ScrollView>

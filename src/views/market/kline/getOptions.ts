@@ -1,7 +1,8 @@
+// @ts-nocheck
 /* eslint-disable prefer-template */
 import { EChartOption } from 'echarts';
 import {
-  themeGreen, themeRed, defaultThemeColor, getThemeOpacity, defaultThemeBgColor, themeWhite, themeGray,
+  themeGreen, themeRed, defaultThemeColor, themeGray,
 } from '../../../config/theme';
 
 // 折线数据类型
@@ -101,7 +102,137 @@ export function getMACD(inData: TypeKlineValue[]) {
   return result;
 }
 
-export const getOptionSerise = (inputData: TypeKlineValue[]): EChartOption['series'] => {
+
+/*
+ * 计算EMA指数平滑移动平均线，用于MACD
+ * @param {number} n 时间窗口
+ * @param {array} data 输入数据
+ * @param {string} field 计算字段配置
+ */
+const calcEMA = (n?: any, data?: any, field?: any) => {
+  let i; let l; let ema;
+  const a = 2 / (n + 1);
+  if (field) {
+    //二维数组
+    ema = [data[0][field]];
+    for (i = 1, l = data.length; i < l; i++) {
+      ema.push(a * data[i][field] + (1 - a) * ema[i - 1]);
+    }
+  } else {
+    //普通一维数组
+    ema = [data[0]];
+    for (i = 1, l = data.length; i < l; i++) {
+      ema.push(a * data[i] + (1 - a) * ema[i - 1]);
+    }
+  }
+  return ema;
+};
+/*
+ * 计算DIF快线，用于MACD
+ * @param {number} short 快速EMA时间窗口
+ * @param {number} long 慢速EMA时间窗口
+ * @param {array} data 输入数据
+ * @param {string} field 计算字段配置
+ */
+const calcDIF = (short: any, long: any, data: any, field: any) => {
+  let i; let l;
+  const dif = [];
+  const emaShort = calcEMA(short, data, field);
+  const emaLong = calcEMA(long, data, field);
+  for (i = 0, l = data.length; i < l; i++) {
+    dif.push(emaShort[i] - emaLong[i]);
+  }
+  return dif;
+};
+/*
+ * 计算DEA慢线，用于MACD
+ * @param {number} mid 对dif的时间窗口
+ * @param {array} dif 输入数据
+ */
+const calcDEA = (mid:any, dif: any) => {
+  return calcEMA(mid, dif);
+};
+/*
+ * 计算MACD
+ * @param {number} short 快速EMA时间窗口
+ * @param {number} long 慢速EMA时间窗口
+ * @param {number} mid dea时间窗口
+ * @param {array} data 输入数据
+ * @param {string} field 计算字段配置
+ */
+const calcMACD = (short: any, long: any, mid: any, data: any, field: any) => {
+  if (data.length === 0) {
+    return {
+      dif: [],
+      dea: [],
+      macd: [],
+    };
+  }
+  let i; let l;
+  const result: any = {};
+  const macd = [];
+  const dif = calcDIF(short, long, data, field);
+  const dea = calcDEA(mid, dif);
+  for (i = 0, l = data.length; i < l; i++) {
+    macd.push((dif[i] - dea[i]) * 2);
+  }
+  result.dif = dif.map(item => item.toFixed(4));
+  result.dea = dea.map(item => item.toFixed(4));
+  result.macd = macd.map(item => item.toFixed(4));
+  return result;
+};
+// const input = [
+//   {
+//     open: 3.89, close: 3.89, low: 3.86, high: 3.93,
+//   },
+//   {
+//     open: 3.88, close: 3.85, low: 3.81, high: 3.89,
+//   },
+//   {
+//     open: 3.85, close: 3.91, low: 3.82, high: 3.95,
+//   },
+//   {
+//     open: 3.89, close: 4.02, low: 3.89, high: 4.07,
+//   },
+//   {
+//     open: 4.04, close: 4.05, low: 4.00, high: 4.08,
+//   },
+//   {
+//     open: 4.05, close: 4.00, low: 3.98, high: 4.08,
+//   },
+//   {
+//     open: 4.00, close: 4.00, low: 3.97, high: 4.04,
+//   },
+//   {
+//     open: 3.99, close: 3.90, low: 3.88, high: 4.00,
+//   },
+//   {
+//     open: 3.89, close: 3.90, low: 3.88, high: 3.92,
+//   },
+//   {
+//     open: 3.89, close: 3.98, low: 3.88, high: 3.98,
+//   },
+//   {
+//     open: 3.99, close: 3.98, low: 3.95, high: 4.03,
+//   },
+//   {
+//     open: 3.98, close: 4.06, low: 3.96, high: 4.08,
+//   },
+//   {
+//     open: 4.08, close: 4.08, low: 4.02, high: 4.08,
+//   },
+// ];
+// console.log(calcMACD(12, 26, 9, input, 'close'));
+
+export const getOptionSerise = (inputData: TypeKlineValue[], length: number): EChartOption['series'] => {
+  const macdInput = inputData.map(item => (
+    {
+      open: parseFloat(item.openValue),
+      close: parseFloat(item.closeValue),
+      low: parseFloat(item.minValue),
+      high: parseFloat(item.maxValue),
+    }
+  ));
   return [
     // k线
     {
@@ -120,12 +251,36 @@ export const getOptionSerise = (inputData: TypeKlineValue[]): EChartOption['seri
         silent: true,
         symbolSize: 0,
         animation: false,
-        label: { position: 'insideEndTop' },
+        label: {
+          position: 'insideEndTop',
+          distance: [-length * 5, 0],
+        },
         lineStyle: { color: defaultThemeColor },
         data: [{ yAxis: inputData.length ? parseFloat(inputData[inputData.length - 1].closeValue) : 0 }],
       },
       markPoint: {
-        symbol: 'circle',
+        symbol: 'rect',
+        data: [
+          {
+            name: 'highest value',
+            type: 'max',
+            valueDim: 'highest',
+          },
+          {
+            name: 'lowest value',
+            type: 'min',
+            valueDim: 'lowest',
+          },
+        ],
+        label: {
+          color: '#e7e7e7',
+          fontWeight: '900',
+        },
+        itemStyle: {
+          // color: '#e7e7e7',
+        },
+        symbolSize: [1, 1],
+        symbolOffset: [0, 8],
       },
     },
     // ma5日线
@@ -218,8 +373,8 @@ export const getOptionSerise = (inputData: TypeKlineValue[]): EChartOption['seri
       xAxisIndex: 2,
       yAxisIndex: 2,
       data: (() => {
-        const { macd } = getMACD(inputData);
-        return macd.map((item, index) => ({
+        const { macd } = calcMACD(12, 26, 9, macdInput, 'close');
+        return macd.map((item: number, index: number) => ({
           value: ([index, item, Number(item) > 0 ? 1 : -1]),
         }));
       })(),
@@ -231,7 +386,7 @@ export const getOptionSerise = (inputData: TypeKlineValue[]): EChartOption['seri
       type: 'line',
       xAxisIndex: 2,
       yAxisIndex: 2,
-      data: getMACD(inputData).diff.map(item => (Number(item) === 0 ? '-' : item)),
+      data: calcMACD(12, 26, 9, macdInput, 'close').dif,
       smooth: true,
       showSymbol: false,
       lineStyle: {
@@ -245,7 +400,7 @@ export const getOptionSerise = (inputData: TypeKlineValue[]): EChartOption['seri
       type: 'line',
       xAxisIndex: 2,
       yAxisIndex: 2,
-      data: getMACD(inputData).dea.map(item => (Number(item) === 0 ? '-' : item)),
+      data: calcMACD(12, 26, 9, macdInput, 'close').dea,
       smooth: true,
       showSymbol: false,
       lineStyle: {
@@ -302,6 +457,14 @@ export const getOptionTitle = (input: EChartOption['series']): EChartOption['tit
 
 // echarts配置
 const getOption = (inputData: TypeKlineValue[]): EChartOption => {
+  const macdInput = inputData.map(item => (
+    {
+      open: parseFloat(item.openValue),
+      close: parseFloat(item.closeValue),
+      low: parseFloat(item.minValue),
+      high: parseFloat(item.maxValue),
+    }
+  ));
   return {
     animation: false,
     textStyle: {
@@ -346,21 +509,21 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
     grid: [
       {
         left: 0,
-        top: '0%',
+        top: '5%',
         right: '10%',
-        height: '65%',
+        height: '60%',
       },
       {
         left: 0,
-        top: '65%',
+        top: '70%',
         right: '10%',
-        height: '15%',
+        height: '10%',
       },
       {
         left: 0,
-        top: '80%',
+        top: '85%',
         right: '10%',
-        height: '15%',
+        height: '10%',
       },
     ],
     xAxis: [
@@ -368,8 +531,8 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         type: 'category',
         gridIndex: 0,
         data: inputData.map(item => item.time),
-        splitLine: { show: true, lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
-        axisLine: { lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
+        splitLine: { show: true, lineStyle: { color: '#1e314a' } },
+        axisLine: { lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: { show: false },
         axisPointer: { label: { show: false } },
@@ -378,8 +541,8 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         type: 'category',
         gridIndex: 1,
         data: inputData.map(item => item.time),
-        splitLine: { show: true, lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
-        axisLine: { lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
+        splitLine: { show: true, lineStyle: { color: '#1e314a' } },
+        axisLine: { lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: { show: false },
         axisPointer: { label: { show: false } },
@@ -388,12 +551,12 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         type: 'category',
         gridIndex: 2,
         data: inputData.map(item => item.time),
-        splitLine: { show: true, lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
-        axisLine: { show: false, lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
+        splitLine: { show: true, lineStyle: { color: '#1e314a' } },
+        axisLine: { lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: {
           show: true,
-          color: getThemeOpacity(themeWhite, 0.6),
+          color: '#8984b3',
         },
         axisPointer: { show: true },
       },
@@ -403,14 +566,14 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         scale: true,
         gridIndex: 0,
         position: 'right',
-        splitLine: { show: true, lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
+        splitLine: { show: true, lineStyle: { color: '#1e314a' } },
         splitNumber: 3,
-        axisLine: { lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
+        axisLine: { lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: {
           show: true,
           margin: 1,
-          color: getThemeOpacity(themeWhite, 0.6),
+          color: '#8984b3',
           fontSize: 10,
           padding: [15, 0, 0, 0],
         },
@@ -420,7 +583,7 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         gridIndex: 1,
         position: 'right',
         splitLine: { show: false },
-        axisLine: { lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
+        axisLine: { lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: { show: false },
       },
@@ -429,7 +592,7 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         gridIndex: 2,
         position: 'right',
         splitLine: { show: false },
-        axisLine: { lineStyle: { color: getThemeOpacity(defaultThemeBgColor, 0.1) } },
+        axisLine: { lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: { show: false },
       },
@@ -439,7 +602,7 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         type: 'inside',
         xAxisIndex: [0, 1, 2],
         minValueSpan: 40,
-        start: 80,
+        start: 100,
       },
     ],
     tooltip: {
@@ -461,7 +624,7 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
           color: defaultThemeColor,
           shadowBlur: 0,
           padding: 2,
-          backgroundColor: getThemeOpacity(defaultThemeBgColor, 0.9),
+          backgroundColor: '#e7e7e7',
         },
       },
       position(point, _params, _dom, _rect, size) {
@@ -541,7 +704,10 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
           silent: true,
           symbolSize: 0,
           animation: false,
-          label: { position: 'insideEndTop' },
+          label: {
+            position: 'insideEndTop',
+            distance: [0, 0],
+          },
           lineStyle: { color: defaultThemeColor },
           data: [{ yAxis: inputData.length ? parseFloat(inputData[inputData.length - 1].closeValue) : 0 }],
         },
@@ -639,8 +805,8 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         xAxisIndex: 2,
         yAxisIndex: 2,
         data: (() => {
-          const { macd } = getMACD(inputData);
-          return macd.map((item, index) => ({
+          const { macd } = calcMACD(12, 26, 9, macdInput, 'close');
+          return macd.map((item: number, index: number) => ({
             value: ([index, item, Number(item) > 0 ? 1 : -1]),
           }));
         })(),
@@ -652,7 +818,7 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         type: 'line',
         xAxisIndex: 2,
         yAxisIndex: 2,
-        data: getMACD(inputData).diff.map(item => (Number(item) === 0 ? '-' : item)),
+        data: calcMACD(12, 26, 9, macdInput, 'close').dif,
         smooth: true,
         showSymbol: false,
         lineStyle: {
@@ -666,7 +832,7 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         type: 'line',
         xAxisIndex: 2,
         yAxisIndex: 2,
-        data: getMACD(inputData).dea.map(item => (Number(item) === 0 ? '-' : item)),
+        data: calcMACD(12, 26, 9, macdInput, 'close').dea,
         smooth: true,
         showSymbol: false,
         lineStyle: {

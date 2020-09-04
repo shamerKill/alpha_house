@@ -12,11 +12,13 @@ import ajax from '../../data/fetch';
 import getHeadImage from '../../tools/getHeagImg';
 import useGetDispatch from '../../data/redux/dispatch';
 import { InState, ActionsType } from '../../data/redux/state';
+import { encryptionAccount } from '../../tools/string';
 
 
 const MyScreen: FC = () => {
   const [userInfo, dispatchUserInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
   const [routePage] = useGetDispatch<InState['pageRouteState']['pageRoute']>('pageRouteState', 'pageRoute');
+  const [userIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
   const goToWithLogin = useGoToWithLogin();
   // 头部颜色
   const [statusBar, setStatusBar] = useState('#ccc9fe');
@@ -79,17 +81,28 @@ const MyScreen: FC = () => {
     if (routePage !== 'My') return;
     setUserPhone(userInfo.account || '未登录');
     setUserId(userInfo.id);
-    setUserBTC(userInfo.assets);
+    setUserBTC(userInfo.assets || '--');
     setUserRMB('--');
+    if (!userIsLogin) {
+      setUserHead(getHeadImage()[0]);
+      return;
+    }
     ajax.post('/userinfo', {}).then(data => {
       if (data.status === 200) {
         if (data.data.auth_status) setSubmitType(data.data.auth_status);
+        let spareAccount = '';
+        if (userInfo.accountType === 'phone') {
+          spareAccount = data.data.email;
+        } else {
+          spareAccount = data.data.mobile;
+        }
         dispatchUserInfo({
           type: ActionsType.CHANGE_USER_INFO,
           data: {
             avatar: getHeadImage()[Number(data.data.headimg)],
             id: `${data.data.unique_id}`,
             assets: data.data.goldbtc,
+            spareAccount,
           },
         });
         setUserHead(getHeadImage()[Number(data.data.headimg)]);
@@ -98,6 +111,8 @@ const MyScreen: FC = () => {
         setUserRMB(data.data.goldcoin);
         setUserBTC(data.data.goldbtc);
       } else {
+        setUserPhone('未登录');
+        setUserId('');
         setUserHead(getHeadImage()[0]);
         setUserRMB('--');
         setUserBTC('--');
@@ -154,7 +169,7 @@ const MyScreen: FC = () => {
             paddingLeft: 10,
             fontSize: 20,
           }}>
-            {userPhone}
+            {encryptionAccount(userPhone)}
           </Text>
           <View
             style={{
@@ -247,7 +262,7 @@ const MyScreen: FC = () => {
         {/* 个人资产 */}
         <View style={{ paddingLeft: 20, paddingRight: 20 }}>
 
-          <TouchableNativeFeedback onPress={() => goToWithLogin('transferAccounts')}>
+          <TouchableNativeFeedback onPress={() => goToWithLogin('MyAssets')}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ fontSize: 16, color: '#7b85b2' }}>
                 总折合资产
