@@ -93,7 +93,7 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
           { data: inData.map(item => item.time) },
           { data: inData.map(item => item.time) },
         ],
-        series: getOptionSerise(inData),
+        series: getOptionSerise(inData, parseFloat(inData[0].closeValue).toFixed(2).length),
       };
       newOptions.title = getOptionTitle(newOptions.series);
       webRef.current?.postMessage(toString(newOptions));

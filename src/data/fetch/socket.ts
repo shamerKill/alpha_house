@@ -253,9 +253,13 @@ export class SocketClass {
   // 重新发送所有请求
   sendMessageAgain(): Promise<void>|undefined {
     if (!this.getSocket) return undefined;
+    const state = rootStore.getState();
     return this.getSocket().then(ws => {
       if (this.nowSendReq?.length) {
         this.nowSendReq.forEach((value) => {
+          if (/^gold\.market\.ALL\.account/.test(value) && !state.userState.userIsLogin) {
+            return;
+          }
           ws.send(value, 'req');
           ws.send(value, 'sub');
         });

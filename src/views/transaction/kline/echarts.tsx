@@ -93,7 +93,7 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
           { data: inData.map(item => item.time) },
           { data: inData.map(item => item.time) },
         ],
-        series: getOptionSerise(inData),
+        series: getOptionSerise(inData, parseFloat(inData[0].closeValue).toFixed(2).length),
       };
       newOptions.title = getOptionTitle(newOptions.series);
       webRef.current?.postMessage(toString(newOptions));
@@ -143,6 +143,7 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
     };
     let useData: TypeKlineValue[] = [];
     const tickerImg = `cash.market.${coinType}.kline.${timeType}`;
+    // eslint-disable-next-line max-len
     const tickerReqStart = `{"req":"cash.market.${coinType}.kline.${timeType}","create_time":"${getStartTime(getTimeValueStart).startTime}","end_time":"${endTime}","limit":"${getTimeValueStart}"}`;
     const tickerReqMore = `{"req":"cash.market.${coinType}.kline.${timeType}","create_time":"${getStartTime().startTime}","end_time":"${endTime}","limit":"${getTimeValueMore}"}`;
     const socketListener = (message: any) => {

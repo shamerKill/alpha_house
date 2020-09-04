@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable prefer-template */
 import { EChartOption } from 'echarts';
 import {
@@ -223,7 +224,7 @@ const calcMACD = (short: any, long: any, mid: any, data: any, field: any) => {
 // ];
 // console.log(calcMACD(12, 26, 9, input, 'close'));
 
-export const getOptionSerise = (inputData: TypeKlineValue[]): EChartOption['series'] => {
+export const getOptionSerise = (inputData: TypeKlineValue[], length: number): EChartOption['series'] => {
   const macdInput = inputData.map(item => (
     {
       open: parseFloat(item.openValue),
@@ -250,7 +251,10 @@ export const getOptionSerise = (inputData: TypeKlineValue[]): EChartOption['seri
         silent: true,
         symbolSize: 0,
         animation: false,
-        label: { position: 'insideEndTop' },
+        label: {
+          position: 'insideEndTop',
+          distance: [-length * 5, 0],
+        },
         lineStyle: { color: defaultThemeColor },
         data: [{ yAxis: inputData.length ? parseFloat(inputData[inputData.length - 1].closeValue) : 0 }],
       },
@@ -527,8 +531,8 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         type: 'category',
         gridIndex: 0,
         data: inputData.map(item => item.time),
-        splitLine: { show: true, lineStyle: { color: '#3c3769' } },
-        axisLine: { lineStyle: { color: '#3c3769' } },
+        splitLine: { show: true, lineStyle: { color: '#1e314a' } },
+        axisLine: { lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: { show: false },
         axisPointer: { label: { show: false } },
@@ -537,8 +541,8 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         type: 'category',
         gridIndex: 1,
         data: inputData.map(item => item.time),
-        splitLine: { show: true, lineStyle: { color: '#3c3769' } },
-        axisLine: { lineStyle: { color: '#3c3769' } },
+        splitLine: { show: true, lineStyle: { color: '#1e314a' } },
+        axisLine: { lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: { show: false },
         axisPointer: { label: { show: false } },
@@ -547,8 +551,8 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         type: 'category',
         gridIndex: 2,
         data: inputData.map(item => item.time),
-        splitLine: { show: true, lineStyle: { color: '#3c3769' } },
-        axisLine: { show: false, lineStyle: { color: '#3c3769' } },
+        splitLine: { show: true, lineStyle: { color: '#1e314a' } },
+        axisLine: { show: false, lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: {
           show: true,
@@ -562,9 +566,9 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         scale: true,
         gridIndex: 0,
         position: 'right',
-        splitLine: { show: true, lineStyle: { color: '#3c3769' } },
+        splitLine: { show: true, lineStyle: { color: '#1e314a' } },
         splitNumber: 3,
-        axisLine: { lineStyle: { color: '#3c3769' } },
+        axisLine: { lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: {
           show: true,
@@ -579,7 +583,7 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         gridIndex: 1,
         position: 'right',
         splitLine: { show: false },
-        axisLine: { lineStyle: { color: '#3c3769' } },
+        axisLine: { lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: { show: false },
       },
@@ -588,7 +592,7 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
         gridIndex: 2,
         position: 'right',
         splitLine: { show: false },
-        axisLine: { lineStyle: { color: '#3c3769' } },
+        axisLine: { lineStyle: { color: '#1e314a' } },
         axisTick: { show: false },
         axisLabel: { show: false },
       },
@@ -700,7 +704,10 @@ const getOption = (inputData: TypeKlineValue[]): EChartOption => {
           silent: true,
           symbolSize: 0,
           animation: false,
-          label: { position: 'insideEndTop' },
+          label: {
+            position: 'insideEndTop',
+            distance: [0, 0],
+          },
           lineStyle: { color: defaultThemeColor },
           data: [{ yAxis: inputData.length ? parseFloat(inputData[inputData.length - 1].closeValue) : 0 }],
         },

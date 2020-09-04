@@ -417,9 +417,10 @@ const ComContractIndexListPosition: FC<{
   data: TypePositionData,
   leverType: string;
   newPrice: string;
+  price: string;
   changeProfitValue: (data: string) => void;
 }> = ({
-  data, newPrice, changeProfitValue,
+  data, newPrice, price, changeProfitValue,
 }) => {
   // 获取是否有止盈止损的提示框
   const showStopAlert = useRef(true);
@@ -617,7 +618,7 @@ const ComContractIndexListPosition: FC<{
               symbol: data.coinType, // 币种
               type: data.type, // 开空/开多
               openPrice: data.price, // 持仓均价
-              closePrice: newPrice, // 当前价格
+              closePrice: price, // 当前价格
               ratio: profitRatio, // 收益率
             });
           }} />
@@ -1088,6 +1089,9 @@ const ContractUSDTScreen: FC = () => {
 
   // 获取用户信息判断
   const getUserInfoMem = useRef(0);
+
+  // 下面的筛选tab列表头
+  const [tabTitleLength, setTabTitleLength] = useState(['持仓', '普通委托', '止盈止损']);
 
   const addEvent = {
     // 获取当前用户信息
@@ -1651,14 +1655,19 @@ const ContractUSDTScreen: FC = () => {
       // 可用资产
       const assets = parseFloat(userAllAssets);
       if (Number.isNaN(assets)) return state;
-      // 获取其他合约所有保证金和未实现盈亏
-      let otherBound = 0;
-      // 其他合约未实现盈亏
-      let otherWillChange = 0;
+      // 获取合约所有保证金和未实现盈亏
+      const otherBound: {margin: number, symbol: string}[] = [];
+      // 合约未实现盈亏
+      const otherWillChange: {unrealized: number, symbol: string}[] = [];
       state.forEach(item => {
-        if (item.symbol === coinType) return;
-        otherBound += parseFloat(item.initialMarginBuy) + parseFloat(item.initialMarginSell);
-        otherWillChange += parseFloat(item.unrealizedProfitBuy) + parseFloat(item.unrealizedProfitSell);
+        otherBound.push({
+          symbol: item.symbol,
+          margin: parseFloat(item.initialMarginBuy) + parseFloat(item.initialMarginSell),
+        });
+        otherWillChange.push({
+          symbol: item.symbol,
+          unrealized: parseFloat(item.unrealizedProfitBuy) + parseFloat(item.unrealizedProfitSell),
+        });
       });
       return state.map(coin => {
         const result = { ...coin };
@@ -1667,11 +1676,12 @@ const ContractUSDTScreen: FC = () => {
           const res = { ...order };
           // 在此计算-------------
           // --------------------
-          const [inRatio, inValue] = addEvent.getFollowRatio(coinType, parseFloat(order.allValue) * parseFloat(coin.newPirce)); // 获取费率和速算额
+          const coinNewPirce = coinListInfo.filter(item => item.symbol === order.coinType)[0]?.newPirce || '0';
+          const [inRatio, inValue] = addEvent.getFollowRatio(order.coinType, parseFloat(order.allValue) * parseFloat(coinNewPirce)); // 获取费率和速算额
           // 分子
           const resultMolecule = assets // 资产余额
-            - otherBound // 保证金
-            + otherWillChange // 未实现盈亏
+            - otherBound.filter(item => item.symbol !== order.coinType).map(item => item.margin).reduce((a, b) => a + b) // 保证金
+            + otherWillChange.filter(item => item.symbol !== order.coinType).map(item => item.unrealized).reduce((a, b) => a + b) // 未实现盈亏
             + inValue // 保证金速算额
             + (
               (order.type === 0 ? 1 : -1) // 开多-或开空+
@@ -1917,7 +1927,9 @@ const ContractUSDTScreen: FC = () => {
         allUseBond += parseFloat(order.useBond);
       });
     });
-    setRiskLever(`${(allUseBond / parseFloat(canUseAssets)).toFixed(2)}%`);
+    let reulst = allUseBond / parseFloat(canUseAssets);
+    if (Number.isNaN(reulst)) reulst = 0;
+    setRiskLever(`${(reulst).toFixed(2)}%`);
   }, [coinListInfo]);
 
   // 计算可用资产
@@ -1940,6 +1952,16 @@ const ContractUSDTScreen: FC = () => {
       setRiskLever(`${ratio}%`);
     }
   }, [nowCoinInfo.positionOrders, canUseAssets, coinListInfo]);
+
+  // 更改tab信息
+  useEffect(() => {
+    setTabTitleLength(state => (state.map((item, index) => {
+      if (index === 0) return `持仓(${nowCoinInfo.positionOrders.length})`;
+      if (index === 1) return `普通委托(${nowCoinInfo.entrustOrders.length})`;
+      if (index === 2) return `止盈止损(${nowCoinInfo.stopOrders.length})`;
+      return item;
+    })));
+  }, [nowCoinInfo.positionOrders, nowCoinInfo.entrustOrders, nowCoinInfo.stopOrders]);
 
   return (
     <View style={style.pageView}>
@@ -2270,7 +2292,7 @@ const ContractUSDTScreen: FC = () => {
         <View style={style.tabView}>
           <View style={style.tabViewLeft}>
             {
-              ['持仓', '普通委托', '止盈止损'].map((item, index) => (
+              tabTitleLength.map((item, index) => (
                 <TouchableNativeFeedback
                   key={index}
                   onPress={() => setLogSelectTab(index)}>
@@ -2306,6 +2328,7 @@ const ContractUSDTScreen: FC = () => {
                 leverType={nowCoinInfo.lever}
                 newPrice={coinListInfo.filter(coin => coin.symbol === item.coinType)[0].riskPrice}
                 data={item}
+                price={coinListInfo.filter(coin => coin.symbol === item.coinType)[0].newPirce}
                 // 更改未实现盈亏
                 changeProfitValue={
                   (data: string) => {
