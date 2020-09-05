@@ -55,6 +55,16 @@ export const numberToFixed = (value: number, fix: number): string => {
   const count = Math.floor(value * 10 ** fix);
   return `${count / 10 ** fix}`;
 };
+// 两数相减
+export const towNumCut = (prev: number, after: number) => {
+  const prevLength = numberOtherLength(prev);
+  const afterLength = numberOtherLength(after);
+  const bigLength = prevLength > afterLength ? prevLength : afterLength;
+  return (
+    Math.floor(prev * 10 ** bigLength)
+    - Math.floor(after * 10 ** bigLength)
+  ) / 10 ** bigLength;
+};
 
 export default {
   positive: positiveNumber,

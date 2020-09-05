@@ -13,6 +13,9 @@ export class Fetch {
   // 声明fetch方法
   private promise: (input: RequestInfo, init?: RequestInit | undefined) => Promise<Response>;
 
+  // 请求等待记录
+  private reqLoadList: {[key: string]: number|null} = {};
+
   // 声明token
   private token: string = '';
 
@@ -55,6 +58,13 @@ export class Fetch {
     };
     if (token) fetchHeader.cookie = `JAVASESSID=${token}`;
     try {
+      // 等待计时
+      if (!await this.waitReq(uri)) {
+        return {
+          status: 10086,
+          message: '等待中',
+        };
+      }
       const result = await this.promise(
         // 链接
         `${this.baseURI}${Fetch.checkUri(uri)}`,
@@ -110,6 +120,13 @@ export class Fetch {
         // 头部信息
         req.headers = new Headers(fetchHeader);
       }
+      // 等待计时
+      if (!await this.waitReq(uri)) {
+        return {
+          status: 10086,
+          message: '等待中',
+        };
+      }
       const result = await this.promise(
         // 链接
         `${this.baseURI}${Fetch.checkUri(uri)}`,
@@ -134,6 +151,21 @@ export class Fetch {
         message: err.meesage || '请检查您的网络后重试当前操作',
       };
     }
+  }
+
+  // 等待方法
+  waitReq(req: string): Promise<boolean> {
+    const date = new Date().getTime();
+    this.reqLoadList[req] = date;
+    return new Promise(resolve => {
+      setTimeout(() => {
+        if (this.reqLoadList[req] === date) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      }, 200);
+    });
   }
 
   // 工具函数-tostring

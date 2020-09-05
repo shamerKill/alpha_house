@@ -17,6 +17,7 @@ import ajax from '../../../data/fetch';
 import useGetDispatch from '../../../data/redux/dispatch';
 import { InState } from '../../../data/redux/state';
 import showPayPass from '../../../components/modal/paypass';
+import { towNumCut } from '../../../tools/number';
 
 const MyWithdrawScreen: FC = () => {
   const navigation = useNavigation();
@@ -171,7 +172,7 @@ const MyWithdrawScreen: FC = () => {
           } else {
             setLittleNum(data.data.config.little);
             setCanUse(`${data.data.account.account}`);
-            setFree(`${data.data.config.fee * 100}%`);
+            setFree(`${data.data.config.fee}`);
             setCanWithDraw(data.data.config.frequency > data.data.today_num);
             if (data.data.pwdStatus === 1) {
               setHasPass(false);
@@ -198,7 +199,7 @@ const MyWithdrawScreen: FC = () => {
     addEvent.getPageInfo(coinName);
   }, [coinName]);
   useEffect(() => {
-    const willNum = Number(num) * (1 - parseFloat(free) / 100);
+    const willNum = towNumCut(parseFloat(num), parseFloat(free));
     setToNum((willNum > 0 ? willNum : 0).toString());
   }, [num, free]);
   return (
@@ -300,7 +301,7 @@ const MyWithdrawScreen: FC = () => {
         <ComInputForm
           noError
           disabled
-          labelText="手续费"
+          labelText={`手续费(${coinName})`}
           value={free} />
         <ComInputForm
           disabled
