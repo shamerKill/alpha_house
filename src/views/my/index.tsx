@@ -88,6 +88,7 @@ const MyScreen: FC = () => {
       return;
     }
     ajax.post('/userinfo', {}).then(data => {
+      console.log(data);
       if (data.status === 200) {
         if (data.data.auth_status) setSubmitType(data.data.auth_status);
         let spareAccount = '';

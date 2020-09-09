@@ -1,4 +1,6 @@
 import { getUniqueId } from 'react-native-device-info';
+import { defaultUserInfoState } from '../redux/state/user';
+import { ActionsType } from '../redux/state/index';
 import onlyData from '../../tools/onlyId';
 import ajax from '.';
 import rootStore from '../store';
@@ -117,11 +119,11 @@ export class SocketClass {
 
   // 开启失败
   private onError: WebSocket['onerror'] = (err: any) => {
-    console.log(err);
     this.isOpen = false;
     this.isError = true;
     // 重新开启
     console.log('Socket Error');
+    console.log(err);
     this.socketErrorMessage = err.message;
     // 错误之后，进行处理
     const message = `
@@ -148,8 +150,9 @@ export class SocketClass {
   };
 
   // 关闭
-  private onClose: WebSocket['onclose'] = () => {
+  private onClose: WebSocket['onclose'] = (err: any) => {
     console.log('Socket Close');
+    console.log(err);
     // 断线重连
     this.isOpen = false;
     if (this.nowSendReq.length) {
@@ -175,10 +178,22 @@ export class SocketClass {
     }
     // 获取当前时间
     const nowTime = SocketClass.getNowTime();
+    if (data.ch === 'err') {
+      rootStore.dispatch({
+        type: ActionsType.CHANGE_USER_LOGIN,
+        data: false,
+      });
+      rootStore.dispatch({
+        type: ActionsType.CHANGE_USER_INFO,
+        data: {
+          ...defaultUserInfoState,
+        },
+      });
+    }
     this.onMessageList = this.onMessageList.map(item => {
       let time = item.changeTime;
       if (data.ch === item.id && item.func) {
-        if (item.changeTime < nowTime) {
+        if (item.changeTime < nowTime || item.id === 'gold.market.ALL.account') {
           time = nowTime;
           item.func.forEach(func => func(data));
         }

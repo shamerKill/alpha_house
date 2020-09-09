@@ -18,7 +18,7 @@ export type TypePositionData = {
   allValue: string; // 总仓
   useBond: string; // 占用保证金
   willBoomPrice: string; // 预估强评价
-  useBondRatio: string; // 维持保证金率
+  // useBondRatio: string; // 维持保证金率
   time: string; // 订单时间
   // 没有止盈止损
   // stopWinValue: string; // 止盈手数
@@ -35,6 +35,7 @@ export type TypeGeneralEntrustemnt = {
   haveNumber: number; // 已成交量
   backValue: number; // 可撤数量
   state: 0|1; // 状态，未成交0｜部分成交1
+  willUseBond: string; // 预计占用保证金
   // winStartPrice: string; // 止盈触发价
   // winDoPrice: string; // 止盈执行价
   // lowStartPrice: string; // 止损触发价

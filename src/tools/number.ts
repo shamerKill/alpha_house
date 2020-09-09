@@ -56,13 +56,26 @@ export const numberToFixed = (value: number, fix: number): string => {
   return `${count / 10 ** fix}`;
 };
 // 两数相减
-export const towNumCut = (prev: number, after: number) => {
-  const prevLength = numberOtherLength(prev);
-  const afterLength = numberOtherLength(after);
+export const towNumCut = (prev: number|string, after: number|string) => {
+  const prevNum = typeof prev === 'number' ? prev : parseFloat(prev);
+  const afterNum = typeof after === 'number' ? after : parseFloat(after);
+  const prevLength = numberOtherLength(prevNum);
+  const afterLength = numberOtherLength(afterNum);
   const bigLength = prevLength > afterLength ? prevLength : afterLength;
   return (
-    Math.floor(prev * 10 ** bigLength)
-    - Math.floor(after * 10 ** bigLength)
+    Math.floor(prevNum * 10 ** bigLength)
+    - Math.floor(afterNum * 10 ** bigLength)
+  ) / 10 ** bigLength;
+};
+export const towNumAdd = (prev: number|string, after: number|string) => {
+  const prevNum = typeof prev === 'number' ? prev : parseFloat(prev);
+  const afterNum = typeof after === 'number' ? after : parseFloat(after);
+  const prevLength = numberOtherLength(prevNum);
+  const afterLength = numberOtherLength(afterNum);
+  const bigLength = prevLength > afterLength ? prevLength : afterLength;
+  return (
+    Math.floor(prevNum * 10 ** bigLength)
+    + Math.floor(afterNum * 10 ** bigLength)
   ) / 10 ** bigLength;
 };
 

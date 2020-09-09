@@ -80,19 +80,25 @@ const HomeFundDetail: FC = () => {
   const [surplusNum, setSurplusNum] = useState(''); // 剩余金额
   const [endTime, setEndTime] = useState(''); // 结束时间
 
-  useEffect(() => {
-    if (routePage !== 'HomeFundDetail') return;
+  const getDetail = () => {
     ajax.get('/v1/fund/fund').then(data => {
-      setTitle(data.data.title);
-      setRatio(data.data.earnings_rate);
-      setTime(data.data.cycle);
-      setStartNum(`${data.data.min}`);
-      setAllNum(`${data.data.number}`);
-      setSurplusNum(`${data.data.surplus_number}`);
-      setEndTime(data.data.end_time);
+      if (data.status === 200) {
+        setTitle(data.data.title);
+        setRatio(data.data.earnings_rate);
+        setTime(data.data.cycle);
+        setStartNum(`${data.data.min}`);
+        setAllNum(`${data.data.number}`);
+        setSurplusNum(`${data.data.surplus_number}`);
+        setEndTime(data.data.end_time);
+      }
     }).catch(err => {
       console.log(err);
     });
+  };
+
+  useEffect(() => {
+    if (routePage !== 'HomeFundDetail') return;
+    getDetail();
   }, [routePage]);
 
   return (
