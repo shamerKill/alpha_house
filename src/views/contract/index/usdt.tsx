@@ -1071,6 +1071,7 @@ const ContractUSDTScreen: FC = () => {
           setNoUserInfo(false);
           // 可用资产
           setUserAllAssets(`${res.asset.crossWalletBalance}`);
+          setCanUseAssets(`${res.asset.availableBalance}`);
           // 更改币种杠杆信息
           setCoinListInfo(state => ({
             ...state,
@@ -1892,6 +1893,7 @@ const ContractUSDTScreen: FC = () => {
     const tickerImgStart = 'gold.market.ALL.account';
     const tickerImg = `${tickerImgStart}.${userInfo.token}`;
     const socketListener = (message: any) => {
+      console.log(JSON.stringify(message, null, 2));
       if (message.data.type === '1') { // 创建委托
         const res = message.data.entrust;
         setCoinListInfo(state => {

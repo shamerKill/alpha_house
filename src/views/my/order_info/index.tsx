@@ -150,6 +150,7 @@ const MyOrderInfo: FC = () => {
     },
     getPageData: () => {
       if (!canLoadingPage.current) return;
+      canLoadingPage.current = false;
       addEvent.getData();
     },
     getData: () => {
@@ -177,6 +178,7 @@ const MyOrderInfo: FC = () => {
         fm.type = {'全部': 1, '充值': 2, '提现': 3, '转入': 4, '转出': 5, '手续费': 6}[selectType[1]];
         fm.offset = page.current;
       }
+      console.log(fm);
       ajax.post('/v1/currency/billdetails', fm).then(data => {
         if (data.status === 200) {
           setOrderList(state => {
@@ -189,6 +191,7 @@ const MyOrderInfo: FC = () => {
           });
           page.current++;
           if (data.data.length === 0) canLoadingPage.current = false;
+          else canLoadingPage.current = true;
         }
       }).catch(err => {
         console.log(err);
