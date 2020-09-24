@@ -2109,12 +2109,17 @@ const ContractUSDTScreen: FC = () => {
   // 计算可用资产/资金使用率
   useEffect(() => {
     // 获取所有持仓数据的保证金
+    // 计算未实现盈亏
+    let floatChange = 0;
     // 计算占用保证金总和
     let positionsOrderRisk = 0;
-    coinListInfo.positionOrders.map(item => parseFloat(item.useBond)).forEach(item => { positionsOrderRisk += item; });
+    coinListInfo.positionOrders.map(item => {
+      floatChange += parseFloat(item.profitValue);
+      return parseFloat(item.useBond);
+    }).forEach(item => { positionsOrderRisk += item; });
     let entrOrderRisk = 0;
     coinListInfo.entrustOrders.map(item => parseFloat(item.willUseBond)).forEach(item => { entrOrderRisk += item; });
-    const assetsValue = parseFloat(userAllAssets) - (positionsOrderRisk + entrOrderRisk) || parseFloat(userAllAssets);
+    const assetsValue = parseFloat(userAllAssets) - (positionsOrderRisk + entrOrderRisk) + floatChange || parseFloat(userAllAssets);
     setCanUseAssets(`${assetsValue}`);
   }, [coinListInfo, userAllAssets]);
   useEffect(() => {
