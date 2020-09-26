@@ -608,7 +608,7 @@ const HomeScreen: FC = () => {
   // 处理数据
   useEffect(() => {
     setNavAd({
-      pic: require('../../assets/images/pic/home_nav.jpg'),
+      pic: require('../../assets/images/memory/nav_2.jpeg'),
       link: 'Contract',
     });
   }, []);
