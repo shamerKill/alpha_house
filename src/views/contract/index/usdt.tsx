@@ -1290,6 +1290,12 @@ const ContractUSDTScreen: FC = () => {
           { lever: '100', selfRatio: 0.01 },
         ].reverse();
       }
+      if (coin === 'BCHUSDT') {
+        return [
+          { lever: '10', selfRatio: 0.1 },
+          { lever: '20', selfRatio: 0.05 },
+        ].reverse();
+      }
       return [
         { lever: '10', selfRatio: 0.1 },
         { lever: '25', selfRatio: 0.04 },
@@ -1902,7 +1908,9 @@ const ContractUSDTScreen: FC = () => {
           coinListInfoRef.current.coinInfo.forEach(coin => {
             if (coin.symbol === `${res.symbol}USDT`) leverType = coin.lever;
           });
-          entrustResult.push({
+          // 判断订单中是否已经存在
+          const dataIndex = state.entrustOrders.map(order => order.id).indexOf(res.binance_id);
+          const addData: TypeGeneralEntrustemnt = {
             id: res.binance_id,
             // eslint-disable-next-line no-nested-ternary
             type: res.type === '1' ? (res.sell_buy === '1' ? 1 : 3) : (res.sell_buy === '1' ? 2 : 0),
@@ -1915,7 +1923,12 @@ const ContractUSDTScreen: FC = () => {
             state: Number(res.status === '8') as 0|1,
             time: res.create_time,
             willUseBond: '',
-          });
+          };
+          if (dataIndex === -1) {
+            entrustResult.push(addData);
+          } else {
+            entrustResult.splice(dataIndex, 1, addData);
+          }
           return {
             ...state,
             entrustOrders: entrustResult,
@@ -2447,7 +2460,7 @@ const ContractUSDTScreen: FC = () => {
                   doType === 0
                     ? (
                       <>
-                        <Text style={style.doFuncBtnText}>开多</Text>
+                        <Text style={style.doFuncBtnText}>开仓买多</Text>
                         <Text style={style.doFuncBtnDesc}>看涨</Text>
                       </>
                     )
@@ -2469,7 +2482,7 @@ const ContractUSDTScreen: FC = () => {
                   doType === 0
                     ? (
                       <>
-                        <Text style={style.doFuncBtnText}>开空</Text>
+                        <Text style={style.doFuncBtnText}>开仓买空</Text>
                         <Text style={style.doFuncBtnDesc}>看跌</Text>
                       </>
                     )
