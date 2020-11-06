@@ -18,7 +18,7 @@ import {
 import { useGoToWithLogin } from '../../../tools/routeTools';
 import { modalOutBg } from '../../../components/modal/outBg';
 import {
-  numberToFormatString, fiexedNumber, towNumAdd, towNumCut,
+  numberToFormatString, fiexedNumber, towNumAdd, towNumCut, NumberTools,
 } from '../../../tools/number';
 import showSelector from '../../../components/modal/selector';
 import storage from '../../../data/database';
@@ -26,6 +26,7 @@ import showComAlert from '../../../components/modal/alert';
 import ajax from '../../../data/fetch';
 import { TypePositionData, TypeGeneralEntrustemnt, TypeStopOrder } from './type';
 import ComFormButton from '../../../components/form/button';
+import getSymbolBond from './bondData';
 
 const routeName = 'Contract';
 
@@ -985,12 +986,12 @@ const ContractUSDTScreen: FC = () => {
   const [canUseAssets, setCanUseAssets] = useState('');
   // 当前全部资产
   const [userAllAssets, setUserAllAssets] = useState('');
+  // 占用保证金
+  const [useBondAssets, setUseBondAssets] = useState(0);
   const userAllAssetsRef = useRef(userAllAssets);
   useEffect(() => {
     userAllAssetsRef.current = userAllAssets;
   }, [userAllAssets]);
-  // 资金使用率
-  const [assetsUseRatio, setAssetsUseRatio] = useState('');
   // 风险度
   const [riskLever, setRiskLever] = useState('');
 
@@ -1097,6 +1098,11 @@ const ContractUSDTScreen: FC = () => {
         if (data.status === 200) {
           result = data?.data?.list?.map((item: any) => {
             const itemCoinRisk = data?.data?.risk.filter((risk: any) => risk.symbol === `${item.symbol}USDT`);
+            let nowPrice = '';
+            coinListInfoRef.current.coinInfo.forEach(coin => {
+              if (coin.symbol === `${item.symbol}USDT`) nowPrice = coin.newPirce;
+            });
+            const useBond = getSymbolBond(item.symbol, (parseFloat(item.surplus_coin_num) * parseFloat(nowPrice)));
             return {
               id: item.id,
               type: Number(item.type === '1') as TypePositionData['type'],
@@ -1104,11 +1110,9 @@ const ContractUSDTScreen: FC = () => {
               leverType: itemCoinRisk[0].leverage,
               price: item.price,
               profitValue: fiexedNumber(itemCoinRisk[Number(item.type === '2')].unrealizedProfit, 4),
-              profitRatio: `${
-                ((itemCoinRisk[Number(item.type === '2')].unrealizedProfit / parseFloat(itemCoinRisk[Number(item.type === '2')].initialMargin)) * 100).toFixed(2)
-              }%`,
+              profitRatio: `${new NumberTools(parseFloat(itemCoinRisk[Number(item.type === '2')].unrealizedProfit)).divides(useBond / 100, 2).get()}%`,
               allValue: item.surplus_coin_num,
-              useBond: parseFloat(itemCoinRisk[Number(item.type === '2')].initialMargin).toFixed(4),
+              useBond: useBond.toString(),
               willBoomPrice: '--',
               time: item.create_time,
             };
@@ -1858,8 +1862,8 @@ const ContractUSDTScreen: FC = () => {
     });
     if (safeRatio === -1) return;
     // 占用保证金数 价格*币数*资金占用率比例
-    const safeValue = price * value * safeRatio;
-    setOccupyBond(`${fiexedNumber(safeValue, 2)}`);
+    const safeValue = getSymbolBond(nowCoinInfo.symbol.replace('USDT', ''), (price * value));
+    setOccupyBond(safeValue.toString());
   }, [fixedPrice, fixedValue, nowCoinInfo.lever, nowCoinInfo.leverList, nowCoinInfo.openMinValue, canUseAssets, isMarketPrice, nowCoinInfo.newPirce]);
 
   // 根据滚动条计算开仓数量
@@ -1922,7 +1926,7 @@ const ContractUSDTScreen: FC = () => {
             backValue: parseFloat((res.coin_num - res.deal_coin_num).toFixed(3)),
             state: Number(res.status === '8') as 0|1,
             time: res.create_time,
-            willUseBond: '',
+            willUseBond: getSymbolBond(res.symbol, (parseFloat(res.coin_num) * parseFloat(res.price))).toString(),
           };
           if (dataIndex === -1) {
             entrustResult.push(addData);
@@ -2069,7 +2073,7 @@ const ContractUSDTScreen: FC = () => {
           }
         });
         // 计算占用保证金
-        const safeValue = parseFloat(order.allValue) * parseFloat(nowCoin.riskPrice) * safeRatio;
+        const safeValue = getSymbolBond(nowCoin.symbol.replace('USDT', ''), (parseFloat(order.allValue) * parseFloat(nowCoin.riskPrice)));
         // 计算未实现盈亏
         let profitResult = '';
         let profitRatio = 0; // 收益率
@@ -2108,7 +2112,7 @@ const ContractUSDTScreen: FC = () => {
           }
         });
         // 计算占用保证金
-        const safeValue = order.backValue * parseFloat(order.willPrice) * safeRatio;
+        const safeValue = getSymbolBond(nowCoin.symbol.replace('USDT', ''), (order.backValue * parseFloat(order.willPrice)));
         return {
           ...order,
           willUseBond: `${safeValue}`,
@@ -2134,12 +2138,8 @@ const ContractUSDTScreen: FC = () => {
     coinListInfo.entrustOrders.map(item => parseFloat(item.willUseBond)).forEach(item => { entrOrderRisk += item; });
     const assetsValue = parseFloat(userAllAssets) - (positionsOrderRisk + entrOrderRisk) + floatChange || parseFloat(userAllAssets);
     setCanUseAssets(`${assetsValue}`);
+    setUseBondAssets(new NumberTools(positionsOrderRisk).divides(1, 4).get());
   }, [coinListInfo, userAllAssets]);
-  useEffect(() => {
-    // 计算资金使用率
-    const ratioValue = ((parseFloat(userAllAssets) - parseFloat(canUseAssets)) / parseFloat(userAllAssets)) || 0;
-    setAssetsUseRatio(`${fiexedNumber(ratioValue * 100, 2)}%`);
-  }, [userAllAssets, canUseAssets]);
 
   // 计算风险度
   useEffect(() => {
@@ -2251,8 +2251,10 @@ const ContractUSDTScreen: FC = () => {
                 <Text style={style.topInfoViewInfo}>{riskLever}</Text>
               </Text>
               <Text style={style.topInfoViewText}>
-                <Text>资金使用率:&nbsp;&nbsp;</Text>
-                <Text style={style.topInfoViewInfo}>{assetsUseRatio}</Text>
+                <Text>占用保证金&nbsp;&nbsp;</Text>
+                <Text style={style.topInfoViewInfo}>
+                  {useBondAssets}
+                </Text>
               </Text>
               <Text style={[style.topInfoViewText, style.topInfoViewRight]}>
                 <Text>资金杠杆:&nbsp;&nbsp;</Text>

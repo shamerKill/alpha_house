@@ -336,7 +336,7 @@ const MarketKlineLogsView: FC = () => {
         setLogsList(state => {
           const result = [...state];
           result.shift();
-          result.push({
+          result.unshift({
             time: formatTime('hh:mm:ss', message.Tick.ts),
             price: message.Tick.price,
             number: message.Tick.number,

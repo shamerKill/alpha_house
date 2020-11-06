@@ -385,7 +385,7 @@ const HomeScreenMarketLine: FC<TypeHomeScreenMarketLine> = ({
         </View>
         <Text style={{ color: themeGray, fontSize: 12 }}>24h&nbsp;&nbsp;&nbsp;{count}</Text>
       </View>
-      <View style={{ width: '30%', alignItems: 'center' }}>
+      <View style={{ width: '30%', alignItems: 'flex-start' }}>
         <Text style={{ color: themeBlack, fontWeight: 'bold', fontSize: 16 }}>{price}</Text>
         <Text style={{ color: themeGray, fontSize: 12 }}>&yen;{rmbPrice}</Text>
       </View>
