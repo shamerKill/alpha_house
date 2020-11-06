@@ -5,7 +5,7 @@ import {
   View, Text, TouchableNativeFeedback, Image, StyleSheet,
 } from 'react-native';
 import {
-  useNavigation, StackActions, useRoute, RouteProp,
+  useNavigation, StackActions,
 } from '@react-navigation/native';
 import { Input } from 'react-native-elements';
 import { showMessage } from 'react-native-flash-message';
@@ -23,7 +23,7 @@ import { defaultUserInfoState } from '../../../data/redux/state/user';
 
 const LoginScreen: FC = () => {
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<{'login'?: { name: string; params?: object }}, 'login'>>();
+  // const route = useRoute<RouteProp<{'login'?: { name: string; params?: object }}, 'login'>>();
   const [loading, setLoading] = useState(false);
   const [userInfoState, dispatchUserInfo] = useGetDispatch<InState['userState']['userInfo']>('userState', 'userInfo');
   const [, dispatchUserIsLogin] = useGetDispatch<InState['userState']['userIsLogin']>('userState', 'userIsLogin');
@@ -105,12 +105,14 @@ const LoginScreen: FC = () => {
       });
     },
     goToHome: () => {
-      if (route.params) {
-        navigation.dispatch(StackActions.replace(route.params.name, route.params.params));
-      } else {
-        navigation.dispatch(StackActions.popToTop());
-        navigation.dispatch(StackActions.replace('Home'));
-      }
+      // if (route.params) {
+      //   navigation.dispatch(StackActions.replace(route.params.name, route.params.params));
+      // } else {
+      //   navigation.dispatch(StackActions.popToTop());
+      //   navigation.dispatch(StackActions.replace('Home'));
+      // }
+      navigation.dispatch(StackActions.popToTop());
+      navigation.dispatch(StackActions.replace('Home'));
     },
     goToLink: (link: string, obj?: object) => {
       navigation.navigate(link, obj);
