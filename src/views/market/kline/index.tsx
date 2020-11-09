@@ -350,8 +350,8 @@ const MarketKlineLogsView: FC = () => {
       marketSocket.getSocket().then(ws => {
         socket.current = ws;
         ws.addListener(socketListener, tickerImg);
-        ws.send(tickerImg, 'sub');
         ws.send(tickerImg, 'req');
+        ws.send(tickerImg, 'sub');
         subSocket.current = false;
       }).catch(err => {
         console.log(err);
