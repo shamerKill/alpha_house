@@ -1898,11 +1898,19 @@ const ContractUSDTScreen: FC = () => {
   // 监听订单更改
   const socket = useRef<Socket|null>(null);
   const subSocket = useRef(false);
+  // 保留socket返回数据，处理数据问题高
+  const socketAccountData = useRef<{
+    did: number[],
+  }>({
+    did: [],
+  });
   useEffect(() => {
     if (!userInfo.token) return;
     const tickerImgStart = 'gold.market.ALL.account';
     const tickerImg = `${tickerImgStart}.${userInfo.token}`;
     const socketListener = (message: any) => {
+      if (socketAccountData.current.did.includes(message.ts)) return;
+      socketAccountData.current.did.push(message.ts);
       console.log(JSON.stringify(message, null, 2));
       if (message.data.type === '1') { // 创建委托
         const res = message.data.entrust;
