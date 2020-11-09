@@ -1103,6 +1103,7 @@ const ContractUSDTScreen: FC = () => {
               if (coin.symbol === `${item.symbol}USDT`) nowPrice = coin.newPirce;
             });
             const useBond = getSymbolBond(item.symbol, (parseFloat(item.surplus_coin_num) * parseFloat(nowPrice)));
+            const willUseBond = (parseFloat(nowPrice) * parseFloat(item.surplus_coin_num)) / (parseFloat(item?.lever) || 1);
             return {
               id: item.id,
               type: Number(item.type === '1') as TypePositionData['type'],
@@ -1110,9 +1111,10 @@ const ContractUSDTScreen: FC = () => {
               leverType: itemCoinRisk[0].leverage,
               price: item.price,
               profitValue: fiexedNumber(itemCoinRisk[Number(item.type === '2')].unrealizedProfit, 4),
-              profitRatio: `${new NumberTools(parseFloat(itemCoinRisk[Number(item.type === '2')].unrealizedProfit)).divides(useBond / 100, 2).get()}%`,
+              profitRatio: `${new NumberTools(parseFloat(itemCoinRisk[Number(item.type === '2')].unrealizedProfit)).divides(willUseBond / 100, 2).get()}%`,
               allValue: item.surplus_coin_num,
               useBond: useBond.toString(),
+              willUseBond,
               willBoomPrice: '--',
               time: item.create_time,
             };
@@ -2081,7 +2083,8 @@ const ContractUSDTScreen: FC = () => {
           }
         });
         // 计算占用保证金
-        const safeValue = getSymbolBond(nowCoin.symbol.replace('USDT', ''), (parseFloat(order.allValue) * parseFloat(nowCoin.riskPrice)));
+        // const safeValue = getSymbolBond(nowCoin.symbol.replace('USDT', ''), (parseFloat(order.allValue) * parseFloat(nowCoin.riskPrice)));
+        const safeValue = (parseFloat(nowCoin.newPirce) * parseFloat(order.allValue)) / parseFloat(nowCoin.lever);
         // 计算未实现盈亏
         let profitResult = '';
         let profitRatio = 0; // 收益率

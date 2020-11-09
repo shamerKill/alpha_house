@@ -23,6 +23,7 @@ export type TypePositionData = {
   // 没有止盈止损
   // stopWinValue: string; // 止盈手数
   // stopLowValue: string; // 止损手数
+  willUseBond?: number; // 占用保证金
 };
 // 普通委托数据类型
 export type TypeGeneralEntrustemnt = {

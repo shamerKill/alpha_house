@@ -16,6 +16,7 @@ import getOption, { TypeKlineValue, getOptionSerise, getOptionTitle } from './ge
 // import mockData from './mock';
 import Socket, { marketSocket } from '../../../data/fetch/socket';
 import formatTime from '../../../tools/time';
+import ajax from '../../../data/fetch';
 
 
 // const demoData = mockData.map(item =`> {
@@ -109,7 +110,6 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
   useEffect(() => {
     setGotData(false);
     let splitNum = 0;
-    const getTimeValueStart = 100;
     const getTimeValueMore = 500;
     const timeType: typeof showType = showType;
     const coinType = routeCoinType;
@@ -143,9 +143,6 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
     };
     let useData: TypeKlineValue[] = [];
     const tickerImg = `gold.market.${coinType}.kline.${timeType}`;
-    // eslint-disable-next-line max-len
-    const tickerReqStart = `{"req":"gold.market.${coinType}.kline.${timeType}","create_time":"${getStartTime(getTimeValueStart).startTime}","end_time":"${endTime}","limit":"${getTimeValueStart}"}`;
-    const tickerReqMore = `{"req":"gold.market.${coinType}.kline.${timeType}","create_time":"${getStartTime().startTime}","end_time":"${endTime}","limit":"${getTimeValueMore}"}`;
     const socketListener = (message: any) => {
       const resultData: {
         [key: string]: string;
@@ -189,19 +186,39 @@ const MarketKlineHtml: FC<{style: StyleProp<ViewStyle>}> = ({
       }
       addEvent.dataSendToWeb(useData);
     };
+    const getKLineDataContractByLength = async (time: number, coinTypeIn: string) => {
+      const getTimeSome = getStartTime(time);
+      const nowCoin = coinTypeIn;
+      const data = await ajax.get(
+        `/v1/market/contract_kline?symbol=${coinTypeIn}&interval=${timeType}&create_unix=${getTimeSome.startTime}&end_unix=${endTime}&limit=${time}`,
+      );
+      if (data.status === 200) {
+        if (nowCoin === coinTypeIn) {
+          socketListener(data.data);
+          return true;
+        }
+      }
+      return false;
+    };
     const inter = setInterval(() => {
       if (viewShowRef.current) {
-        clearInterval(inter);
-        marketSocket.getSocket().then(ws => {
-          socket.current = ws;
-          ws.addListener(socketListener, tickerImg);
-          ws.send(tickerReqStart);
-          ws.send(tickerReqMore);
-          ws.send(tickerImg, 'sub');
-          subSocket.current = false;
-        }).catch(err => {
-          console.log(err);
+        getKLineDataContractByLength(100, coinType).then(data => {
+          if (data) {
+            getKLineDataContractByLength(500, coinType).then((res) => {
+              if (res) {
+                marketSocket.getSocket().then(ws => {
+                  socket.current = ws;
+                  ws.addListener(socketListener, tickerImg);
+                  ws.send(tickerImg, 'sub');
+                  subSocket.current = false;
+                }).catch(err => {
+                  console.log(err);
+                });
+              }
+            });
+          }
         });
+        clearInterval(inter);
       }
     }, 100);
     return () => {
