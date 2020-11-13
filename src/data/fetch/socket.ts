@@ -432,9 +432,8 @@ export class SocketClass {
 }
 
 export const marketSocket = new SocketClass({
-  // baseURI: 'wss://testapi.alfaex.pro/contract/ws/market',
   baseURI: 'wss://serve.alfaex.pro/contract/ws/market',
-  // baseURI: 'ws://192.168.3.10:3003/market',
+  // baseURI: 'wss://testapi.alfaex.pro/contract/ws/market',
 });
 export const CoinToCoinSocket = new SocketClass({
   baseURI: 'wss://serve.alfaex.pro/cash/ws/market',

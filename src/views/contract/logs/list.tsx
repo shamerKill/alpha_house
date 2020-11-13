@@ -1,7 +1,9 @@
+import { useNavigation } from '@react-navigation/native';
 import React, { FC } from 'react';
 import {
   View, Text, StyleSheet,
 } from 'react-native';
+import { Button } from 'react-native-elements';
 import {
   themeBlack, getThemeOpacity, themeGray, defaultThemeBgColor, themeGreen, themeRed, defaultThemeColor, themeWhite,
 } from '../../../config/theme';
@@ -79,7 +81,8 @@ export const ComContractIndexListGeneralLog: FC<{data: TypeGeneralEntrustemntLog
 };
 
 // 历史记录
-export const ComContractIndexListHistory: FC<{data: TypeHistoryLog}> = ({ data }) => {
+export const ComContractIndexListHistory: FC<{data: TypeHistoryLog, showDetails?: true}> = ({ data, showDetails }) => {
+  const navigation = useNavigation();
   return (
     <View style={style.listView}>
       {/* 头部 */}
@@ -96,9 +99,9 @@ export const ComContractIndexListHistory: FC<{data: TypeHistoryLog}> = ({ data }
         </Text>
         <Text style={[
           style.listTopTime,
-          { color: themeGreen },
+          (data.status === 2 || data.status === undefined) && { color: themeGreen },
         ]}>
-          已成交
+          {['', '持仓中', '已完成', '部分强平价', '全部强平', '部分平仓'][data.status || 2]}
         </Text>
       </View>
       {/* 中部 */}
@@ -137,9 +140,30 @@ export const ComContractIndexListHistory: FC<{data: TypeHistoryLog}> = ({ data }
         style.listInfo,
       ]}>
         <View style={{ width: '80%' }}>
+          {data.openPrice && <Text style={[style.listInfoText, { width: '100%' }]}>开仓价&nbsp;{data.openPrice}</Text>}
+          {data.openNumber && <Text style={[style.listInfoText, { width: '100%' }]}>开仓量&nbsp;{data.openNumber}</Text>}
           <Text style={[style.listInfoText, { width: '100%' }]}>手续费&nbsp;{data.serviceFee}</Text>
-          <Text style={[style.listInfoText, { width: '100%' }]}>成交时间&nbsp;{data.successTime}</Text>
+          <Text style={[style.listInfoText, { width: '100%' }]}>{showDetails ? '开仓' : '成交'}时间&nbsp;{data.successTime}</Text>
         </View>
+        {
+          showDetails && (
+            <Button
+              title="订单详情"
+              onPress={() => { navigation.navigate('ContractLogsDetails', { id: data.id }); }}
+              containerStyle={{
+                position: 'absolute',
+                bottom: 10,
+                right: 0,
+              }}
+              buttonStyle={{
+                backgroundColor: defaultThemeColor,
+                padding: 5,
+              }}
+              titleStyle={{
+                fontSize: 12,
+              }} />
+          )
+        }
       </View>
     </View>
   );

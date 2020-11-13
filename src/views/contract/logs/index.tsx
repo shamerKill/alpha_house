@@ -8,9 +8,8 @@ import { themeWhite } from '../../../config/theme';
 import ComFormButton from '../../../components/form/button';
 import ComLine from '../../../components/line';
 import { ComContractIndexListGeneralLog, ComContractIndexListHistory, ComContractIndexListOrderLog } from './list';
-import { TypeGeneralEntrustemntLog, TypeHistoryLog } from '../_index/type';
+import { TypeGeneralEntrustemntLog, TypeHistoryLog, TypeStopOrderLog } from '../index/type';
 import ajax from '../../../data/fetch';
-import { TypeStopOrderLog } from '../index/type';
 
 const ContractLogsAllScreen: FC = () => {
   // const selectArr = [
@@ -43,13 +42,14 @@ const ContractLogsAllScreen: FC = () => {
   const [orderData, setOrderData] = useState<TypeStopOrderLog[]>([]);
   // 不同记录的页数
   const [pageList, setPageList] = useState<[number, number, number]>([1, 1, 1]);
+  const [nowPageList, setNowPageList] = useState<[number, number, number]>([0, 0, 0]);
   const [canLoad, setCanLoad] = useState<[boolean, boolean, boolean]>([true, true, true]);
 
   const onMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y; //滑动距离
     const contentSizeHeight = event.nativeEvent.contentSize.height; //scrollView contentSize高度
     const oriageScrollHeight = event.nativeEvent.layoutMeasurement.height; //scrollView高度
-    if (offsetY + oriageScrollHeight >= contentSizeHeight) {
+    if (offsetY + oriageScrollHeight >= contentSizeHeight - 10) {
       if (canLoad[selectStatus]) {
         setPageList(state => {
           const result: typeof pageList = [...state];
@@ -66,12 +66,18 @@ const ContractLogsAllScreen: FC = () => {
 
   // 获取止盈止损
   const getWillOrder = (page: number, coin: string) => {
+    if (pageList[2] === nowPageList[2]) return;
     setCanLoad(state => [
       state[0],
       state[1],
       false,
     ]);
     ajax.get(`/contract/api/v2/order/profitLossLog?symbol=${coin.replace('USDT', '')}&page=${page}`).then(data => {
+      setNowPageList(state => [
+        state[0],
+        state[1],
+        page,
+      ]);
       if (data.status === 200 && data.data) {
         if (data?.data.length) {
           setCanLoad(state => [
@@ -103,14 +109,20 @@ const ContractLogsAllScreen: FC = () => {
       console.log(err);
     });
   };
-  // 获取历史委托
+  // 获取历史成交
   const getHistoryOrder = (page: number, coin: string) => {
+    if (pageList[1] === nowPageList[1]) return;
     setCanLoad(state => [
       state[0],
       false,
       state[2],
     ]);
-    ajax.get(`/contract/api/v1/bian/dealorder_log?symbol=${coin.replace('USDT', '')}&page=${page}`).then(data => {
+    ajax.get(`/contract/api/v1/bian/holdorder_log?symbol=${coin.replace('USDT', '')}&page=${page}`).then(data => {
+      setNowPageList(state => [
+        state[0],
+        page,
+        state[2],
+      ]);
       if (data.status === 200) {
         if (data?.data.length) {
           setCanLoad(state => [
@@ -122,14 +134,16 @@ const ContractLogsAllScreen: FC = () => {
         setHistoryLogsData(state => (
           [...state].concat(data?.data?.map((item: any) => ({
             id: item.id,
-            // eslint-disable-next-line no-nested-ternary
-            type: item.direction - 1,
+            type: item.type - 1,
             coinType,
-            successPrice: item.price,
-            successNumber: item.num,
-            successTime: item.update_time || item.create_time,
-            serviceFee: item.fee,
-            changeValue: item.profit,
+            openNumber: `${item.coin_num}`,
+            openPrice: `${item.price}`,
+            successPrice: `${item.deal_price}`,
+            successNumber: item.deal_coin_num,
+            successTime: item.create_time,
+            serviceFee: item.FeeAll,
+            changeValue: item.already_profit,
+            status: parseFloat(item.status),
           })) || [])
         ));
       }
@@ -140,12 +154,18 @@ const ContractLogsAllScreen: FC = () => {
 
   // 获取普通委托
   const getNowOrder = (page: number, coin: string) => {
+    if (pageList[0] === nowPageList[0]) return;
     setCanLoad(state => [
       false,
       state[1],
       state[2],
     ]);
     ajax.get(`/contract/api/v1/bian/allorder_log?symbol=${coin.replace('USDT', '')}&page=${page}`).then(data => {
+      setNowPageList(state => [
+        page,
+        state[1],
+        state[2],
+      ]);
       if (data.status === 200) {
         if (data?.data.length) {
           setCanLoad(state => [
@@ -214,9 +234,9 @@ const ContractLogsAllScreen: FC = () => {
         selectStatus === 0 && (
           <ScrollView onMomentumScrollEnd={onMomentumScrollEnd} style={style.scrollViewContent}>
             {
-              generalEntrustementData.map(item => (
+              generalEntrustementData.map((item, index) => (
                 <ComContractIndexListGeneralLog
-                  key={item.id}
+                  key={`${item.id}${index}`}
                   data={item} />
               ))
             }
@@ -227,10 +247,11 @@ const ContractLogsAllScreen: FC = () => {
         selectStatus === 1 && (
           <ScrollView onMomentumScrollEnd={onMomentumScrollEnd} style={style.scrollViewContent}>
             {
-              historyLogsData.map(item => (
+              historyLogsData.map((item, index) => (
                 <ComContractIndexListHistory
-                  key={item.id}
-                  data={item} />
+                  key={`${item.id}${index}`}
+                  data={item}
+                  showDetails />
               ))
             }
           </ScrollView>
@@ -240,9 +261,9 @@ const ContractLogsAllScreen: FC = () => {
         selectStatus === 2 && (
           <ScrollView onMomentumScrollEnd={onMomentumScrollEnd} style={style.scrollViewContent}>
             {
-              orderData.map(item => (
+              orderData.map((item, index) => (
                 <ComContractIndexListOrderLog
-                  key={item.id}
+                  key={`${item.id}${index}`}
                   data={item} />
               ))
             }

@@ -208,7 +208,6 @@ export class Fetch {
 
 const ajax = new Fetch({
   // baseURI: 'https://testapi.alfaex.pro',
-  // baseURI: 'http://192.168.3.10:3001',
   baseURI: 'https://serve.alfaex.pro',
 });
 export default ajax;

@@ -94,11 +94,14 @@ export type TypeHistoryLog = {
   id: string|number; // 订单id
   type: 0|1|2|3, // 开多0｜开空1｜平多2｜平空3
   coinType: string; // 交易对
+  openNumber?: string; // 开仓数量
+  openPrice?: string; // 开仓价格
   successPrice: string; // 成交价格
   successNumber: string; // 成交数量
   successTime: string; // 成交时间
   serviceFee: string; // 手续费
   changeValue: string; // 盈亏
+  status?: 1|2|3|4|5; // 订单状态 1=持仓中,2=已平仓,3=部分强平,4=全部强平，5=部分平仓
   // orderType: 0|1|2|3; // 限价0/市价1|计划2｜系统强平3
 };
 // 历史记录计划委托数据类型
